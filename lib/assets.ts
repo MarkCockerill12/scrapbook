@@ -17,6 +17,8 @@ export interface AssetEntry {
   index: number;
   hash: string;
   hasAlpha: boolean;
+  animated: boolean;
+  frames: number;
   src: string;
   thumb: string;
   width: number;

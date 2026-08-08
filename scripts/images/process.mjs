@@ -74,19 +74,30 @@ async function processOne(aesthetic, file, { hasAlpha }) {
   const outDir = join(OUT, aesthetic);
   await mkdir(outDir, { recursive: true });
 
-  const base = sharp(buf, { animated: extname(file).toLowerCase() === ".gif" });
-  const meta = await base.metadata();
+  const isGif = extname(file).toLowerCase() === ".gif";
+  const meta = await sharp(buf, { animated: isGif }).metadata();
 
-  const pipeline = () =>
-    sharp(buf, { animated: extname(file).toLowerCase() === ".gif" }).rotate();
+  /**
+   * Animated input is loaded by sharp as a single tall strip of frames, so
+   * `metadata().height` is frameHeight * frameCount. Recording that in the manifest
+   * would size every animated badge at ~15x its real height. `pageHeight` is the true
+   * frame height; `pages` is the frame count.
+   */
+  const animated = (meta.pages ?? 1) > 1;
+  const frameHeight = animated ? (meta.pageHeight ?? meta.height) : meta.height;
 
-  const display = pipeline().resize({
-    width: Math.min(MAX_W, meta.width ?? MAX_W),
-    withoutEnlargement: true,
-  });
+  const pipeline = () => sharp(buf, { animated: isGif }).rotate();
 
   const displayOut = join(outDir, `${stem}.webp`);
-  const info = await (hasAlpha ? display : display.flatten({ background: "#000" }))
+  await pipeline()
+    .resize({
+      width: Math.min(MAX_W, meta.width ?? MAX_W),
+      withoutEnlargement: true,
+    })
+    // Never flatten. Alpha is preserved wherever the source has it — the cutout/
+    // folder is about POSITIONING intent (measure the visible subject), not about
+    // whether an image has transparency. Flattening onto black put a black box behind
+    // every transparent 88x31 badge.
     .webp({ quality: QUALITY, alphaQuality: 100, effort: 5 })
     .toFile(displayOut);
 
@@ -95,6 +106,10 @@ async function processOne(aesthetic, file, { hasAlpha }) {
     .resize({ width: THUMB_W, withoutEnlargement: true })
     .webp({ quality: 74, effort: 5 })
     .toFile(thumbOut);
+
+  const outWidth = Math.min(MAX_W, meta.width ?? MAX_W);
+  const scale = outWidth / (meta.width || outWidth);
+  const outHeight = Math.round((frameHeight || 0) * scale);
 
   // Dominant colour gives <Cutout> something to paint while the real file loads,
   // which matters because these pages are mostly image.
@@ -128,11 +143,13 @@ async function processOne(aesthetic, file, { hasAlpha }) {
     slot,
     index,
     hash,
-    hasAlpha,
+    hasAlpha: hasAlpha || Boolean(meta.hasAlpha),
+    animated,
+    frames: animated ? meta.pages : 1,
     src: `/dev-assets/${aesthetic}/${stem}.webp`,
     thumb: `/dev-assets/${aesthetic}/${stem}.thumb.webp`,
-    width: info.width,
-    height: info.height,
+    width: outWidth,
+    height: outHeight,
     bytes,
     dominant: dominant
       ? `#${[dominant.r, dominant.g, dominant.b].map((v) => v.toString(16).padStart(2, "0")).join("")}`

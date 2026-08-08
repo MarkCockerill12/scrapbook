@@ -81,6 +81,25 @@ export function Cutout({
   const w = width ?? (height ? Math.round(height * ratio) : entry.width);
   const h = height ?? Math.round(w / ratio);
 
+  // Animated WebP has to bypass next/image: the optimiser re-encodes to a still frame,
+  // which would silently kill every blinking 88x31 badge on the Early Internet page —
+  // where the blinking is most of the point.
+  if (entry.animated) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={entry.src}
+        alt={alt}
+        width={w}
+        height={h}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        className={className}
+        style={{ display: "block", width: w, height: h, ...style }}
+      />
+    );
+  }
+
   return (
     <Image
       src={entry.src}
