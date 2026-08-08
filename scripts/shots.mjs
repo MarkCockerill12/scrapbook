@@ -118,6 +118,29 @@ const SHOTS = [
     },
   ],
 
+  // 09 Deep Sea
+  [
+    "deepsea-top",
+    "/deep-sea",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1600);
+      await p.mouse.move(800, 450);
+      await p.waitForTimeout(700);
+    },
+  ],
+  [
+    "deepsea-deep",
+    "/deep-sea",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.42));
+      await p.mouse.move(700, 400);
+      await p.waitForTimeout(1400);
+    },
+  ],
+
   // 08 Matrix
   ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
   [

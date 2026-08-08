@@ -1,0 +1,292 @@
+/*
+ * Deep Sea — DSV-4 descent log.
+ *
+ * Own reset, own tokens (rule R2). px against a 1600x5400 canvas in "width" mode:
+ * scroll IS descent, so this page earns its scroll under rule R1.
+ *
+ * What makes the deep read as deep:
+ *   1. NEAR-BLACK, NOT BLUE. Below 200m there is no blue left. Everything visible is
+ *      lit by the sub or by the animal itself. A blue "underwater" gradient is a
+ *      shallow-water look and reads as a swimming pool.
+ *   2. LIGHT IS LOCAL. Nothing has ambient illumination. The spotlight and the
+ *      bioluminescence are the only sources, so most of the frame is genuinely empty.
+ *   3. INSTRUMENTS, NOT UI. Etched glass, hairline strokes, monospace numerals,
+ *      everything slightly imprecise. The HUD is a physical object in front of you.
+ *   4. PRESSURE. The numbers climb, the hull complains, and nothing reassures you.
+ */
+
+.root {
+  --ds-ink: #7fe9d8;
+  --ds-ink-dim: rgba(127, 233, 216, 0.5);
+  --ds-warn: #ffb347;
+  --ds-alarm: #ff4d5a;
+  --ds-glass: rgba(10, 30, 34, 0.55);
+
+  position: relative;
+  width: 1600px;
+  height: 5400px;
+  overflow: hidden;
+  background: #01070a;
+  color: var(--ds-ink);
+  font-family: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  cursor: none;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * The water column. Surface light dies fast and then it's black the rest of the way
+ * down — the stops are placed to match real light attenuation rather than spread
+ * evenly, which is what stops it looking like a decorative gradient.
+ */
+.column {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #2a7f96 0%,
+    #12556b 2%,
+    #0a4356 3%,
+    #06303f 5%,
+    #02141d 11%,
+    #01070a 20%,
+    #01070a 100%
+  );
+}
+
+.sun {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 900px;
+  background: radial-gradient(
+    ellipse 40% 60% at 50% 0%,
+    rgba(190, 255, 245, 0.4),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ---------- HUD: fixed to the viewport, not the canvas ---------- */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.porthole {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 62% 62% at 50% 50%,
+    transparent 52%,
+    rgba(0, 6, 10, 0.82) 78%,
+    #000508 100%
+  );
+}
+
+.gauge {
+  position: absolute;
+  left: 46px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 96px;
+  padding: 18px 12px;
+  border: 1px solid rgba(127, 233, 216, 0.28);
+  background: var(--ds-glass);
+  backdrop-filter: blur(2px);
+  text-align: center;
+}
+
+.gaugeLabel {
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--ds-ink-dim);
+  text-transform: uppercase;
+}
+
+.gaugeValue {
+  font-size: 26px;
+  line-height: 1.1;
+  margin: 6px 0 2px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(127, 233, 216, 0.6);
+}
+
+.gaugeUnit {
+  font-size: 10px;
+  color: var(--ds-ink-dim);
+}
+
+.gaugeBar {
+  margin-top: 14px;
+  height: 190px;
+  position: relative;
+  border: 1px solid rgba(127, 233, 216, 0.24);
+}
+
+.gaugeFill {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: linear-gradient(180deg, rgba(127, 233, 216, 0.7), rgba(127, 233, 216, 0.2));
+}
+
+.readouts {
+  position: absolute;
+  right: 46px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 176px;
+  border: 1px solid rgba(127, 233, 216, 0.28);
+  background: var(--ds-glass);
+  backdrop-filter: blur(2px);
+  padding: 14px;
+}
+
+.readout {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(127, 233, 216, 0.12);
+}
+
+.readout:last-child {
+  border-bottom: 0;
+}
+
+.readout span:first-child {
+  color: var(--ds-ink-dim);
+  letter-spacing: 0.1em;
+}
+
+.readout b {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.warn {
+  color: var(--ds-warn);
+}
+
+.alarm {
+  color: var(--ds-alarm);
+  animation: pulse 900ms steps(2) infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.banner {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ds-warn);
+  white-space: nowrap;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 62px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ds-ink-dim);
+}
+
+/* ---------- zone markers in the water column ---------- */
+
+.zone {
+  position: absolute;
+  left: 300px;
+  width: 1000px;
+  padding-left: 26px;
+  border-left: 1px solid rgba(127, 233, 216, 0.22);
+}
+
+.zoneDepth {
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(127, 233, 216, 0.85);
+  text-shadow: 0 0 16px rgba(127, 233, 216, 0.35);
+}
+
+.zoneName {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ds-ink-dim);
+}
+
+.zoneBody {
+  margin-top: 14px;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(190, 240, 235, 0.72);
+}
+
+.zoneBody b {
+  color: #cffcf3;
+  font-weight: 400;
+}
+
+/* Only readable once the spotlight is near it — the page's core mechanic in CSS. */
+.hidden {
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.revealed {
+  opacity: 1;
+}
+
+.cursorLight {
+  position: fixed;
+  width: 460px;
+  height: 460px;
+  margin: -230px 0 0 -230px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 45;
+  background: radial-gradient(
+    circle,
+    rgba(150, 255, 240, 0.16) 0%,
+    rgba(120, 230, 220, 0.07) 34%,
+    transparent 68%
+  );
+  mix-blend-mode: screen;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alarm {
+    animation: none;
+  }
+}

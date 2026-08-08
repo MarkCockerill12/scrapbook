@@ -17,6 +17,7 @@ const PAGES: Record<string, ComponentType> = {
   "early-internet": dynamic(() => import("./early-internet")),
   matrix: dynamic(() => import("./matrix")),
   bbs: dynamic(() => import("./bbs")),
+  "deep-sea": dynamic(() => import("./deep-sea")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };
