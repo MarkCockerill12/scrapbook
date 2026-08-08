@@ -14,6 +14,7 @@ import type { ComponentType } from "react";
  */
 const PAGES: Record<string, ComponentType> = {
   "frutiger-aero": dynamic(() => import("./frutiger-aero")),
+  matrix: dynamic(() => import("./matrix")),
   // "early-internet": dynamic(() => import("./early-internet")),
   // "jdm": dynamic(() => import("./jdm")),
 };

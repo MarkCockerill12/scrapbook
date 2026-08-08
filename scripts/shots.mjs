@@ -101,6 +101,27 @@ const SHOTS = [
       await p.waitForTimeout(700);
     },
   ],
+
+  // 08 Matrix
+  ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
+  [
+    "matrix-typed",
+    "/matrix",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1600);
+      const input = p.getByLabel("Terminal input");
+      await input.click();
+      await input.fill("cat /etc/channels.conf");
+      await input.press("Enter");
+      await p.waitForTimeout(400);
+      await input.fill("ps");
+      await input.press("Enter");
+      // hover a node so the decrypt effect resolves
+      await p.getByRole("button", { name: /^0?3/ }).first().hover().catch(() => {});
+      await p.waitForTimeout(900);
+    },
+  ],
 ];
 
 const browser = await chromium.launch();

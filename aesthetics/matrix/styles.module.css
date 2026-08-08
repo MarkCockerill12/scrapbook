@@ -1,0 +1,380 @@
+/*
+ * Matrix — unauthorised session.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The trap with this aesthetic is that "green text on black" is trivially easy and
+ * looks like a student project. What makes it read as the real thing:
+ *   1. PHOSPHOR, not paint. Green glows — text-shadow at the same hue, never a flat
+ *      #0f0. Bright core, wide dim halo.
+ *   2. Only two greens plus black. Any third hue (a blue link, a red error) has to be
+ *      earned; here red is reserved exclusively for the trace, so it means danger.
+ *   3. Everything is slightly transparent and slightly askew. Panels sit at 0.4deg,
+ *      never square, so the rain shows through and the composition feels handheld.
+ *   4. Scanlines and a vignette over the whole frame, tying the layers together.
+ */
+
+.root {
+  --mx-green: #00ff41;
+  --mx-dim: #12b23a;
+  --mx-deep: #073b16;
+  --mx-black: #020604;
+  --mx-red: #ff2f38;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--mx-black);
+  color: var(--mx-green);
+  font-family: "Cascadia Mono", "Consolas", "DejaVu Sans Mono", ui-monospace, monospace;
+  font-size: 14px;
+  cursor: crosshair;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.root button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ---------- chrome overlays ---------- */
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.32) 0 1px,
+    transparent 1px 3px
+  );
+  z-index: 60;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 46%, rgba(0, 0, 0, 0.88) 100%);
+  z-index: 59;
+}
+
+/* ---------- panels ---------- */
+
+.panel {
+  /* Positioned by <Draggable>, which owns left/top/transform on the wrapper. */
+  position: relative;
+  background: rgba(2, 14, 6, 0.82);
+  border: 1px solid rgba(0, 255, 65, 0.34);
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 65, 0.07),
+    0 0 34px -6px rgba(0, 255, 65, 0.28),
+    inset 0 0 46px -18px rgba(0, 255, 65, 0.4);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.panelBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.24);
+  background: rgba(0, 255, 65, 0.07);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mx-dim);
+  cursor: grab;
+  user-select: none;
+}
+
+.panelBar b {
+  color: var(--mx-green);
+  font-weight: 400;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
+}
+
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px;
+  overflow: hidden;
+}
+
+/* ---------- terminal ---------- */
+
+.termScroll {
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 65, 0.4) transparent;
+}
+
+.termLine {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  text-shadow: 0 0 7px rgba(0, 255, 65, 0.55);
+}
+
+.termDim {
+  color: var(--mx-dim);
+  text-shadow: none;
+}
+
+.termErr {
+  color: var(--mx-red);
+  text-shadow: 0 0 8px rgba(255, 47, 56, 0.6);
+}
+
+.termPromptRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.termPrompt {
+  color: var(--mx-green);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
+  white-space: nowrap;
+}
+
+.termInput {
+  flex: 1;
+  background: none;
+  border: 0;
+  outline: none;
+  font: inherit;
+  color: var(--mx-green);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
+  caret-color: var(--mx-green);
+  padding: 0;
+}
+
+/* ---------- target list ---------- */
+
+.target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 4px 6px;
+  text-align: left;
+  border-left: 2px solid transparent;
+  transition: background 120ms linear, border-color 120ms linear;
+}
+
+.target:hover {
+  background: rgba(0, 255, 65, 0.12);
+  border-left-color: var(--mx-green);
+}
+
+.targetId {
+  color: var(--mx-dim);
+  font-size: 12px;
+}
+
+.targetName {
+  flex: 1;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.targetState {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--mx-dim);
+}
+
+.targetLive {
+  color: var(--mx-green);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
+}
+
+/* ---------- trace ---------- */
+
+.trace {
+  position: absolute;
+  left: 90px;
+  bottom: 46px;
+  width: 660px;
+  z-index: 20;
+}
+
+.traceHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mx-dim);
+  margin-bottom: 6px;
+}
+
+.traceTrack {
+  height: 8px;
+  border: 1px solid rgba(0, 255, 65, 0.4);
+  background: rgba(0, 40, 14, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.traceFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--mx-green) 0 6px,
+    rgba(0, 255, 65, 0.45) 6px 10px
+  );
+  box-shadow: 0 0 14px rgba(0, 255, 65, 0.8);
+  transition: width 220ms linear;
+}
+
+.traceHot .traceFill {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--mx-red) 0 6px,
+    rgba(255, 47, 56, 0.45) 6px 10px
+  );
+  box-shadow: 0 0 18px rgba(255, 47, 56, 0.9);
+}
+
+.traceHot .traceHead {
+  color: var(--mx-red);
+  animation: blink 620ms steps(2) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ---------- header ---------- */
+
+/*
+ * Loose text sits directly on the rain, and glyphs falling behind a letterform make
+ * it unreadable. Everything floating gets a soft black pad behind it — a panel border
+ * would be wrong here (these aren't windows), but a blurred dark wash reads as depth
+ * rather than as a box.
+ */
+.header,
+.trace,
+.hint {
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 0 22px rgba(0, 0, 0, 0.85));
+}
+
+.header {
+  position: absolute;
+  left: 90px;
+  top: 54px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.headerTitle {
+  font-size: 13px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.7);
+}
+
+.headerSub {
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--mx-dim);
+}
+
+/*
+ * Parked in the empty band along the bottom: the trace bar ends at x=750 and the dial
+ * (fixed to the viewport's bottom-right) starts around x=1280. Bottom-right put it
+ * under the dial; raising it put it under the nodes panel.
+ */
+.hint {
+  position: absolute;
+  left: 790px;
+  bottom: 50px;
+  z-index: 20;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  color: rgba(18, 178, 58, 0.72);
+  pointer-events: none;
+}
+
+/* ---------- decrypt-on-hover ---------- */
+
+.decrypt {
+  cursor: pointer;
+}
+
+/* ---------- the rm -rf easter egg ---------- */
+
+/*
+ * Everything detaches and falls. `.panel` sets its own transform for the askew angle,
+ * so the fall has to be applied to a wrapper rather than the panel itself — animating
+ * transform here would cancel the rotation.
+ */
+.collapsing {
+  animation: fall 1500ms cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(1400px) rotate(22deg);
+    opacity: 0;
+  }
+}
+
+.wipe {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  background: var(--mx-black);
+  text-align: center;
+}
+
+.wipeText {
+  font-size: 18px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mx-red);
+  text-shadow: 0 0 16px rgba(255, 47, 56, 0.8);
+  animation: blink 700ms steps(2) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsing,
+  .traceHot .traceHead,
+  .wipeText {
+    animation: none;
+  }
+}
