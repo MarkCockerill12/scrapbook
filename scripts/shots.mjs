@@ -141,6 +141,20 @@ const SHOTS = [
     },
   ],
 
+  // 07 Neon
+  ["neon", "/neon", "desktop", async (p) => p.waitForTimeout(1500)],
+  [
+    "neon-cyan",
+    "/neon",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Preset hue 190" }).click();
+      await p.getByRole("button", { name: "Tube 3" }).click();
+      await p.waitForTimeout(900);
+    },
+  ],
+
   // 08 Matrix
   ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
   [

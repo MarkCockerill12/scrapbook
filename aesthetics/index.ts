@@ -18,6 +18,7 @@ const PAGES: Record<string, ComponentType> = {
   matrix: dynamic(() => import("./matrix")),
   bbs: dynamic(() => import("./bbs")),
   "deep-sea": dynamic(() => import("./deep-sea")),
+  neon: dynamic(() => import("./neon")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };
