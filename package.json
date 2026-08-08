@@ -12,7 +12,10 @@
     "assets:process": "node scripts/images/process.mjs",
     "assets:usage": "node scripts/r2/usage.mjs",
     "assets:upload": "node scripts/r2/upload.mjs",
-    "shots": "node scripts/shots.mjs"
+    "shots": "node scripts/shots.mjs",
+    "assets:cutout": "node scripts/images/cutout.mjs",
+    "assets:coverage": "node scripts/images/coverage.mjs",
+    "assets:harvest": "node scripts/images/harvest.mjs"
   },
   "dependencies": {
     "animejs": "^4.5.0",
@@ -23,6 +26,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1106.0",
+    "@imgly/background-removal-node": "^1.4.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -39,6 +43,7 @@
     "unrs-resolver"
   ],
   "trustedDependencies": [
+    "onnxruntime-node",
     "sharp",
     "unrs-resolver"
   ]

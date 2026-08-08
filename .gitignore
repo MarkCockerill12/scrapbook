@@ -45,3 +45,4 @@ raw/
 
 public/dev-assets/
 .env*.local
+.cutout-bench/
