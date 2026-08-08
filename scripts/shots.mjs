@@ -179,6 +179,51 @@ const SHOTS = [
     },
   ],
 
+  // 22 Channel 7 News
+  ["news", "/news", "desktop", async (p) => p.waitForTimeout(1800)],
+  [
+    "news-studio",
+    "/news",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Studio cam" }).click();
+      await p.getByRole("button", { name: "Breaking" }).click();
+      await p.waitForTimeout(800);
+    },
+  ],
+
+  // 21 Arcade
+  ["arcade", "/arcade", "desktop", async (p) => p.waitForTimeout(2000)],
+  [
+    "arcade-select",
+    "/arcade",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1500);
+      await p.getByRole("button", { name: "INSERT COIN" }).click();
+      await p.waitForTimeout(400);
+      await p.getByRole("button", { name: "START" }).click();
+      await p.waitForTimeout(700);
+    },
+  ],
+
+  // 17 PS1
+  ["ps1", "/ps1", "desktop", async (p) => p.waitForTimeout(2400)],
+  [
+    "ps1-corrupt",
+    "/ps1",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      for (let i = 0; i < 3; i++) {
+        await p.getByRole("button", { name: /Delete/ }).click();
+        await p.waitForTimeout(1600);
+      }
+      await p.waitForTimeout(900);
+    },
+  ],
+
   // 05 Liminal
   ["liminal", "/liminal", "desktop", async (p) => p.waitForTimeout(1800)],
   [

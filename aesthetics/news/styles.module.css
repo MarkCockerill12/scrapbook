@@ -1,0 +1,524 @@
+/*
+ * Channel 7 Action News — 1998 local broadcast.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * What makes graphics read as 1998 broadcast rather than as a web page:
+ *   1. EVERYTHING IS BEVELLED AND EVERYTHING HAS A HARD DROP SHADOW. These were
+ *      built in a character generator that could do exactly two effects, and it did
+ *      both to everything.
+ *   2. TYPE IS CONDENSED, ITALIC AND OUTLINED. Italic implies urgency; the outline
+ *      exists because the graphic has to survive being keyed over live video.
+ *   3. GRADIENTS RUN VERTICALLY AND BAND. Smooth gradients are a 2005 idea.
+ *   4. NOTHING IS TRANSPARENT. Broadcast keys were hard-edged. Any soft alpha
+ *      instantly reads as modern.
+ *   5. THE SIGNAL IS 4:3 AND THE STUDIO IS NOT. The pillars either side are the
+ *      gallery you are watching from, which is where the controls live.
+ */
+
+.root {
+  --red: #d92b2b;
+  --blue: #12306e;
+  --blue-lt: #2a5bb8;
+  --gold: #e8b73a;
+  --ink: #ffffff;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #16171c 0%, #0c0d10 100%);
+  color: var(--ink);
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ---------- the signal ---------- */
+
+.signal {
+  position: absolute;
+  left: 200px;
+  top: 0;
+  width: 1200px;
+  height: 900px;
+  overflow: hidden;
+  background: #05070c;
+  box-shadow: 0 0 0 2px #000, 0 0 60px rgba(0, 0, 0, 0.9);
+}
+
+.radar {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Interlace + a faint sync wobble. Broadcast, not a monitor. */
+.interlace {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.16) 0 2px,
+    transparent 2px 4px
+  );
+}
+
+.softness {
+  position: absolute;
+  inset: 0;
+  z-index: 31;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- the anchor ---------- */
+
+/*
+ * Camera right, not camera left. The lower third occupies the left two-thirds of
+ * frame, so an anchor on that side spends the whole bulletin behind their own name
+ * caption — which is exactly why real galleries frame them opposite the graphic.
+ */
+.anchor {
+  position: absolute;
+  right: 96px;
+  bottom: 0;
+  z-index: 12;
+  filter: drop-shadow(-16px 0 22px rgba(0, 0, 0, 0.55));
+}
+
+.desk {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 168px;
+  z-index: 13;
+  background:
+    linear-gradient(180deg, #24406e 0 6px, #16294a 6px 16px, #0e1c34 16px),
+    #0e1c34;
+  box-shadow: inset 0 2px 0 #4d74b8;
+}
+
+.deskLogo {
+  position: absolute;
+  left: 60px;
+  top: 40px;
+  font-size: 62px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #000;
+  opacity: 0.9;
+}
+
+/* ---------- station bug ---------- */
+
+.bug {
+  position: absolute;
+  right: 26px;
+  top: 22px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: linear-gradient(180deg, #ffffff 0 2px, #e6e9ef 2px 50%, #b9c0cc 50%);
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  color: var(--blue);
+  font-weight: 700;
+  font-style: italic;
+}
+
+.bugSeven {
+  font-size: 34px;
+  line-height: 1;
+  color: var(--red);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.bugText {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+}
+
+.live {
+  color: var(--red);
+  animation: livePulse 2s steps(1) infinite;
+}
+
+@keyframes livePulse {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0.35; }
+}
+
+/* ---------- lower third ---------- */
+
+.lower {
+  position: absolute;
+  left: 0;
+  bottom: 118px;
+  z-index: 22;
+  width: 760px;
+  animation: wipeIn 480ms cubic-bezier(0.15, 0.85, 0.25, 1);
+}
+
+@keyframes wipeIn {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+.lowerMain {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid #000;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+}
+
+.lowerFlag {
+  width: 22px;
+  background: linear-gradient(180deg, #ff5c5c 0 3px, var(--red) 3px 50%, #8f1414 50%);
+}
+
+.lowerBody {
+  flex: 1;
+  padding: 10px 20px;
+  background: linear-gradient(180deg, #3a63b8 0 3px, var(--blue) 3px 50%, #0a1f4a 50%);
+}
+
+.lowerName {
+  font-size: 34px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  background: none;
+  border: 0;
+  color: #ffffff;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+}
+
+.lowerName::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.lowerRole {
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  margin-top: 2px;
+  background: none;
+  border: 0;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+}
+
+.lowerStrap {
+  margin-top: 4px;
+  display: inline-block;
+  padding: 5px 16px;
+  background: linear-gradient(180deg, #ffd769 0 3px, var(--gold) 3px 50%, #a37a12 50%);
+  border: 2px solid #000;
+  color: #1a1200;
+  font-size: 13px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ---------- breaking ---------- */
+
+.breaking {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 92px;
+  z-index: 24;
+  padding: 12px 0;
+  text-align: center;
+  background: linear-gradient(180deg, #ff5c5c 0 4px, var(--red) 4px 50%, #7d0f0f 50%);
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  font-size: 40px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.14em;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  animation: breakIn 420ms cubic-bezier(0.15, 0.85, 0.25, 1);
+}
+
+@keyframes breakIn {
+  from { transform: translateY(-100%); }
+}
+
+/* ---------- ticker ---------- */
+
+.ticker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  height: 62px;
+  display: flex;
+  align-items: stretch;
+  border-top: 2px solid #000;
+  background: linear-gradient(180deg, #2a5bb8 0 4px, var(--blue) 4px 52%, #081733 52%);
+}
+
+.tickerBadge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0 20px;
+  background: linear-gradient(180deg, #ff5c5c 0 4px, var(--red) 4px 52%, #7d0f0f 52%);
+  font-size: 19px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  border-right: 2px solid #000;
+}
+
+.tickerTrack {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tickerRun {
+  position: absolute;
+  white-space: nowrap;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 21px;
+  letter-spacing: 0.04em;
+  animation: run 46s linear infinite;
+}
+
+@keyframes run {
+  from { left: 100%; transform: translate(0, -50%); }
+  to { left: 0; transform: translate(-100%, -50%); }
+}
+
+.tickerItem {
+  padding: 0 34px;
+}
+
+.tickerDot {
+  color: var(--gold);
+}
+
+/* ---------- commercial ---------- */
+
+.commercial {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+  background:
+    repeating-linear-gradient(45deg, #ffe45c 0 40px, #ffd400 40px 80px);
+  color: #3d1f00;
+}
+
+.adTitle {
+  font-size: 84px;
+  font-weight: 700;
+  font-style: italic;
+  color: #d81b1b;
+  text-shadow: 5px 5px 0 #fff, 9px 9px 0 rgba(0, 0, 0, 0.35);
+}
+
+.adLine {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.adPhone {
+  margin-top: 10px;
+  padding: 14px 34px;
+  background: #12306e;
+  color: #fff;
+  font-size: 40px;
+  font-weight: 700;
+  font-style: italic;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+}
+
+.adSmall {
+  font-size: 12px;
+  max-width: 620px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+/* ---------- EAS ---------- */
+
+.eas {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+}
+
+.bars {
+  flex: 1;
+  display: flex;
+}
+
+.bars > span {
+  flex: 1;
+}
+
+.easText {
+  padding: 26px 34px 40px;
+  background: #000;
+  color: #fff;
+  font-family: ui-monospace, "Courier New", monospace;
+  font-size: 19px;
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- the gallery ---------- */
+
+.gallery {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  padding: 22px 16px;
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #1c1e24, #101116);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.galleryTitle {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #7c8492;
+  margin-bottom: 14px;
+}
+
+.src {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #cfd6e2;
+  background: linear-gradient(180deg, #2b2f38, #1a1d24);
+  border: 1px solid #3b4150;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.src:hover {
+  border-color: #6b7488;
+  color: #fff;
+}
+
+.srcOn {
+  color: #0b1220;
+  background: linear-gradient(180deg, #ffe89a, var(--gold));
+  border-color: #000;
+}
+
+.srcHot {
+  color: #fff;
+  background: linear-gradient(180deg, #ff5c5c, #a11616);
+  border-color: #000;
+}
+
+.slider {
+  width: 100%;
+  margin-top: 6px;
+  accent-color: #e8b73a;
+}
+
+.field {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #e8edf5;
+  background: #0c0e13;
+  border: 1px solid #3b4150;
+  outline: none;
+  font-family: inherit;
+}
+
+.small {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #6f7684;
+  margin-top: 10px;
+}
+
+.clockBox {
+  margin-top: 14px;
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #3b4150;
+  background: #0c0e13;
+}
+
+.clockTime {
+  font-family: ui-monospace, monospace;
+  font-size: 22px;
+  color: #7fe3a0;
+  letter-spacing: 0.08em;
+}
+
+.clockLabel {
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: #6f7684;
+  margin-top: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tickerRun,
+  .live,
+  .lower,
+  .breaking {
+    animation: none;
+  }
+}

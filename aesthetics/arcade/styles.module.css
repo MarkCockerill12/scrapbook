@@ -1,0 +1,538 @@
+/*
+ * Arcade — the page IS the cabinet.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * What separates a cabinet from "a dark page with scanlines":
+ *   1. THE SCREEN IS RECESSED. It sits behind a bezel with a real inner shadow and a
+ *      sheet of glass over it. A CRT flush with the surrounding panel reads as a div.
+ *   2. THE MARQUEE IS BACKLIT, NOT PRINTED. Light comes from inside it, spills onto
+ *      the cabinet below, and flickers a little because the tube is thirty years old.
+ *   3. THE GLASS REFLECTS THE ROOM. One soft diagonal sheen across the top-left. It
+ *      is the cheapest possible detail and does more than the scanlines.
+ *   4. THE CONTROL PANEL IS A DIFFERENT MATERIAL. Brushed dark laminate, not the
+ *      moulded plastic of the cabinet body, with the button holes punched through it.
+ */
+
+.root {
+  --neon: #ffd400;
+  --ink: #f4e9c8;
+  --panel: #16130f;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -8%, rgba(255, 190, 60, 0.16), transparent 62%),
+    linear-gradient(180deg, #14100c 0%, #0a0806 58%, #060504 100%);
+  color: var(--ink);
+  font-family: ui-monospace, "Courier New", monospace;
+  cursor: crosshair;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: crosshair;
+}
+
+/* ---------- marquee ---------- */
+
+.marquee {
+  position: absolute;
+  left: 210px;
+  right: 210px;
+  top: 22px;
+  height: 96px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #fffdf2, #ffe9a8 46%, #ffcf5c);
+  box-shadow:
+    0 0 60px 14px rgba(255, 205, 90, 0.42),
+    inset 0 -4px 0 rgba(150, 100, 0, 0.35),
+    inset 0 3px 0 #ffffff;
+  display: grid;
+  place-items: center;
+  animation: tubeFlicker 7s steps(1) infinite;
+}
+
+@keyframes tubeFlicker {
+  0%, 92%, 94%, 100% { filter: brightness(1); }
+  93%, 95% { filter: brightness(0.72); }
+}
+
+.marqueeText {
+  font-family: "Impact", "Haettenschweiler", "Arial Black", sans-serif;
+  font-size: 50px;
+  margin-bottom: 14px;
+  letter-spacing: 0.14em;
+  color: #b5122a;
+  text-shadow:
+    2px 2px 0 #ffd400,
+    4px 4px 0 #1b6ac0,
+    0 0 26px rgba(255, 60, 60, 0.35);
+}
+
+.marqueeSub {
+  position: absolute;
+  bottom: 7px;
+  font-size: 10px;
+  letter-spacing: 0.44em;
+  color: #8a5a10;
+}
+
+/* ---------- cabinet body ---------- */
+
+.body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 128px;
+  bottom: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 200, 90, 0.08), transparent 22%),
+    linear-gradient(90deg, #191410 0%, #241c15 12%, #100c09 50%, #241c15 88%, #191410 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Side art: painted directly on the cabinet, faded and scuffed. */
+.sideArt {
+  position: absolute;
+  top: 40px;
+  width: 190px;
+  height: 470px;
+  display: grid;
+  place-items: center;
+  opacity: 0.62;
+}
+
+.sideArtText {
+  writing-mode: vertical-rl;
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 54px;
+  letter-spacing: 0.2em;
+  color: transparent;
+  background: linear-gradient(180deg, #ff4d2e, #ffd400 46%, #29b6f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: blur(0.2px);
+}
+
+/* ---------- the screen ---------- */
+
+.bezel {
+  position: absolute;
+  left: 400px;
+  top: 156px;
+  width: 800px;
+  height: 600px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #0d0b09, #060505);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.05),
+    inset 0 18px 30px rgba(0, 0, 0, 0.9),
+    0 12px 40px rgba(0, 0, 0, 0.7);
+  padding: 26px;
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Slight barrel: a CRT is a section of a sphere, and even 6% sells it. */
+  border-radius: 7% / 5%;
+  background: #05060a;
+  box-shadow:
+    inset 0 0 60px 12px rgba(0, 0, 0, 0.95),
+    0 0 24px 2px rgba(120, 200, 255, 0.09);
+}
+
+.crtOff {
+  filter: brightness(0);
+}
+
+/* The CRT coming up: a bright horizontal line that opens into a picture. */
+.warmup {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 30;
+  animation: warm 1200ms ease-out forwards;
+}
+
+.warmup::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  background: #dff3ff;
+  box-shadow: 0 0 22px 6px rgba(200, 235, 255, 0.85);
+  animation: warmLine 1200ms ease-out forwards;
+}
+
+@keyframes warm {
+  0% { clip-path: inset(50% 0 50% 0); }
+  55% { clip-path: inset(50% 0 50% 0); }
+  100% { clip-path: inset(0 0 0 0); opacity: 0; }
+}
+
+@keyframes warmLine {
+  0% { opacity: 1; transform: scaleX(0.02); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(60); }
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.42) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+.aperture {
+  position: absolute;
+  inset: 0;
+  z-index: 21;
+  pointer-events: none;
+  opacity: 0.16;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.6) 0 1px,
+    rgba(0, 255, 0, 0.6) 1px 2px,
+    rgba(0, 0, 255, 0.6) 2px 3px
+  );
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  pointer-events: none;
+  background:
+    linear-gradient(126deg, rgba(255, 255, 255, 0.13) 0%, transparent 34%),
+    radial-gradient(ellipse 76% 66% at 50% 46%, transparent 52%, rgba(0, 0, 0, 0.72));
+}
+
+/* ---------- screen contents ---------- */
+
+.crtInner {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  padding: 34px 40px;
+  color: #eaf6ff;
+  display: flex;
+  flex-direction: column;
+}
+
+.bigTitle {
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 68px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: #ffd400;
+  text-shadow: 4px 4px 0 #b5122a, 8px 8px 0 rgba(0, 0, 0, 0.6);
+  margin-top: 24px;
+}
+
+.subTitle {
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  color: #9fd8ff;
+  margin-top: 16px;
+}
+
+.insert {
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: 0.28em;
+  color: #ff5a4d;
+  margin-top: auto;
+  margin-bottom: 12px;
+  animation: coinBlink 1s steps(1) infinite;
+}
+
+@keyframes coinBlink {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0.05; }
+}
+
+.scoreHead {
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 0.3em;
+  color: #ffd400;
+  margin-bottom: 22px;
+}
+
+.scoreRow {
+  display: grid;
+  grid-template-columns: 44px 1fr 130px;
+  gap: 12px;
+  font-size: 19px;
+  letter-spacing: 0.14em;
+  padding: 5px 24px;
+  color: #cfe9ff;
+}
+
+.scoreMine {
+  color: #ffd400;
+}
+
+.demoTag {
+  position: absolute;
+  right: 26px;
+  top: 22px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: #ff5a4d;
+  z-index: 12;
+}
+
+.demoArt {
+  flex: 1;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 10px;
+  align-content: center;
+}
+
+.demoNo {
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 90px;
+  color: #ffffff;
+  text-shadow: 0 0 34px currentColor;
+}
+
+.demoName {
+  font-size: 20px;
+  letter-spacing: 0.24em;
+}
+
+.demoTagline {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: #9fd8ff;
+}
+
+/* ---------- select screen ---------- */
+
+.selectGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.game {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #cfe9ff;
+  line-height: 1.5;
+}
+
+.gameOn {
+  border-color: #ffd400;
+  background: rgba(255, 212, 0, 0.16);
+  color: #ffffff;
+  animation: sel 500ms steps(1) infinite;
+}
+
+@keyframes sel {
+  0%, 60% { box-shadow: 0 0 0 2px #ffd400 inset; }
+  61%, 100% { box-shadow: none; }
+}
+
+.gameNo {
+  display: block;
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 26px;
+  color: #ffffff;
+}
+
+/* ---------- initials ---------- */
+
+.initials {
+  display: flex;
+  gap: 26px;
+  justify-content: center;
+  margin: 28px 0;
+}
+
+.letter {
+  width: 74px;
+  text-align: center;
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 64px;
+  color: #cfe9ff;
+  border-bottom: 4px solid rgba(255, 255, 255, 0.25);
+}
+
+.letterOn {
+  color: #ffd400;
+  border-bottom-color: #ffd400;
+}
+
+/* ---------- control panel ---------- */
+
+.panelDeck {
+  position: absolute;
+  left: 210px;
+  right: 210px;
+  top: 782px;
+  height: 108px;
+  border-radius: 8px 8px 0 0;
+  background:
+    repeating-linear-gradient(94deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, #2b2620, #14110d);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 -8px 26px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  /*
+   * 260 on the right, not 40: the shell's dial is fixed over the bottom-right corner
+   * of the canvas and would swallow clicks on the coin slot — on a page whose entire
+   * premise is that you have to put a coin in. See TECHNICAL_SPECS §2b.
+   */
+  padding: 0 260px 0 40px;
+}
+
+.stick {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  flex: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.stickBase {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 34%, #4a4238, #17130f 72%);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.stickBall {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #ff8a7a, #c8102e 58%, #6c0616);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7), inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 90ms ease-out;
+}
+
+.buttons {
+  display: flex;
+  gap: 18px;
+}
+
+.abutton {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 -5px 9px rgba(0, 0, 0, 0.45),
+    inset 0 4px 6px rgba(255, 255, 255, 0.4),
+    0 4px 0 rgba(0, 0, 0, 0.6);
+  transition: transform 60ms ease-out, box-shadow 60ms ease-out;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+}
+
+.abutton:active,
+.pressed {
+  transform: translateY(3px);
+  box-shadow: inset 0 -2px 5px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.coinSlot {
+  margin-left: auto;
+  width: 148px;
+  padding: 12px 0;
+  text-align: center;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #3a332a, #1a1611);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -3px 8px rgba(0, 0, 0, 0.7);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: #d9c79a;
+}
+
+.coinMouth {
+  width: 74px;
+  height: 9px;
+  margin: 0 auto 8px;
+  border-radius: 2px;
+  background: #050403;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.credits {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: #ffd400;
+  z-index: 5;
+}
+
+.freeplay {
+  color: #7fe3b8;
+}
+
+.hint {
+  position: absolute;
+  left: 30px;
+  bottom: 128px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 233, 200, 0.4);
+  line-height: 1.9;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee,
+  .insert,
+  .gameOn,
+  .warmup,
+  .warmup::after {
+    animation: none;
+  }
+}

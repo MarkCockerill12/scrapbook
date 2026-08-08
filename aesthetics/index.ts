@@ -26,6 +26,9 @@ const PAGES: Record<string, ComponentType> = {
   "xbox-360": dynamic(() => import("./xbox-360")),
   vaporwave: dynamic(() => import("./vaporwave")),
   liminal: dynamic(() => import("./liminal")),
+  ps1: dynamic(() => import("./ps1")),
+  arcade: dynamic(() => import("./arcade")),
+  news: dynamic(() => import("./news")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };

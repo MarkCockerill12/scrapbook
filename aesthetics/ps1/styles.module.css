@@ -1,0 +1,296 @@
+/*
+ * PS1 — Memory Card (8MB), Slot 1.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The BIOS screen is a very particular kind of ugly and it has rules:
+ *   1. THE BACKGROUND IS A SLOW BLUE-GREY GRADIENT WITH SOFT BLOBS IN IT. Not black,
+ *      not flat. It looked like a cheap 3D render of nothing, because it was one.
+ *   2. EVERY PANEL IS A 1PX OUTLINE, NOT A FILL. Console UI of this generation drew
+ *      boxes. Solid cards read as a phone app twenty-five years early.
+ *   3. TYPE IS SMALL, WIDE-TRACKED AND UPPERCASE, with generous leading. It was
+ *      designed to survive composite video on a CRT two metres away.
+ *   4. NOTHING IS ROUNDED AND NOTHING HAS A SHADOW. The only depth cue is the
+ *      selection highlight.
+ */
+
+.root {
+  --line: #7d90b8;
+  --line-dim: #44526f;
+  --ink: #d5deef;
+  --ink-dim: #8b99b5;
+  --sel: #e8eef9;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 46% 40% at 22% 18%, rgba(120, 150, 200, 0.22), transparent 70%),
+    radial-gradient(ellipse 52% 46% at 78% 78%, rgba(90, 110, 160, 0.18), transparent 72%),
+    linear-gradient(178deg, #1b2438 0%, #121a2c 46%, #0b1120 100%);
+  color: var(--ink);
+  font-family: Verdana, "Segoe UI", system-ui, sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ---------- header ---------- */
+
+.head {
+  position: absolute;
+  left: 64px;
+  top: 52px;
+  right: 64px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line-dim);
+}
+
+.title {
+  font-size: 20px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* ---------- panels ---------- */
+
+.panel {
+  position: absolute;
+  border: 1px solid var(--line-dim);
+  padding: 18px 20px;
+}
+
+.panelTitle {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 14px;
+}
+
+/* ---------- the block grid ---------- */
+
+.blocks {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.block {
+  height: 26px;
+  border: 1px solid var(--line-dim);
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+}
+
+.blockUsed {
+  border-color: var(--line);
+  background: rgba(125, 144, 184, 0.22);
+  color: var(--ink);
+}
+
+.blockSel {
+  border-color: var(--sel);
+  background: rgba(232, 238, 249, 0.34);
+  color: #0d1220;
+}
+
+/* ---------- save list ---------- */
+
+.save {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  text-align: left;
+  transition: none;
+}
+
+.save + .save {
+  margin-top: 8px;
+}
+
+.saveOn {
+  border-color: var(--sel);
+  background: rgba(213, 222, 239, 0.14);
+}
+
+.saveIcon {
+  border: 1px solid var(--line-dim);
+  flex: none;
+  line-height: 0;
+}
+
+.saveName {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+}
+
+.saveMeta {
+  margin-top: 4px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.deleted {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
+  padding: 22px 0;
+  text-align: center;
+}
+
+/* ---------- actions ---------- */
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action {
+  flex: 1;
+  padding: 11px 0;
+  border: 1px solid var(--line-dim);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.action:hover {
+  border-color: var(--sel);
+  background: rgba(213, 222, 239, 0.12);
+}
+
+.action:disabled {
+  color: var(--line-dim);
+  border-color: #2b3448;
+}
+
+.glyph {
+  font-size: 13px;
+}
+
+.gCross { color: #7fa9ff; }
+.gCircle { color: #ff8080; }
+.gSquare { color: #ff9ad2; }
+.gTri { color: #7fe3b8; }
+
+/* ---------- viewport ---------- */
+
+.viewport {
+  display: block;
+  border: 1px solid var(--line-dim);
+  background: #0b1120;
+  cursor: grab;
+}
+
+.viewport:active {
+  cursor: grabbing;
+}
+
+.viewportLabel {
+  position: absolute;
+  left: 0;
+  bottom: -26px;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.reading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-align: center;
+  line-height: 2.2;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 12px;
+  border: 2px solid var(--line-dim);
+  border-top-color: var(--sel);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.hint {
+  position: absolute;
+  left: 64px;
+  bottom: 26px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  line-height: 1.9;
+  pointer-events: none;
+}
+
+/* ---------- corruption ---------- */
+
+.warn {
+  border-color: #b8455f !important;
+  color: #ffbcc9;
+}
+
+.warnText {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ff9aae;
+  line-height: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
