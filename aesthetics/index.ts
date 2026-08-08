@@ -13,13 +13,10 @@ import type { ComponentType } from "react";
  * physics must never end up in one bundle.
  */
 const PAGES: Record<string, ComponentType> = {
-  // "frutiger-aero": dynamic(() => import("./frutiger-aero")),
+  "frutiger-aero": dynamic(() => import("./frutiger-aero")),
   // "early-internet": dynamic(() => import("./early-internet")),
   // "jdm": dynamic(() => import("./jdm")),
 };
-
-// Referenced so the import survives while the map is still empty.
-void dynamic;
 
 export function getAestheticComponent(slug: string): ComponentType | null {
   return PAGES[slug] ?? null;

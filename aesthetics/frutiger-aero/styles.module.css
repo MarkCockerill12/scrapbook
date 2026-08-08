@@ -1,0 +1,613 @@
+/*
+ * Frutiger Aero — AquaOS 2004.
+ *
+ * Own reset, own tokens, own everything (rule R2). No Tailwind reaches this file.
+ * All lengths are px against the 1600x900 design canvas — no vw/vh, no breakpoints;
+ * CanvasStage handles fitting.
+ *
+ * The look rests on four things, in order of importance:
+ *   1. Specular highlights — a hard white gradient on the TOP half of every surface.
+ *      This is what "glossy" actually is. Without it, everything reads as flat 2010s
+ *      glassmorphism.
+ *   2. Real transparency with saturation — backdrop-filter blur AND saturate, so
+ *      colour bleeds through panels rather than greying out.
+ *   3. Deep, optimistic blue with a light source top-left.
+ *   4. Rounded, generous radii. 2004 was not afraid of a 20px corner.
+ */
+
+.root {
+  --aq-sky-top: #1d6fd0;
+  --aq-sky-mid: #63b8ef;
+  --aq-sky-haze: #c8ecff;
+  --aq-water-top: #1a9fd4;
+  --aq-water-deep: #04355f;
+  --aq-glass: rgba(255, 255, 255, 0.17);
+  --aq-glass-edge: rgba(255, 255, 255, 0.62);
+  --aq-ink: #f2fbff;
+  --aq-ink-dim: rgba(240, 251, 255, 0.86);
+  --aq-accent: #5fe0ff;
+  --aq-horizon: 512px;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Verdana, system-ui, sans-serif;
+  color: var(--aq-ink);
+  cursor: default;
+  user-select: none;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.root button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ---------- environment ---------- */
+
+/*
+ * The sky must stay VIVID. First pass had a huge white sun radial over a white haze
+ * gradient and the top two-thirds bleached out to near-white — which killed the deep
+ * blue that the whole aesthetic is built on. The glow is now tighter and weaker, and
+ * the haze only arrives in the last quarter, just above the horizon.
+ */
+.sky {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--aq-horizon);
+  background:
+    radial-gradient(70% 52% at 26% 2%, rgba(255, 255, 255, 0.5), transparent 58%),
+    linear-gradient(
+      180deg,
+      var(--aq-sky-top) 0%,
+      #3d92e0 34%,
+      var(--aq-sky-mid) 72%,
+      var(--aq-sky-haze) 100%
+    );
+}
+
+.sun {
+  position: absolute;
+  left: 344px;
+  top: -180px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 58%);
+  pointer-events: none;
+}
+
+.cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at 40% 35%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.55) 58%,
+    rgba(255, 255, 255, 0) 72%
+  );
+  pointer-events: none;
+}
+
+.skyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 132px;
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.water {
+  position: absolute;
+  inset: var(--aq-horizon) 0 0 0;
+  background: linear-gradient(180deg, var(--aq-water-top) 0%, var(--aq-water-deep) 100%);
+}
+
+/* The bright band where sky meets water. Frutiger always has this. */
+.waterline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--aq-horizon);
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.95) 30%,
+    rgba(255, 255, 255, 0.95) 70%,
+    transparent
+  );
+  filter: blur(0.5px);
+  pointer-events: none;
+}
+
+.caustics,
+.fish,
+.bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ---------- glass ---------- */
+
+/*
+ * Two stacked layers, and the second one is not decoration.
+ *
+ * The white layer is the gloss. On its own the panels were unreadable in the lower
+ * half: backdrop-filter picks up the bright waterline behind them and blurs it into a
+ * milky band, so white text and inactive tabs disappeared into it. The blue underlay
+ * below re-establishes a floor of contrast that holds no matter what the panel
+ * happens to be sitting in front of — which matters here because the water level is
+ * a slider, so what's behind a panel changes while you use it.
+ */
+.glass {
+  position: absolute;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.32) 0%,
+      rgba(255, 255, 255, 0.12) 48%,
+      rgba(255, 255, 255, 0.05) 49%,
+      rgba(255, 255, 255, 0.14) 100%
+    ),
+    linear-gradient(180deg, rgba(9, 64, 112, 0.08) 0%, rgba(5, 46, 86, 0.42) 100%);
+  backdrop-filter: blur(var(--aq-blur, 14px)) saturate(1.5);
+  border: 1px solid var(--aq-glass-edge);
+  box-shadow:
+    0 22px 44px -14px rgba(2, 28, 54, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -18px 32px -22px rgba(255, 255, 255, 0.55);
+}
+
+/* The specular sweep. This one pseudo-element is most of the aesthetic. */
+.glass::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 4px;
+  height: 44%;
+  border-radius: 18px 18px 60% 60% / 18px 18px 22px 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.62),
+    rgba(255, 255, 255, 0.12) 72%,
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+/*
+ * Gloss off. The toggle is labelled "specular gloss", so it has to actually remove
+ * the speculars, not just the blur — otherwise the demo is lying about what it's
+ * showing you. With these gone the panels drop to flat translucent rectangles, which
+ * is the point being made.
+ */
+.noGloss .glass::after,
+.noGloss .dockIcon::after,
+.noGloss .knob::after {
+  display: none;
+}
+
+.noGloss .glass {
+  box-shadow: 0 18px 34px -18px rgba(2, 28, 54, 0.5);
+}
+
+/* ---------- layout ---------- */
+
+.wordmark {
+  position: absolute;
+  left: 74px;
+  top: 58px;
+  pointer-events: none;
+}
+
+.wordmarkTitle {
+  font-size: 46px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  /* Two shadows: a tight dark one for edge definition against pale sky, and a wide
+     soft one so it still reads if a cloud drifts underneath. */
+  text-shadow:
+    0 1px 2px rgba(0, 40, 80, 0.55),
+    0 3px 22px rgba(0, 40, 80, 0.65);
+}
+
+.wordmarkTitle b {
+  font-weight: 700;
+}
+
+.wordmarkSub {
+  margin-top: 8px;
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--aq-ink-dim);
+}
+
+.stage {
+  position: absolute;
+  left: 392px;
+  top: 152px;
+  width: 700px;
+  height: 452px;
+  padding: 26px 30px;
+}
+
+.stageHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.stageTitle {
+  font-size: 25px;
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgba(0, 40, 80, 0.45);
+}
+
+.stageStep {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--aq-ink-dim);
+}
+
+.stageBody {
+  position: relative;
+  z-index: 1;
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 232px;
+  gap: 26px;
+  height: 312px;
+}
+
+.stageCopy p {
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--aq-ink-dim);
+  margin-bottom: 14px;
+}
+
+.stageCopy strong {
+  color: var(--aq-ink);
+  font-weight: 600;
+}
+
+.readout {
+  align-self: end;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240, 251, 255, 0.72);
+}
+
+.preview {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
+  display: grid;
+  place-items: center;
+}
+
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.tab {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 12px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--aq-ink);
+  text-shadow: 0 1px 4px rgba(0, 34, 66, 0.7);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.24),
+    rgba(6, 52, 94, 0.28)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  transition:
+    transform 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.tab:hover {
+  color: var(--aq-ink);
+  transform: translateY(-1px);
+}
+
+.tabActive {
+  color: #04355f;
+  text-shadow: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(198, 236, 255, 0.72)
+  );
+  box-shadow: 0 6px 16px -6px rgba(0, 30, 60, 0.6);
+}
+
+/* ---------- control panel ---------- */
+
+.panel {
+  position: absolute;
+  left: 1136px;
+  top: 152px;
+  width: 388px;
+  padding: 22px 24px;
+}
+
+.panelTitle {
+  position: relative;
+  z-index: 1;
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--aq-ink-dim);
+  margin-bottom: 16px;
+}
+
+.row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.rowLabel {
+  font-size: 14px;
+}
+
+.rowHint {
+  font-size: 11px;
+  color: rgba(240, 251, 255, 0.66);
+  margin-top: 2px;
+}
+
+/* ---------- gloss toggle ---------- */
+
+.toggle {
+  position: relative;
+  width: 62px;
+  height: 30px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(3, 40, 70, 0.6), rgba(3, 40, 70, 0.3));
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 2px 6px rgba(0, 20, 40, 0.55);
+  transition: background 220ms ease;
+}
+
+.toggleOn {
+  background: linear-gradient(180deg, #6fe4ff, #0f8fd0);
+  box-shadow:
+    inset 0 2px 6px rgba(255, 255, 255, 0.5),
+    0 0 18px -2px var(--aq-accent);
+}
+
+.knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #ffffff, #cfe6f4 58%, #8bb4cc);
+  box-shadow: 0 2px 5px rgba(0, 20, 40, 0.55);
+  transition: transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.toggleOn .knob {
+  transform: translateX(32px);
+}
+
+/* the specular sweep that runs across the knob as it flips */
+.knob::after {
+  content: "";
+  position: absolute;
+  inset: 2px 2px 50% 2px;
+  border-radius: 50% 50% 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+}
+
+/* ---------- gloss slider ---------- */
+
+.slider {
+  position: relative;
+  width: 148px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.sliderTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(3, 40, 70, 0.62), rgba(3, 40, 70, 0.28));
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  box-shadow: inset 0 1px 4px rgba(0, 20, 40, 0.6);
+  overflow: hidden;
+}
+
+.sliderFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(180deg, #8beeff, #1391d2);
+  box-shadow: 0 0 12px var(--aq-accent);
+}
+
+.sliderKnob {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #ffffff, #d4ebf8 56%, #7fadc6);
+  box-shadow: 0 2px 6px rgba(0, 20, 40, 0.6);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* ---------- dock ---------- */
+
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 14px 22px;
+  border-radius: 26px;
+}
+
+.dockIcon {
+  position: relative;
+  z-index: 1;
+  width: 58px;
+  height: 58px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 8px 16px -6px rgba(0, 30, 60, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 200ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.dockIcon::after {
+  content: "";
+  position: absolute;
+  inset: 3px 3px 52% 3px;
+  border-radius: 12px 12px 60% 60% / 12px 12px 20px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.dockIcon:hover {
+  transform: translateY(-11px) scale(1.1);
+}
+
+.dockLabel {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  margin-bottom: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  text-shadow: 0 2px 8px rgba(0, 30, 60, 0.8);
+}
+
+.dockIcon:hover .dockLabel {
+  opacity: 1;
+}
+
+/* ---------- flood ---------- */
+
+/*
+ * The easter egg: drag the water level above the horizon and the whole page floods.
+ * Everything gains a blue cast and starts bobbing.
+ */
+.flooded .stage,
+.flooded .panel {
+  animation: bob 4.4s ease-in-out infinite;
+}
+
+/*
+ * The dock needs its own keyframes. It is centred with translateX(-50%), and an
+ * animation's transform REPLACES that rather than composing with it — so sharing
+ * `bob` threw the dock half a screen to the right the moment the page flooded.
+ * Any centred element that animates transform needs the offset baked into every
+ * keyframe.
+ */
+.flooded .dock {
+  animation: bobDock 4.4s ease-in-out infinite;
+}
+
+.flooded .sky {
+  filter: saturate(1.5) brightness(0.72) hue-rotate(-8deg);
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.28deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(0.28deg);
+  }
+}
+
+@keyframes bobDock {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) rotate(-0.28deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-9px) rotate(0.28deg);
+  }
+}
+
+.hint {
+  position: absolute;
+  left: 74px;
+  bottom: 54px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240, 251, 255, 0.62);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flooded .stage,
+  .flooded .panel,
+  .flooded .dock {
+    animation: none;
+  }
+}

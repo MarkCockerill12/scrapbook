@@ -48,9 +48,59 @@ const SHOTS = [
     },
   ],
   ["map-phone", "/", "phone", async (p) => p.waitForTimeout(4200)],
-  ["channel-offline", "/frutiger-aero", "desktop", async (p) => p.waitForTimeout(900)],
-  ["channel-phone", "/frutiger-aero", "phone", async (p) => p.waitForTimeout(900)],
-  ["channel-scroll", "/dead-mall", "desktop", async (p) => p.waitForTimeout(900)],
+  ["channel-offline", "/dead-mall", "desktop", async (p) => p.waitForTimeout(900)],
+
+  // 01 Frutiger Aero
+  [
+    "frutiger",
+    "/frutiger-aero",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1800);
+      await p.mouse.move(700, 700); // cursor into the water, so the fish react
+      await p.waitForTimeout(900);
+    },
+  ],
+  [
+    "frutiger-bubbles",
+    "/frutiger-aero",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1600);
+      await p.mouse.click(460, 640);
+      await p.mouse.click(900, 700);
+      await p.mouse.move(520, 560);
+      await p.waitForTimeout(800);
+    },
+  ],
+  [
+    "frutiger-flooded",
+    "/frutiger-aero",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      // Drag the water-level slider to the far right to trigger the flood.
+      const slider = p.getByRole("slider", { name: "Water level" });
+      const box = await slider.boundingBox();
+      if (box) {
+        await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await p.mouse.down();
+        await p.mouse.move(box.x + box.width + 40, box.y + box.height / 2, { steps: 12 });
+        await p.mouse.up();
+      }
+      await p.waitForTimeout(900);
+    },
+  ],
+  [
+    "frutiger-nogloss",
+    "/frutiger-aero",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.getByRole("switch", { name: "Specular gloss" }).click();
+      await p.waitForTimeout(700);
+    },
+  ],
 ];
 
 const browser = await chromium.launch();

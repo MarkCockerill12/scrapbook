@@ -1,5 +1,6 @@
 "use client";
 
+import { unlock } from "@/lib/audio";
 import { useShell } from "@/lib/store";
 
 /**
@@ -40,7 +41,10 @@ export function ConsentModal() {
         <div className="mt-6 flex gap-2.5">
           <button
             type="button"
-            onClick={() => decide(true)}
+            onClick={() => {
+              unlock();
+              decide(true);
+            }}
             className="flex-1 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white/85"
           >
             Let it remember

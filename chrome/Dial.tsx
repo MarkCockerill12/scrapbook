@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { unlock } from "@/lib/audio";
 import { AESTHETICS, neighbour, type Aesthetic } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 
@@ -101,7 +102,12 @@ export function Dial({ current }: { current: Aesthetic }) {
 
         <DialButton
           label={muted ? "Unmute" : "Mute"}
-          onClick={toggleMute}
+          onClick={() => {
+            // Unmuting is itself the user gesture the browser wants before audio is
+            // allowed to start, so take it.
+            unlock();
+            toggleMute();
+          }}
           disabled={false}
         >
           <span className="text-sm">{muted ? "🔇" : "🔊"}</span>
