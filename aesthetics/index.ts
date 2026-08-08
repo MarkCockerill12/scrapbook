@@ -22,6 +22,10 @@ const PAGES: Record<string, ComponentType> = {
   // tiki: built, but held back pending curated photography — see its README.
   // tiki: dynamic(() => import("./tiki")),
   win98: dynamic(() => import("./win98")),
+  wii: dynamic(() => import("./wii")),
+  "xbox-360": dynamic(() => import("./xbox-360")),
+  vaporwave: dynamic(() => import("./vaporwave")),
+  liminal: dynamic(() => import("./liminal")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };

@@ -111,3 +111,76 @@ export function chime(up = true): void {
 export function tick(): void {
   tone({ freq: 1400, toFreq: 900, duration: 0.035, type: "square", gain: 0.05 });
 }
+
+export interface NoiseOptions {
+  gain?: number;
+  /** Cut everything above this, in Hz. Low values give rumble, high values give hiss. */
+  lowpass?: number;
+  /** Cut everything below this, in Hz. */
+  highpass?: number;
+  /** Seconds to fade in. Noise that starts instantly reads as a glitch. */
+  attack?: number;
+}
+
+/**
+ * A looping noise bed. Returns a stop function.
+ *
+ * Filtered white noise is the whole of a surprising number of sounds these pages
+ * need — tape hiss, waves, rain, a fluorescent tube, a photocopier, room tone,
+ * console fan. Two biquads and a gain cover all of them, and it costs one 2-second
+ * buffer instead of a file per page.
+ *
+ * Mute is honoured at *start* only, the same way the looping music is: callers hold
+ * this in an effect keyed on `muted`, so unmuting restarts it. A continuously
+ * running source can't consult the per-call guard that `tone` uses.
+ */
+export function noiseLoop({
+  gain = 0.06,
+  lowpass = 8000,
+  highpass = 0,
+  attack = 0.6,
+}: NoiseOptions = {}): () => void {
+  if (!audible()) return () => {};
+  const c = ensure();
+  if (!c || c.state !== "running" || !master) return () => {};
+
+  const frames = c.sampleRate * 2;
+  const buffer = c.createBuffer(1, frames, c.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+
+  const src = c.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+
+  const lp = c.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = lowpass;
+
+  const env = c.createGain();
+  env.gain.setValueAtTime(0.0001, c.currentTime);
+  env.gain.exponentialRampToValueAtTime(gain, c.currentTime + attack);
+
+  let tail: AudioNode = src;
+  if (highpass > 0) {
+    const hp = c.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = highpass;
+    tail.connect(hp);
+    tail = hp;
+  }
+  tail.connect(lp);
+  lp.connect(env);
+  env.connect(master);
+  src.start();
+
+  return () => {
+    try {
+      env.gain.cancelScheduledValues(c.currentTime);
+      env.gain.setTargetAtTime(0.0001, c.currentTime, 0.08);
+      src.stop(c.currentTime + 0.4);
+    } catch {
+      /* already stopped */
+    }
+  };
+}

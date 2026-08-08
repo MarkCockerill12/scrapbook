@@ -37,15 +37,15 @@
   user-select: none;
 }
 
-.root *,
-.root *::before,
-.root *::after {
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-.root button {
+:where(.root) button {
   font: inherit;
   color: inherit;
   border: 0;

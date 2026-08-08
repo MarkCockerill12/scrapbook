@@ -32,9 +32,9 @@
   cursor: none;
 }
 
-.root *,
-.root *::before,
-.root *::after {
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;

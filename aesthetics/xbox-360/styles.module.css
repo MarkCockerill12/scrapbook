@@ -1,0 +1,926 @@
+/*
+ * Xbox 360 — blades dashboard.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The blades dashboard is four things, and it stops reading as a 360 the moment any
+ * one of them is missing:
+ *   1. THE BLADES OVERLAP. They are sheets of coloured glass stacked in Z, each
+ *      casting a hard shadow onto the one beneath. A row of flat tabs is a website.
+ *   2. EVERY SURFACE IS GLOSSY AND LIT FROM ABOVE. Top-edge highlight, vertical
+ *      gradient darkening downward, 1px bright rim. Flat fills read as 2015, not 2005.
+ *   3. THE GREEN IS ENVIRONMENTAL. It is in the background haze, the rim light and
+ *      the shadows — not just in the accents. This is what makes the era read.
+ *   4. THE HIGHLIGHT INVERTS. The selected row is a bright glossy pill with DARK text
+ *      on it. Every other UI of the period tinted the row; the 360 flipped it.
+ */
+
+.root {
+  --live: #8fd400;
+  --live-dim: #5f8f00;
+  --ink: #e7f2df;
+  --ink-dim: #9db095;
+  --glass: rgba(6, 14, 6, 0.72);
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 44%, #24361d 0%, transparent 68%),
+    radial-gradient(ellipse 90% 70% at 50% 120%, #16240f 0%, transparent 70%),
+    #050804;
+  color: var(--ink);
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+  cursor: crosshair;
+  user-select: none;
+}
+
+/*
+ * The reset is wrapped in :where() so it carries ZERO specificity.
+ *
+ * Written the obvious way, `.root button { background: none }` is (0,1,1) and beats
+ * every (0,1,0) component class — so `.strip`'s gradient silently computed to
+ * `background-image: none` and the blades rendered as black slabs with white text.
+ * Nothing errors; the page just looks wrong. :where() makes the reset lose every tie.
+ */
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: crosshair;
+}
+
+/* The two crossing light bands the console's whole identity was built on. */
+.swoosh {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    radial-gradient(
+      ellipse 46% 120% at 22% 50%,
+      transparent 55%,
+      rgba(143, 212, 0, 0.16) 61%,
+      transparent 66%
+    ),
+    radial-gradient(
+      ellipse 62% 140% at 78% 44%,
+      transparent 58%,
+      rgba(143, 212, 0, 0.1) 63%,
+      transparent 69%
+    );
+  filter: blur(1px);
+}
+
+/* ---------- blades ---------- */
+
+.strip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 46px;
+  border-radius: 6px;
+  /* Lit from above, darkening down: the sheet-of-glass read. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bladeC) 88%, #ffffff) 0%,
+    var(--bladeC) 22%,
+    color-mix(in srgb, var(--bladeC) 55%, #000000) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset -1px 0 0 rgba(0, 0, 0, 0.35),
+    6px 0 18px rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  transition: filter 160ms ease, width 220ms cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+
+.strip:hover {
+  filter: brightness(1.22);
+}
+
+.stripLabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 15px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.blade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px),
+    linear-gradient(
+      178deg,
+      color-mix(in srgb, var(--bladeC) 34%, #060c05) 0%,
+      #060c05 46%,
+      #040703 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 0 90px -20px color-mix(in srgb, var(--bladeC) 70%, transparent);
+  padding: 34px 42px 0;
+  overflow: hidden;
+  animation: bladeIn 240ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes bladeIn {
+  from {
+    opacity: 0.4;
+    transform: translateX(-26px);
+  }
+}
+
+/* A coloured rim down the leading edge, the way a lit sheet of glass catches light. */
+.blade::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bladeC) 90%, #ffffff),
+    var(--bladeC) 40%,
+    transparent
+  );
+  box-shadow: 0 0 22px color-mix(in srgb, var(--bladeC) 80%, transparent);
+}
+
+/* ---------- header + gamertag ---------- */
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.bladeName {
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 26px color-mix(in srgb, var(--bladeC) 65%, transparent);
+}
+
+.bladeSub {
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.gamertag {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px 10px 10px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+.gpic {
+  width: 62px;
+  height: 62px;
+  border-radius: 5px;
+  background: linear-gradient(160deg, #9be22a, #2f6a06);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+}
+
+.gname {
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.grow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.gsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 15px;
+  color: var(--live);
+  font-variant-numeric: tabular-nums;
+}
+
+.rep {
+  font-size: 12px;
+  color: #ffd34a;
+  letter-spacing: 0.1em;
+}
+
+/* ---------- two-column body ---------- */
+
+.body {
+  display: flex;
+  gap: 34px;
+  padding-top: 24px;
+  height: 420px;
+}
+
+/*
+ * The recent-played strip. It exists partly because the 360 had one and partly
+ * because without it the blade is 400px of empty black — the dashboard was sparse,
+ * but it was never a void.
+ *
+ * Sits at bottom: 140 — high enough that the achievement toast (which the 360 put
+ * at the bottom centre, and which must stay there) never lands on top of it, and
+ * clear of the shell's dial in the corner.
+ */
+.recent {
+  position: absolute;
+  left: 42px;
+  right: 42px;
+  bottom: 140px;
+}
+
+.recentTitle {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 12px;
+}
+
+.recentRow {
+  display: flex;
+  gap: 14px;
+}
+
+.recentCard {
+  position: relative;
+  width: 156px;
+  height: 96px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.55);
+  transition: transform 140ms ease, box-shadow 160ms ease;
+}
+
+.recentCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 0 2px var(--live), 0 12px 24px rgba(0, 0, 0, 0.65);
+}
+
+.recentArt {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(158deg, var(--cardC) 0%, #0a1206 88%);
+  opacity: 0.9;
+}
+
+.recentNo {
+  position: absolute;
+  right: 9px;
+  top: 4px;
+  font-size: 20px;
+  color: #ffffff;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.recentName {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-align: left;
+}
+
+/*
+ * The list scrolls internally (23 marketplace entries never fit 640px). That's a
+ * widget scrolling, not the page — the same allowance the terminal and the BBS
+ * buffer take under rule R1.
+ */
+.menu {
+  width: 430px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 212, 0, 0.55) rgba(255, 255, 255, 0.06);
+}
+
+.menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b7e457, var(--live));
+  border-radius: 4px;
+}
+
+.item {
+  flex: none;
+}
+
+/*
+ * The 360's list highlight INVERTS: a bright glossy pill with dark text. Tinting the
+ * row instead is the single most common way a recreation drifts into looking modern.
+ */
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 5px;
+  font-size: 16px;
+  color: var(--ink);
+  text-align: left;
+  transition: background 120ms linear, color 120ms linear;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.itemOn,
+.itemOn:hover {
+  color: #0d1a06;
+  background: linear-gradient(180deg, #ffffff 0%, #e4eedb 48%, #b9cfa4 100%);
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 10px rgba(143, 212, 0, 0.35);
+}
+
+.itemMeta {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+
+.detail {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  padding: 22px 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.25));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.detailTitle {
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
+.detailSub {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.detailBody {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #cfe0c4;
+}
+
+.action {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 22px;
+  border-radius: 6px;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #10200a;
+  background: linear-gradient(180deg, #d7ef9e, var(--live) 55%, #5f8f00);
+  box-shadow: inset 0 1px 0 #ffffff88, 0 6px 16px rgba(143, 212, 0, 0.3);
+  transition: transform 120ms ease, box-shadow 160ms ease;
+}
+
+.action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(143, 212, 0, 0.45);
+}
+
+.actionGhost {
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ---------- friends list ---------- */
+
+.friend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 14px;
+}
+
+.friendPic {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  flex: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.friendState {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 2px;
+}
+
+.online {
+  color: var(--live);
+}
+
+/* ---------- achievements ---------- */
+
+.achList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 500px;
+  overflow: hidden;
+}
+
+.ach {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.achOrb {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  background: radial-gradient(circle at 34% 30%, #ffffff, #2d3a26 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.achOrbOn {
+  background: radial-gradient(circle at 34% 30%, #f4ffd9, var(--live) 45%, #33540a 100%);
+  box-shadow: 0 0 16px rgba(143, 212, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.achName {
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.achLocked .achName {
+  color: #7f8f78;
+}
+
+.achHow {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 2px;
+}
+
+.achGs {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--live);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- montage player ---------- */
+
+/* 16:9 and centred. Stretching the clip to the pane's width warped it to 2.8:1. */
+.player {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  height: 292px;
+  margin: 0 auto;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000000;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.playerCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.playerBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.85));
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #cfe0c4;
+}
+
+.progress {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--live);
+  box-shadow: 0 0 10px var(--live);
+}
+
+/* ---------- quickscope arena ---------- */
+
+.arena {
+  position: relative;
+  width: 100%;
+  height: 292px;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 108%, #2a3a20, transparent 70%),
+    linear-gradient(180deg, #0b1408, #060a05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  cursor: crosshair;
+}
+
+.target {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #ffffff, #d6431f 55%, #6d1a08 100%);
+  box-shadow: 0 0 18px rgba(214, 67, 31, 0.7);
+  animation: pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1.6);
+}
+
+@keyframes pop {
+  from { transform: scale(0.2); }
+}
+
+.scoped {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 26%, rgba(0, 0, 0, 0.86) 32%);
+}
+
+.scoped::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(255, 255, 255, 0.5) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(255, 255, 255, 0.5) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+}
+
+.arenaHud {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #cfe0c4;
+  line-height: 1.8;
+  pointer-events: none;
+}
+
+.spinMeter {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 150px;
+  pointer-events: none;
+  text-align: right;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.spinBar {
+  margin-top: 5px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.spinFill {
+  height: 100%;
+  background: #ffd34a;
+  box-shadow: 0 0 10px #ffd34a;
+}
+
+/* ---------- hitmarkers ---------- */
+
+.hitLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.hit {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  animation: hitOut 340ms ease-out forwards;
+}
+
+.hit::before,
+.hit::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 15px;
+  height: 3px;
+  margin: -1.5px 0 0 -7.5px;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+}
+
+.hit::before {
+  transform: rotate(45deg) translateX(6px);
+}
+
+.hit::after {
+  transform: rotate(-45deg) translateX(6px);
+}
+
+@keyframes hitOut {
+  from { transform: scale(0.6); opacity: 1; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+
+.combo {
+  position: absolute;
+  left: 50%;
+  top: 96px;
+  transform: translateX(-50%);
+  font-size: 46px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  color: #ffd34a;
+  text-shadow: 0 0 22px rgba(255, 211, 74, 0.7), 3px 3px 0 #7a3d00;
+  pointer-events: none;
+  z-index: 61;
+}
+
+/* ---------- achievement toast ---------- */
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 44px;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 460px;
+  padding: 14px 26px 14px 16px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(26, 38, 20, 0.97), rgba(8, 14, 6, 0.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 0 0 1px rgba(143, 212, 0, 0.35),
+    0 18px 44px rgba(0, 0, 0, 0.7);
+  animation: toastIn 320ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 22px); }
+}
+
+.toastTitle {
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--live);
+}
+
+.toastName {
+  font-size: 17px;
+  color: #ffffff;
+  margin-top: 3px;
+}
+
+.toastGs {
+  margin-left: auto;
+  font-size: 20px;
+  color: var(--live);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- montage mode ---------- */
+
+.montage {
+  filter: saturate(1.7) contrast(1.28) brightness(1.06) hue-rotate(-6deg);
+  animation: shake 340ms linear infinite;
+}
+
+@keyframes shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-3px, 2px) rotate(-0.25deg); }
+  50% { transform: translate(3px, -2px) rotate(0.25deg); }
+  75% { transform: translate(-2px, -3px) rotate(-0.15deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* Lens dirt: blown-out smears that only exist so the bloom has something to catch. */
+.dirt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 65;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 22% 8% at 18% 26%, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(ellipse 12% 5% at 62% 18%, rgba(255, 240, 190, 0.42), transparent 70%),
+    radial-gradient(ellipse 30% 6% at 74% 72%, rgba(255, 255, 255, 0.3), transparent 70%),
+    radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.16), transparent 22%);
+  filter: blur(2px);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 64;
+  background: radial-gradient(ellipse 74% 66% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.72));
+}
+
+/* ---------- red ring of death ---------- */
+
+.rrod {
+  position: absolute;
+  inset: 0;
+  z-index: 95;
+  background: #000000;
+  display: grid;
+  place-items: center;
+  gap: 34px;
+  grid-auto-flow: row;
+  align-content: center;
+  animation: rrodIn 260ms linear;
+}
+
+@keyframes rrodIn {
+  from { opacity: 0; }
+}
+
+.ring {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 225deg,
+      #ff1a1a 0deg 90deg,
+      #2a0505 90deg 180deg,
+      #ff1a1a 180deg 360deg
+    );
+  box-shadow: 0 0 60px rgba(255, 26, 26, 0.75);
+  animation: ringFlash 900ms steps(1) infinite;
+  display: grid;
+  place-items: center;
+}
+
+.ring::after {
+  content: "";
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  background: #0c0c0c;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes ringFlash {
+  0%, 49% { filter: brightness(1); }
+  50%, 100% { filter: brightness(0.55); }
+}
+
+.rrodText {
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ff5b5b;
+  text-align: center;
+  line-height: 2.2;
+}
+
+/* ---------- hints ---------- */
+
+.hints {
+  position: absolute;
+  left: 42px;
+  bottom: 26px;
+  display: flex;
+  gap: 22px;
+  font-size: 12px;
+  color: var(--ink-dim);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.hintKey {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0b1406;
+  vertical-align: -4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .montage,
+  .ring,
+  .blade,
+  .target,
+  .toast {
+    animation: none;
+  }
+}

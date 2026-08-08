@@ -5,13 +5,18 @@
  * 1.0x and 0.4x" — this is how that gets checked. Not part of the app; scripts/ is
  * gitignored.
  *
- *   bun scripts/shots.mjs [baseUrl] [outDir]
+ *   node scripts/shots.mjs [baseUrl] [outDir] [--only=<substring>] [--virgin]
+ *
+ * `--only` filters by shot label, which is what you want while building a single
+ * page — the full sweep takes minutes and you only ever care about one channel.
  */
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const BASE = process.argv[2] ?? "http://localhost:3000";
-const OUT = process.argv[3] ?? "./.shots";
+const positional = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const BASE = positional[0] ?? "http://localhost:3000";
+const OUT = positional[1] ?? "./.shots";
+const ONLY = process.argv.find((a) => a.startsWith("--only="))?.slice(7) ?? "";
 
 const VIEWPORTS = {
   desktop: { width: 1600, height: 900 },
@@ -174,6 +179,107 @@ const SHOTS = [
     },
   ],
 
+  // 05 Liminal
+  ["liminal", "/liminal", "desktop", async (p) => p.waitForTimeout(1800)],
+  [
+    "liminal-walk",
+    "/liminal",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.mouse.move(800, 450);
+      for (let i = 0; i < 14; i++) {
+        await p.mouse.wheel(0, 120);
+        await p.waitForTimeout(90);
+      }
+      await p.waitForTimeout(600);
+    },
+  ],
+
+  // 10 Vaporwave
+  ["vapor", "/vaporwave", "desktop", async (p) => p.waitForTimeout(2200)],
+  [
+    "vapor-closed",
+    "/vaporwave",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1600);
+      for (const name of ["TRACKLIST.TXT", "NOW PLAYING", "COVER.BMP", "DISPLAY PROPERTIES"]) {
+        await p.getByRole("button", { name: `Close ${name}` }).click();
+      }
+      await p.waitForTimeout(3400);
+    },
+  ],
+
+  // 04 Xbox 360
+  ["xbox", "/xbox-360", "desktop", async (p) => p.waitForTimeout(1600)],
+  [
+    "xbox-market",
+    "/xbox-360",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Marketplace" }).click();
+      await p.waitForTimeout(700);
+    },
+  ],
+  [
+    "xbox-games",
+    "/xbox-360",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Games" }).click();
+      await p.waitForTimeout(500);
+      await p.getByRole("button", { name: "SNIPEZ 360" }).click();
+      await p.waitForTimeout(700);
+    },
+  ],
+  [
+    "xbox-montage",
+    "/xbox-360",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Media" }).click();
+      await p.waitForTimeout(500);
+      await p.getByRole("button", { name: /Montage mode/ }).click();
+      await p.waitForTimeout(900);
+    },
+  ],
+
+  // 14 Wii
+  [
+    "wii",
+    "/wii",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1600);
+      await p.mouse.move(700, 300);
+      await p.waitForTimeout(600);
+    },
+  ],
+  [
+    "wii-board",
+    "/wii",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: /Message Board/ }).click();
+      await p.waitForTimeout(700);
+    },
+  ],
+  [
+    "wii-page2",
+    "/wii",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Next page" }).click();
+      await p.waitForTimeout(700);
+    },
+  ],
+
   // 08 Matrix
   ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
   [
@@ -199,7 +305,7 @@ const SHOTS = [
 const browser = await chromium.launch();
 await mkdir(OUT, { recursive: true });
 
-for (const [label, path, vp, prep] of SHOTS) {
+for (const [label, path, vp, prep] of SHOTS.filter(([l]) => l.includes(ONLY))) {
   const ctx = await browser.newContext({ viewport: VIEWPORTS[vp] });
   const page = await ctx.newPage();
   if (!VIRGIN) await page.addInitScript(SEED);

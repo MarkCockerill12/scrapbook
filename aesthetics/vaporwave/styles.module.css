@@ -1,0 +1,559 @@
+/*
+ * Vaporwave — A E S T H E T I C S / 美学.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The trap with vaporwave is that it is the most imitated aesthetic on earth and
+ * nearly every imitation is a purple gradient with a grid on it. What actually
+ * separates the real thing:
+ *   1. IT IS A COLLAGE OF STOLEN OBJECTS. Marble busts, dolphins, palms, cassettes —
+ *      real photographs, cut out and floated. Drawn shapes read as an homage; cut
+ *      photographs read as the thing itself.
+ *   2. THE SUN IS SLITTED AND THE SLITS WIDEN DOWNWARD. Equal-width bands look like
+ *      a test card. The gaps grow toward the horizon.
+ *   3. EVERYTHING IS SLIGHTLY BROKEN. Chromatic fringing, JPEG-ish banding, windows
+ *      at angles. Perfect registration kills it.
+ *   4. THE CHROME IS 1995 AND UNTOUCHED. Bevels stay grey and correct; only the
+ *      title bars get the pink. Restyling the whole window is the giveaway.
+ */
+
+.root {
+  --pink: #ff6ad5;
+  --cyan: #26f7f7;
+  --violet: #6a2fa0;
+  --ink: #ffe7fb;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    #17032e 0%,
+    #3b0b5c 22%,
+    #8b1a86 42%,
+    #ff5f8d 50%,
+    #2a0640 52%,
+    #10021f 100%
+  );
+  color: var(--ink);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  cursor: crosshair;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: crosshair;
+}
+
+/* ---------- sky furniture ---------- */
+
+.stars {
+  position: absolute;
+  inset: 0 0 52% 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 22%, #ffffff, transparent),
+    radial-gradient(1px 1px at 28% 46%, #ffd9f5, transparent),
+    radial-gradient(1.5px 1.5px at 46% 14%, #ffffff, transparent),
+    radial-gradient(1px 1px at 64% 34%, #d9f5ff, transparent),
+    radial-gradient(1.5px 1.5px at 82% 20%, #ffffff, transparent),
+    radial-gradient(1px 1px at 92% 44%, #ffd9f5, transparent),
+    radial-gradient(1px 1px at 6% 60%, #ffffff, transparent),
+    radial-gradient(1px 1px at 72% 58%, #ffffff, transparent);
+  opacity: 0.85;
+}
+
+/*
+ * The sun. The slits are a repeating gradient in a mask, and their *gaps* widen
+ * toward the bottom — bands of equal width read as a test card, not a sunset.
+ */
+.sun {
+  position: absolute;
+  left: 800px;
+  /*
+   * 330, not 384. The grid canvas starts at y=430 and paints an opaque haze, so
+   * anything below that is simply gone — with the disc centred at 384 the entire
+   * slitted half was hidden and the sun read as a solid semicircle.
+   */
+  top: 330px;
+  width: 400px;
+  height: 400px;
+  margin: -200px 0 0 -200px;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    #fff27a 0%,
+    #ffb44d 26%,
+    #ff5f8d 58%,
+    #d2288f 100%
+  );
+  mask-image: linear-gradient(180deg, #000 0 38%, transparent 38%),
+    repeating-linear-gradient(
+      180deg,
+      #000 0 14px,
+      transparent 14px 16px,
+      #000 16px 28px,
+      transparent 28px 33px,
+      #000 33px 43px,
+      transparent 43px 51px,
+      #000 51px 58px,
+      transparent 58px 72px
+    );
+  mask-composite: add;
+  -webkit-mask-composite: source-over;
+  filter: drop-shadow(0 0 60px rgba(255, 95, 141, 0.65));
+  pointer-events: none;
+}
+
+.grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 430px;
+  bottom: 0;
+  display: block;
+}
+
+.palm {
+  position: absolute;
+  bottom: 0;
+  pointer-events: none;
+  /* Photographs become silhouettes: total black, then bloom the edge with the sky. */
+  filter: brightness(0) drop-shadow(0 0 26px rgba(255, 106, 213, 0.45));
+  opacity: 0.94;
+}
+
+/* ---------- wordmark ---------- */
+
+/* top: 18 keeps 美学 clear of the sun's crown — over the orange it was unreadable. */
+.wordmark {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.wordmarkMain {
+  font-size: 48px;
+  font-weight: 300;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  color: #ffffff;
+  text-shadow:
+    calc(var(--chroma) * -1px) 0 0 rgba(255, 0, 128, 0.85),
+    calc(var(--chroma) * 1px) 0 0 rgba(0, 240, 255, 0.85),
+    0 0 40px rgba(255, 106, 213, 0.7);
+}
+
+.wordmarkSub {
+  margin-top: 8px;
+  font-size: 22px;
+  letter-spacing: 0.7em;
+  text-indent: 0.7em;
+  color: #ffd0f2;
+  text-shadow: 0 0 22px rgba(255, 106, 213, 0.9);
+}
+
+/* ---------- the bust ---------- */
+
+.bustWrap {
+  position: absolute;
+  left: 800px;
+  bottom: 96px;
+  transform-origin: 50% 100%;
+  perspective: 900px;
+  z-index: 4;
+  cursor: grab;
+  touch-action: none;
+}
+
+.bustWrap:active {
+  cursor: grabbing;
+}
+
+.bust {
+  transform-style: preserve-3d;
+  filter:
+    drop-shadow(calc(var(--chroma) * -1.6px) 0 0 rgba(255, 0, 140, 0.75))
+    drop-shadow(calc(var(--chroma) * 1.6px) 0 0 rgba(0, 240, 255, 0.7))
+    drop-shadow(0 22px 26px rgba(20, 0, 30, 0.7))
+    saturate(0.55) contrast(1.12) brightness(1.06);
+}
+
+.pedestal {
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  width: 260px;
+  height: 44px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 106, 213, 0.55), transparent 68%);
+  pointer-events: none;
+}
+
+.bustHint {
+  position: absolute;
+  left: 50%;
+  bottom: -58px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 214, 245, 0.55);
+  pointer-events: none;
+}
+
+/* ---------- windows ---------- */
+
+/*
+ * Authentic 1995 chrome. The bevels stay grey and correct — only the title bar takes
+ * the pink. Restyling the whole window is what makes most vaporwave pastiche read as
+ * a modern app with a retro skin.
+ */
+.window {
+  position: absolute;
+  z-index: 10;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: 1px 1px 0 #000000, 6px 8px 22px rgba(20, 0, 34, 0.55);
+  display: flex;
+  flex-direction: column;
+  color: #000000;
+  font-family: "MS Sans Serif", "Segoe UI", Tahoma, sans-serif;
+  font-size: 12px;
+}
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 3px 0 4px;
+  background: linear-gradient(90deg, #a4118f, #ff6ad5 62%, #26f7f7);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: grab;
+  flex: none;
+}
+
+.titleBar:active {
+  cursor: grabbing;
+}
+
+.titleText {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+}
+
+.sysButton {
+  width: 18px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  line-height: 1;
+  color: #000000;
+  background: #c0c0c0;
+  border: 1px solid;
+  border-color: #ffffff #000000 #000000 #ffffff;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080;
+  cursor: pointer;
+}
+
+.sysButton:active {
+  border-color: #000000 #ffffff #ffffff #000000;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+
+.windowBody {
+  flex: 1;
+  margin: 3px;
+  padding: 8px 10px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+}
+
+.windowBodyFlat {
+  background: #c0c0c0;
+  border: 0;
+  padding: 10px;
+}
+
+.minimised {
+  height: 26px !important;
+  overflow: hidden;
+}
+
+/* ---------- tracklist ---------- */
+
+.track {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3px 4px;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.track:hover {
+  background: #000080;
+  color: #ffffff;
+}
+
+.trackOn {
+  background: #000080;
+  color: #ffffff;
+}
+
+/* ---------- cassette ---------- */
+
+.cassette {
+  position: relative;
+  width: 100%;
+  height: 128px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2a2140, #171026);
+  box-shadow: inset 0 0 0 2px #57406f, inset 0 2px 0 rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+.cassetteLabel {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 8px;
+  height: 34px;
+  border-radius: 2px;
+  background: linear-gradient(96deg, var(--pink), var(--cyan));
+  color: #22003a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reelWindow {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 50px;
+  height: 66px;
+  border-radius: 3px;
+  background: #0d0716;
+  box-shadow: inset 0 0 0 2px #3b2a52;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.reel {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(#3a2c52 0deg 18deg, #241a38 18deg 36deg);
+  box-shadow: inset 0 0 0 8px #120a1f, 0 0 0 2px #4b3868;
+  position: relative;
+}
+
+.reel::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: #d9c7f0;
+  box-shadow: inset 0 0 0 3px #8d78ad;
+}
+
+.reelSpin {
+  animation: spin 1.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.tapeSpan {
+  flex: 1;
+  height: 8px;
+  margin: 0 6px;
+  background: linear-gradient(180deg, #6b4a2e, #3b2718);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.transport {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.tbutton {
+  flex: 1;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: #000000;
+  background: #c0c0c0;
+  border: 1px solid;
+  border-color: #ffffff #000000 #000000 #ffffff;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080;
+  cursor: pointer;
+}
+
+.tbutton:active,
+.tbuttonOn {
+  border-color: #000000 #ffffff #ffffff #000000;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+
+.counter {
+  margin-top: 8px;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: #00ff9c;
+  background: #101010;
+  border: 1px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  padding: 3px 0;
+}
+
+.vu {
+  display: flex;
+  gap: 2px;
+  margin-top: 8px;
+  height: 12px;
+}
+
+.vuBar {
+  flex: 1;
+  background: #3a3a3a;
+  box-shadow: inset 0 0 0 1px #202020;
+}
+
+.vuOn {
+  background: linear-gradient(180deg, var(--cyan), var(--pink));
+}
+
+/* ---------- control panel ---------- */
+
+.control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.controlLabel {
+  font-size: 12px;
+}
+
+.controlHint {
+  font-size: 10px;
+  color: #505050;
+}
+
+/* ---------- cover art ---------- */
+
+/*
+ * A tinted checkerboard, not a grey one. At 28px in neutral grey it read as the
+ * "this pixel is transparent" grid rather than as artwork — which is exactly the
+ * wrong signal on a page whose subject matter is cut-out photographs.
+ */
+.cover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    repeating-conic-gradient(#ffd9f4 0% 25%, #b7f2f5 0% 50%) 0 0 / 16px 16px;
+  display: grid;
+  place-items: center;
+}
+
+.coverImg {
+  filter: saturate(1.35) contrast(1.12) hue-rotate(-10deg)
+    drop-shadow(0 8px 16px rgba(60, 0, 60, 0.45));
+}
+
+/* ---------- egg ---------- */
+
+.thankyou {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 22px;
+  background: linear-gradient(180deg, rgba(8, 0, 18, 0.55), rgba(8, 0, 18, 0.9));
+  text-align: center;
+  animation: fadeIn 1200ms ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+.thankyouMain {
+  font-size: 40px;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  color: #ffffff;
+  text-shadow: -2px 0 0 rgba(255, 0, 128, 0.8), 2px 0 0 rgba(0, 240, 255, 0.8);
+}
+
+.thankyouSub {
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  color: #ffbdec;
+}
+
+.hint {
+  position: absolute;
+  left: 28px;
+  bottom: 22px;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 214, 245, 0.5);
+  line-height: 1.9;
+  pointer-events: none;
+  z-index: 30;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reelSpin,
+  .thankyou {
+    animation: none;
+  }
+}
