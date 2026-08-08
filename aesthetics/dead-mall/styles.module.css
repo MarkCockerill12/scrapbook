@@ -1,0 +1,485 @@
+/*
+ * Dead Mall — Northgate Centre directory.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x2700 canvas (width mode:
+ * scroll IS the board being taller than you).
+ *
+ * Four things separate a dead mall from "a dim page with teal in it":
+ *   1. THE LIGHT IS STILL ON. That is the whole horror. Everything is lit, evenly,
+ *      by fluorescents nobody has switched off, and one of them is failing.
+ *   2. THE PALETTE IS CHEERFUL. Teal, salmon, brass, cream — 1991 optimism, aged.
+ *      Desaturating to grey turns it into generic decay and loses the specific
+ *      sadness of a place built to be busy.
+ *   3. THE DIRECTORY IS A BACKLIT PLASTIC SIGN. Light comes through it, unevenly,
+ *      with the tube positions visible as brighter vertical bands.
+ *   4. THE WORD "VACANT" REPEATS UNTIL IT STOPS MEANING ANYTHING. That's the page.
+ */
+
+.root {
+  --teal: #39b8a4;
+  --salmon: #e88a7d;
+  --brass: #b08d4a;
+  --board: #efe6d2;
+  --ink: #d8e6e4;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0d1616;
+  color: var(--ink);
+  font-family: "Futura", "Century Gothic", "Trebuchet MS", sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ---------- atrium ---------- */
+
+.atrium {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  object-fit: cover;
+  /* Graded, not desaturated: the teal is still in there, it has just gone cold. */
+  filter: brightness(0.42) saturate(0.72) contrast(1.06) hue-rotate(-8deg);
+}
+
+.atriumFade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  background: linear-gradient(180deg, rgba(10, 22, 22, 0.5) 0%, transparent 30%, #0d1616 96%);
+  pointer-events: none;
+}
+
+/* ---------- fluorescents ---------- */
+
+.tube {
+  position: absolute;
+  height: 8px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff, #cfe9e2);
+  box-shadow: 0 0 34px 10px rgba(190, 240, 230, 0.35);
+  pointer-events: none;
+}
+
+.tubeBad {
+  animation: sputter 5.5s steps(1) infinite;
+}
+
+@keyframes sputter {
+  0%, 58%, 63%, 69%, 100% { opacity: 1; }
+  60%, 66%, 71% { opacity: 0.08; }
+}
+
+.tubeStutter {
+  animation: stutter 420ms steps(1) 1;
+}
+
+@keyframes stutter {
+  0%, 40%, 80% { opacity: 0.1; }
+  20%, 60%, 100% { opacity: 1; }
+}
+
+/* ---------- signage ---------- */
+
+.sign {
+  position: absolute;
+  left: 50%;
+  top: 160px;
+  transform: translateX(-50%);
+  text-align: center;
+  padding: 26px 60px;
+  background: linear-gradient(180deg, rgba(20, 44, 42, 0.72), rgba(10, 26, 26, 0.86));
+  border: 3px solid var(--brass);
+  box-shadow: 0 0 60px rgba(57, 184, 164, 0.22), inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.signName {
+  font-size: 58px;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: #eaf6f2;
+  text-shadow: 0 0 26px rgba(57, 184, 164, 0.5);
+}
+
+.signSub {
+  margin-top: 12px;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.signOccupancy {
+  margin-top: 18px;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--salmon);
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 720px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(216, 230, 228, 0.4);
+  text-align: center;
+  line-height: 2.2;
+}
+
+/* ---------- the board ---------- */
+
+.board {
+  position: absolute;
+  left: 110px;
+  top: 940px;
+  width: 1380px;
+  padding: 34px 40px 40px;
+  color: #21332f;
+  /* Backlit: the tube positions show through as brighter vertical bands. */
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.5) 0 60px,
+      rgba(255, 255, 255, 0) 60px 210px
+    ),
+    linear-gradient(180deg, #fbf5e6, var(--board) 40%, #ddd2b8);
+  border: 10px solid;
+  border-color: #c9a763 #7a6032 #7a6032 #c9a763;
+  box-shadow: 0 0 90px rgba(255, 240, 200, 0.14), 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.boardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 3px solid #21332f;
+}
+
+.boardTitle {
+  font-size: 30px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.boardMeta {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #5d6b64;
+}
+
+.units {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 34px;
+}
+
+.unit {
+  display: flex;
+  gap: 12px;
+  padding: 6px 8px;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px dotted rgba(33, 51, 47, 0.28);
+  color: #21332f;
+  width: 100%;
+}
+
+.unit:hover {
+  background: rgba(57, 184, 164, 0.16);
+}
+
+.unitNo {
+  flex: none;
+  width: 46px;
+  color: #5d6b64;
+  font-variant-numeric: tabular-nums;
+}
+
+.vacant {
+  color: #8b968f;
+  letter-spacing: 0.24em;
+}
+
+.open {
+  color: #1c6b5c;
+  font-weight: 700;
+}
+
+/* The one that shouldn't be open. Nothing marks it; you have to read. */
+.oddOne {
+  color: #b4413a;
+  font-weight: 700;
+}
+
+/* ---------- unit card ---------- */
+
+.card {
+  position: absolute;
+  z-index: 30;
+  width: 420px;
+  padding: 20px 22px;
+  background: #10201e;
+  border: 2px solid var(--teal);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  color: var(--ink);
+}
+
+.cardShot {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(0.6) contrast(1.1);
+  margin-bottom: 14px;
+}
+
+.cardName {
+  font-size: 20px;
+  letter-spacing: 0.12em;
+}
+
+.cardMeta {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.cardBody {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #a8bcb8;
+}
+
+.cardClose {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--salmon);
+}
+
+/* ---------- floorplan ---------- */
+
+.plan {
+  position: absolute;
+  left: 110px;
+  top: 2130px;
+  width: 640px;
+  height: 420px;
+  background: linear-gradient(180deg, #16302c, #0e2320);
+  border: 3px solid var(--brass);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.7);
+}
+
+.planShape {
+  position: absolute;
+  border: 2px solid rgba(57, 184, 164, 0.5);
+  background: rgba(57, 184, 164, 0.08);
+}
+
+.planLabel {
+  position: absolute;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(216, 230, 228, 0.55);
+}
+
+.youAreHere {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #ffd0c4, var(--salmon) 60%, #8f3c32);
+  box-shadow: 0 0 22px rgba(232, 138, 125, 0.9);
+  cursor: grab;
+  touch-action: none;
+  z-index: 4;
+}
+
+.youAreHere:active {
+  cursor: grabbing;
+}
+
+.youLabel {
+  position: absolute;
+  left: 20px;
+  top: -6px;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--salmon);
+  pointer-events: none;
+}
+
+/* ---------- fountain ---------- */
+
+.fountain {
+  position: absolute;
+  right: 110px;
+  top: 2130px;
+  width: 640px;
+  height: 420px;
+  overflow: hidden;
+  border: 3px solid var(--brass);
+  cursor: pointer;
+}
+
+.fountainShot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.44) saturate(0.7) contrast(1.08);
+}
+
+.fountainLabel {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-shadow: 0 2px 6px #000;
+}
+
+.coin {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #ffe9a8, #b08d4a 60%, #6c5426);
+  box-shadow: 0 0 10px rgba(255, 220, 140, 0.6);
+  pointer-events: none;
+  animation: toss 900ms cubic-bezier(0.3, 0, 0.7, 1) forwards;
+}
+
+@keyframes toss {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  55% { transform: translate(0, -120px) scale(1.1); opacity: 1; }
+  100% { transform: translate(0, 40px) scale(0.5); opacity: 0; }
+}
+
+.ripple {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  border: 2px solid rgba(190, 240, 230, 0.8);
+  pointer-events: none;
+  animation: ripple 1200ms ease-out forwards;
+}
+
+@keyframes ripple {
+  to { transform: scale(9); opacity: 0; }
+}
+
+/* ---------- plaque + gate ---------- */
+
+.plaque {
+  position: absolute;
+  left: 110px;
+  top: 2610px;
+  width: 640px;
+  padding: 20px 26px;
+  background: linear-gradient(180deg, #2a2419, #16130d);
+  border: 2px solid var(--brass);
+  color: #d8c9a4;
+}
+
+.plaqueTitle {
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 10px;
+}
+
+.plaqueRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 3px 0;
+  letter-spacing: 0.08em;
+}
+
+.gate {
+  position: absolute;
+  right: 110px;
+  top: 2610px;
+  width: 640px;
+  height: 140px;
+  overflow: hidden;
+  border: 2px solid #4a5450;
+  background: #0a1413;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.gateShutter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      #8f9a96 0 3px,
+      #5f6a67 3px 7px,
+      #414b48 7px 11px
+    );
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7), inset 0 -3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.gateLabel {
+  position: absolute;
+  left: 18px;
+  bottom: 12px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(216, 230, 228, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tubeBad,
+  .tubeStutter,
+  .coin,
+  .ripple {
+    animation: none;
+  }
+}

@@ -179,6 +179,57 @@ const SHOTS = [
     },
   ],
 
+  // 13 Dead Mall
+  ["deadmall-top", "/dead-mall", "desktop", async (p) => p.waitForTimeout(1800)],
+  [
+    "deadmall-board",
+    "/dead-mall",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.evaluate(() => window.scrollTo(0, 640));
+      await p.waitForTimeout(700);
+    },
+  ],
+  [
+    "deadmall-court",
+    "/dead-mall",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await p.waitForTimeout(700);
+    },
+  ],
+
+  // 11 Aztec
+  [
+    "aztec",
+    "/aztec",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1600);
+      await p.mouse.move(560, 420);
+      await p.waitForTimeout(700);
+    },
+  ],
+  [
+    "aztec-rub",
+    "/aztec",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      // Scrub the dirt panel clean.
+      await p.mouse.move(320, 660);
+      await p.mouse.down();
+      for (let i = 0; i < 60; i++) {
+        await p.mouse.move(200 + ((i * 37) % 400), 620 + ((i * 23) % 130));
+      }
+      await p.mouse.up();
+      await p.waitForTimeout(700);
+    },
+  ],
+
   // 22 Channel 7 News
   ["news", "/news", "desktop", async (p) => p.waitForTimeout(1800)],
   [

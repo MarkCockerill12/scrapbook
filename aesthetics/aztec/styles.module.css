@@ -1,0 +1,537 @@
+/*
+ * Aztec / Izalith — Expedition Log, Day 47.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The whole page is a lighting problem, and four things decide whether it reads as
+ * dread or as a texture swatch:
+ *   1. THE ONLY LIGHT SOURCES ARE THE TORCH AND THE LAVA, AND THEY COME FROM
+ *      DIFFERENT DIRECTIONS. The torch is at the cursor; the lava is underneath.
+ *      Anything lit from above instantly reads as a photograph of a museum.
+ *   2. LAVA LIGHT IS ORANGE AND IT MOVES. A static orange glow reads as a filter.
+ *      It has to breathe, and everything it touches has to breathe with it.
+ *   3. CARVING IS TWO SHADOWS, NOT AN OUTLINE. A recess is a dark edge on the
+ *      light side and a bright edge on the dark side. Get them the wrong way round
+ *      and the glyph pops out of the wall instead of into it.
+ *   4. THE DARK IS ACTUALLY DARK. Most of the frame is near-black. The instinct to
+ *      let the visitor see everything is the thing to resist.
+ */
+
+.root {
+  --gold: #e0912f;
+  --ember: #ff6a1f;
+  --stone: #6a5c46;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0a0705;
+  color: #e8d9b8;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  cursor: none;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: none;
+}
+
+/* ---------- the wall ---------- */
+
+.wall {
+  position: absolute;
+  inset: 0;
+  background-size: 620px auto;
+  background-repeat: repeat;
+  filter: brightness(0.62) saturate(0.72) contrast(1.08);
+}
+
+.wallJoints {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 208px,
+      rgba(0, 0, 0, 0.55) 208px 214px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 148px,
+      rgba(0, 0, 0, 0.5) 148px 153px
+    );
+  mix-blend-mode: multiply;
+}
+
+/* ---------- lava ---------- */
+
+/*
+ * z-index 22, ABOVE the darkness overlay. The lava is a light source; putting it
+ * under the same shade as everything else turned the fissure into a dark band with a
+ * pattern on it, which is the exact opposite of what it is for.
+ */
+.lava {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 22;
+  background:
+    linear-gradient(180deg, transparent, rgba(255, 90, 10, 0.35) 22%, #ff8a2b 62%, #ffd27a 100%);
+  box-shadow: 0 -30px 90px 30px rgba(255, 106, 31, 0.35);
+  transition: height 900ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+/*
+ * Crust: irregular dark islands drifting on the surface, NOT a repeating diagonal.
+ * Two crossed repeating gradients read as hazard tape — a barber pole — which is
+ * exactly the wrong signal on a fissure.
+ */
+.lavaCrust {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 14% 62% at 9% 44%, rgba(18, 5, 2, 0.9), transparent 72%),
+    radial-gradient(ellipse 19% 74% at 31% 62%, rgba(24, 7, 2, 0.82), transparent 74%),
+    radial-gradient(ellipse 12% 56% at 52% 34%, rgba(16, 4, 2, 0.88), transparent 72%),
+    radial-gradient(ellipse 22% 70% at 71% 58%, rgba(22, 6, 2, 0.8), transparent 74%),
+    radial-gradient(ellipse 15% 60% at 92% 40%, rgba(20, 5, 2, 0.86), transparent 72%),
+    repeating-linear-gradient(96deg, rgba(10, 3, 1, 0.45) 0 5px, transparent 5px 46px);
+  background-size: 200% 100%, 200% 100%, 200% 100%, 200% 100%, 200% 100%, auto;
+  animation: crust 26s linear infinite;
+}
+
+@keyframes crust {
+  to {
+    background-position: -300px 0, -220px 0, -380px 0, -180px 0, -260px 0, 240px 0;
+  }
+}
+
+/* The light the lava throws UP the wall. Separate layer so it can breathe. */
+.lavaGlow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 21;
+  pointer-events: none;
+  background: linear-gradient(
+    0deg,
+    rgba(255, 122, 30, 0.55),
+    rgba(255, 90, 20, 0.18) 42%,
+    transparent 78%
+  );
+  mix-blend-mode: screen;
+  animation: breathe 4.2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+
+/* Heat haze: a thin band that shears as the lava rises. */
+.haze {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 23;
+  height: 220px;
+  pointer-events: none;
+  backdrop-filter: blur(2.5px);
+  mask-image: linear-gradient(0deg, #000 0%, transparent 100%);
+  animation: shimmer 3.1s ease-in-out infinite alternate;
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-6px) scaleY(1); }
+  to { transform: translateX(6px) scaleY(1.04); }
+}
+
+/* ---------- torch ---------- */
+
+/*
+ * The dark is one big overlay with a hole punched in it at the cursor. Two stops,
+ * because a single soft falloff makes the torch look like a vignette rather than a
+ * flame: a bright inner pool, then a long dim reach.
+ */
+.dark {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: radial-gradient(
+    circle var(--torch, 300px) at var(--tx, 50%) var(--ty, 50%),
+    transparent 0%,
+    rgba(6, 4, 3, 0.26) 36%,
+    rgba(5, 3, 2, 0.72) 64%,
+    rgba(3, 2, 1, 0.9) 100%
+  );
+}
+
+.torchGlow {
+  position: absolute;
+  z-index: 24;
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 168, 70, 0.28), transparent 62%);
+  mix-blend-mode: screen;
+}
+
+.flame {
+  position: absolute;
+  z-index: 26;
+  width: 26px;
+  height: 42px;
+  margin: -34px 0 0 -13px;
+  pointer-events: none;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  background: radial-gradient(ellipse at 50% 76%, #fff3c4 0%, #ffb43c 34%, #ff5a10 68%, transparent 74%);
+  filter: blur(0.4px);
+  animation: flicker 220ms steps(2) infinite;
+}
+
+@keyframes flicker {
+  0% { transform: scale(1, 1) translateY(0); }
+  50% { transform: scale(0.92, 1.08) translateY(-2px); }
+  100% { transform: scale(1.04, 0.96) translateY(1px); }
+}
+
+/* ---------- glyphs ---------- */
+
+.glyphs {
+  position: absolute;
+  left: 96px;
+  top: 168px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, 124px);
+  gap: 22px;
+}
+
+/*
+ * Carved, not printed: dark edge on the lit side, bright edge on the shadow side.
+ * Reversing the two makes the glyph stand proud of the wall instead of sinking in.
+ */
+.glyph {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  border-radius: 3px;
+  background: rgba(30, 22, 14, 0.35);
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.85),
+    inset -2px -2px 4px rgba(255, 210, 150, 0.18),
+    0 1px 0 rgba(255, 220, 170, 0.1);
+  display: grid;
+  place-items: center;
+  transition: box-shadow 160ms ease, transform 90ms ease;
+}
+
+.glyph:hover {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.85),
+    inset -2px -2px 4px rgba(255, 210, 150, 0.26),
+    0 0 22px rgba(224, 145, 47, 0.3);
+}
+
+.glyphDown {
+  transform: translate(1px, 2px);
+  box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.95);
+}
+
+.glyphLit {
+  background: rgba(90, 44, 8, 0.55);
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 26px rgba(255, 150, 40, 0.75),
+    0 0 34px rgba(255, 130, 30, 0.55);
+}
+
+.glyphSvg {
+  width: 82px;
+  height: 82px;
+  stroke: #d8c49a;
+  stroke-width: 5;
+  fill: none;
+  stroke-linecap: square;
+  filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, 0.8));
+}
+
+.glyphLit .glyphSvg {
+  stroke: #ffd899;
+  filter: drop-shadow(0 0 8px rgba(255, 170, 60, 0.9));
+}
+
+/* Dust falling out of the recess when a glyph is pressed. */
+.dust {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #cbb894;
+  pointer-events: none;
+  animation: fall 900ms linear forwards;
+}
+
+@keyframes fall {
+  from { opacity: 0.9; transform: translate(0, 0); }
+  to { opacity: 0; transform: translate(var(--dx, 0), 120px); }
+}
+
+/* ---------- the door ---------- */
+
+.door {
+  position: absolute;
+  left: 96px;
+  top: 168px;
+  z-index: 11;
+  width: 414px;
+  height: 414px;
+  border-radius: 3px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 108%, rgba(255, 130, 30, 0.5), transparent 70%),
+    linear-gradient(180deg, #1b120a, #070503);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.95), 0 0 60px rgba(255, 120, 30, 0.35);
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  align-content: center;
+  text-align: center;
+  animation: doorOpen 1400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes doorOpen {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+.doorText {
+  font-size: 15px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #ffb975;
+}
+
+.doorLink {
+  padding: 12px 26px;
+  border: 1px solid rgba(255, 170, 80, 0.55);
+  background: rgba(60, 24, 4, 0.6);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #ffd8a8;
+}
+
+.doorLink:hover {
+  background: rgba(120, 46, 6, 0.75);
+}
+
+/* ---------- journal ---------- */
+
+.journal {
+  position: absolute;
+  right: 92px;
+  top: 132px;
+  z-index: 12;
+  width: 470px;
+  padding: 32px 34px 28px;
+  transform: rotate(-1.4deg);
+  background:
+    radial-gradient(ellipse 60% 40% at 24% 12%, rgba(150, 110, 50, 0.22), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 82% 88%, rgba(120, 84, 34, 0.28), transparent 70%),
+    linear-gradient(180deg, #ded0ad, #cdba90);
+  color: #2c2214;
+  box-shadow: 0 24px 46px rgba(0, 0, 0, 0.75), inset 0 0 40px rgba(120, 90, 40, 0.25);
+}
+
+/* Torn top edge, cut with a repeating conic notch rather than an image. */
+.journal::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -9px;
+  height: 10px;
+  background: inherit;
+  clip-path: polygon(
+    0 100%, 3% 20%, 7% 90%, 12% 10%, 17% 80%, 23% 25%, 29% 95%, 35% 15%,
+    41% 85%, 47% 30%, 54% 90%, 60% 12%, 67% 80%, 73% 22%, 80% 92%, 87% 18%,
+    94% 84%, 100% 30%, 100% 100%
+  );
+}
+
+.journalHead {
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #6b573a;
+  border-bottom: 1px solid rgba(90, 70, 40, 0.35);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.journalBody {
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+.journalBody em {
+  font-style: italic;
+  color: #6d3a12;
+}
+
+.hand {
+  font-family: "Segoe Script", "Bradley Hand", cursive;
+  font-size: 18px;
+  color: #3a2a12;
+  transform: rotate(-0.6deg);
+  margin-top: 14px;
+  display: block;
+}
+
+.clip {
+  position: absolute;
+  right: 44px;
+  top: -14px;
+  width: 26px;
+  height: 62px;
+  border: 3px solid #9aa0a6;
+  border-radius: 12px;
+  border-bottom-color: transparent;
+  transform: rotate(8deg);
+}
+
+/* ---------- rub panel ---------- */
+
+.rub {
+  position: absolute;
+  left: 96px;
+  bottom: 168px;
+  z-index: 10;
+  width: 414px;
+  height: 190px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 0, 0, 0.6);
+}
+
+.rubReveal {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #4a3c26, #2a2015);
+  color: #ffcf8f;
+  font-size: 15px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 2;
+  padding: 0 20px;
+}
+
+.rubCanvas {
+  position: absolute;
+  inset: 0;
+  cursor: none;
+  touch-action: none;
+}
+
+/* ---------- chrome ---------- */
+
+.title {
+  position: absolute;
+  left: 96px;
+  top: 64px;
+  z-index: 12;
+}
+
+.titleMain {
+  font-size: 30px;
+  letter-spacing: 0.2em;
+  color: #f0d5a2;
+  text-shadow: 0 0 24px rgba(255, 140, 40, 0.4), 2px 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+.titleSub {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #a08a63;
+}
+
+/* Clear of the fissure — at bottom-left it was inside the lava's glow. */
+.hint {
+  position: absolute;
+  left: 552px;
+  bottom: 372px;
+  z-index: 12;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(232, 217, 184, 0.4);
+  line-height: 2;
+  pointer-events: none;
+}
+
+.vine {
+  position: absolute;
+  z-index: 14;
+  pointer-events: none;
+  filter: brightness(0.58) saturate(0.7) contrast(1.1);
+}
+
+/* ---------- the floor giving way ---------- */
+
+.collapse {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: #000;
+  animation: fall2 2600ms ease-in forwards;
+  display: grid;
+  place-items: center;
+}
+
+@keyframes fall2 {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.collapseText {
+  font-size: 17px;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: #7d6a4a;
+  text-align: center;
+  line-height: 2.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lavaCrust,
+  .lavaGlow,
+  .haze,
+  .flame,
+  .collapse {
+    animation: none;
+  }
+}

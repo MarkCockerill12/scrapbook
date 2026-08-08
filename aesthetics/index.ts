@@ -29,6 +29,8 @@ const PAGES: Record<string, ComponentType> = {
   ps1: dynamic(() => import("./ps1")),
   arcade: dynamic(() => import("./arcade")),
   news: dynamic(() => import("./news")),
+  aztec: dynamic(() => import("./aztec")),
+  "dead-mall": dynamic(() => import("./dead-mall")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };
