@@ -59,11 +59,25 @@ a broken layout. Fifteen reads as a guestbook that's been up for two years.
   heights left dead space that read as broken rather than period.
 - The custom cursor is an inline SVG data URI, so it needs no asset.
 
+## GIF furniture — sourced from GifCities
+
+The animated furniture came from **GifCities**, the Internet Archive's search over GIFs
+recovered when GeoCities was shut down. 154 of them across 12 slots, essentially all
+animated: under-construction workers, dividers, saucers, aliens, skulls, globes,
+envelopes, counters, sparkles.
+
+**Pick by shape, not by index.** GifCities returns whatever loosely matches a term, so
+"divider" comes back with text banners in it and "ufo" with wide title graphics. Sizing
+those by height alone blew them to enormous widths and wrecked the layout. `byShape()`
+filters on aspect ratio — wide-and-short for rules, roughly-square-and-small for objects
+— and falls back to the unfiltered pool when nothing matches.
+
+Some dividers are still text banners. That is *authentic*: GeoCities dividers frequently
+were.
+
 ## Still to do
 
 - `earlynet_uglytile` — competing tiled backgrounds per cell. Currently one CSS starfield.
-- `earlynet_construction`, `earlynet_flamebar`, `earlynet_dancing` — the animated GIF
-  furniture. Manual grabs; no open API serves these.
 - A MIDI player widget with a playlist.
 - Sparkle cursor trail.
 - Dial-up handshake on entry — wants a real sample, not a synth.

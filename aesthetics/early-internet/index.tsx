@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cutout } from "@/primitives/Cutout";
 import { chime, tone } from "@/lib/audio";
-import { count } from "@/lib/assets";
+import { slot as slotEntries, type AssetEntry } from "@/lib/assets";
 import { AESTHETICS, neighbour } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 import { sbGet, sbSet } from "@/lib/storage";
@@ -73,6 +73,75 @@ interface Entry {
   text: string;
 }
 
+/**
+ * Pick by SHAPE, not by index.
+ *
+ * GifCities returns whatever loosely matches a term, so "divider" comes back with text
+ * banners in it and "ufo" with wide title graphics. Sizing those by height alone blew
+ * them up to enormous widths and wrecked the layout. Filtering on aspect ratio picks
+ * the artefacts that are actually the right kind of object, and degrades to whatever
+ * exists when the filter matches nothing.
+ */
+function byShape(
+  slotId: string,
+  test: (e: AssetEntry) => boolean,
+  pick: number,
+): AssetEntry | null {
+  const all = slotEntries(AESTHETIC, slotId);
+  const fit = all.filter(test);
+  const pool = fit.length ? fit : all;
+  if (!pool.length) return null;
+  return pool[((pick % pool.length) + pool.length) % pool.length];
+}
+
+/** Wide and short: an actual rule, not a banner with words on it. */
+const isBar = (e: AssetEntry) => e.width / e.height >= 6 && e.height <= 26;
+
+/** Roughly square and small: an object, not a title graphic. */
+const isObject = (e: AssetEntry) => {
+  const r = e.width / e.height;
+  return r > 0.6 && r < 2.4 && e.width <= 220;
+};
+
+function Divider({ pick }: { pick: number }) {
+  const bar = byShape("earlynet_flamebar", isBar, pick);
+  if (!bar) return <div className={styles.hr} style={{ margin: "8px 0" }} />;
+  return (
+    <div
+      className={styles.divider}
+      style={{ backgroundImage: `url(${bar.src})`, height: Math.min(bar.height, 22) }}
+    />
+  );
+}
+
+/** A GIF constrained on BOTH axes, so a wide one can't explode the row. */
+function Sticker({
+  slotId,
+  pick,
+  h,
+  test = isObject,
+}: {
+  slotId: string;
+  pick: number;
+  h: number;
+  test?: (e: AssetEntry) => boolean;
+}) {
+  const e = byShape(slotId, test, pick);
+  if (!e) return null;
+  const w = Math.min(Math.round(h * (e.width / e.height)), 130);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={e.src}
+      alt=""
+      width={w}
+      height={h}
+      className={styles.badge}
+      style={{ width: w, height: h, objectFit: "contain" }}
+    />
+  );
+}
+
 export default function EarlyInternet() {
   const begin = useShell((s) => s.beginTransition);
 
@@ -84,7 +153,7 @@ export default function EarlyInternet() {
   const [secret, setSecret] = useState(false);
   const gbRef = useRef<HTMLDivElement>(null);
 
-  const badgeCount = count(AESTHETIC, "earlynet_button");
+  const badgeCount = slotEntries(AESTHETIC, "earlynet_button").length;
 
   // Hydration-safe: the counter and stored guestbook both read localStorage, which
   // doesn't exist on the server. Both load in an effect, after hydration has settled.
@@ -128,7 +197,13 @@ export default function EarlyInternet() {
         {/* ---------------- header ---------------- */}
         <header className={styles.header}>
           <h1 className={styles.title}>
-            ☆ ZACK&apos;S UFO &amp; PARANORMAL HOMEPAGE ☆
+            <span className={styles.titleIcon}>
+              <Sticker slotId="earlynet_star" pick={2} h={30} />
+            </span>
+            ZACK&apos;S UFO &amp; PARANORMAL HOMEPAGE
+            <span className={styles.titleIcon}>
+              <Sticker slotId="earlynet_star" pick={5} h={30} />
+            </span>
           </h1>
           <div className={styles.subtitle}>
             v3.0 &nbsp;|&nbsp; last updated 11/23/99 &nbsp;|&nbsp;{" "}
@@ -195,7 +270,17 @@ export default function EarlyInternet() {
               was 11. Everything on this page is <b>100% TRUE</b> and I have the photos
               to prove it (see UFO Pics!!).
             </p>
-            <div className={styles.hr} style={{ margin: "8px 0" }} />
+            <Divider pick={1} />
+            <div className={styles.ufoRow}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Sticker key={i} slotId="earlynet_ufo" pick={i} h={52} />
+              ))}
+              <Sticker slotId="earlynet_skull" pick={0} h={46} />
+              <Sticker slotId="earlynet_globe" pick={1} h={46} />
+            </div>
+
+            <Divider pick={4} />
+
             <p className={styles.welcome} style={{ fontSize: 13 }}>
               <span className={styles.blink} style={{ color: "#ff4444" }}>
                 ⚠
@@ -280,7 +365,16 @@ export default function EarlyInternet() {
             </div>
             <div className={styles.small}>you are visitor #{visits}</div>
             <div className={styles.underConstruction} style={{ marginTop: 8 }}>
-              🚧 UNDER CONSTRUCTION 🚧
+              <span className={styles.titleIcon}>
+                <Sticker
+                  slotId="earlynet_construction"
+                  pick={3}
+                  h={38}
+                  test={(e) => e.width / e.height >= 1.2 && e.width / e.height <= 5}
+                />
+              </span>
+              <br />
+              UNDER CONSTRUCTION
             </div>
           </div>
 
