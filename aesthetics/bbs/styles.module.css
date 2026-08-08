@@ -1,0 +1,215 @@
+/*
+ * BBS / Teletext — THE ATTIC BBS, 1987.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * This is NOT the Matrix channel with different colours. Matrix is cinematic hacking;
+ * this is what a modem actually connected to in 1987, and the differences are
+ * specific:
+ *
+ *   1. A HARD 80x25 CHARACTER GRID. Everything snaps to it. No free positioning, no
+ *      floating panels, no rounded anything. The grid is the layout engine.
+ *   2. THE 16-COLOUR ANSI PALETTE, used flatly. No gradients, no glow on everything —
+ *      a CGA/EGA monitor could not do a gradient, and faking one is the tell.
+ *   3. AMBER OR GREEN, one or the other, plus block characters for "graphics".
+ *   4. TEXT ARRIVES AT BAUD RATE. A 1987 board did not paint instantly, and that
+ *      slowness is the defining sensation of the era.
+ *   5. KEYBOARD ONLY. There is no pointer. Menus are numbered.
+ */
+
+.root {
+  --bbs-bg: #000000;
+  --bbs-amber: #ffb000;
+  --bbs-amber-dim: #a06800;
+  --bbs-white: #ffffff;
+  --bbs-cyan: #00aaaa;
+  --bbs-cyan-hi: #55ffff;
+  --bbs-red: #aa0000;
+  --bbs-green: #00aa00;
+  --bbs-blue: #0000aa;
+  --bbs-magenta: #aa00aa;
+
+  --cell-w: 15px;
+  --cell-h: 28px;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bbs-bg);
+  color: var(--bbs-amber);
+  font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+  font-size: 21px;
+  line-height: var(--cell-h);
+  letter-spacing: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* The screen: a fixed 80x25 grid, centred, with the bezel around it. */
+.screen {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  transform: translateX(-50%);
+  width: calc(var(--cell-w) * 80);
+  height: calc(var(--cell-h) * 25);
+  padding: 0;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.line {
+  height: var(--cell-h);
+  white-space: pre;
+}
+
+/* ANSI colour classes. Flat, no glow — the glow lives on the whole screen instead,
+   which is how a real phosphor tube behaves. */
+.c0 { color: #555555; }
+.c1 { color: var(--bbs-cyan); }
+.c2 { color: var(--bbs-cyan-hi); }
+.c3 { color: var(--bbs-amber); }
+.c4 { color: var(--bbs-white); }
+.c5 { color: var(--bbs-red); }
+.c6 { color: var(--bbs-green); }
+.c7 { color: var(--bbs-magenta); }
+.c8 { color: var(--bbs-amber-dim); }
+
+.inverse {
+  background: var(--bbs-amber);
+  color: #000;
+}
+
+/* ---------- CRT treatment ---------- */
+
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  box-shadow:
+    inset 0 0 140px rgba(255, 176, 0, 0.07),
+    inset 0 0 60px rgba(0, 0, 0, 0.9);
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 41;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.34) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+.curve {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 42;
+  background: radial-gradient(
+    ellipse 78% 74% at center,
+    transparent 58%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+}
+
+/* ---------- status line ---------- */
+
+.status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  background: var(--bbs-blue);
+  color: var(--bbs-white);
+  font-size: 15px;
+  line-height: 34px;
+  /* Wide right pad: the dial is fixed to the viewport's bottom-right and was covering
+     the caller/uptime segment. */
+  padding: 0 320px 0 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  z-index: 30;
+  letter-spacing: 0.04em;
+}
+
+.statusSeg {
+  white-space: nowrap;
+}
+
+.statusSeg b {
+  color: var(--bbs-cyan-hi);
+  font-weight: normal;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 34px;
+  font-size: 14px;
+  line-height: 34px;
+  padding: 0 24px;
+  color: var(--bbs-amber-dim);
+  display: flex;
+  justify-content: space-between;
+  z-index: 30;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* ---------- input ---------- */
+
+.entry {
+  display: inline-block;
+  min-width: 4px;
+}
+
+.cursor {
+  display: inline-block;
+  width: var(--cell-w);
+  background: var(--bbs-amber);
+  color: #000;
+  animation: blink 1.05s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Fires when the connection speed changes, so the whole screen flickers like a
+   resync. */
+.resync {
+  animation: resync 260ms steps(3) 1;
+}
+
+@keyframes resync {
+  0% { opacity: 0.2; transform: translateX(-50%) skewX(6deg); }
+  50% { opacity: 0.9; transform: translateX(-50%) skewX(-3deg); }
+  100% { opacity: 1; transform: translateX(-50%) skewX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor,
+  .resync {
+    animation: none;
+  }
+}

@@ -105,6 +105,19 @@ const SHOTS = [
   // 02 Early Internet
   ["earlynet", "/early-internet", "desktop", async (p) => p.waitForTimeout(2200)],
 
+  // 16 BBS
+  ["bbs", "/bbs", "desktop", async (p) => p.waitForTimeout(3800)],
+  [
+    "bbs-messages",
+    "/bbs",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(3800);
+      await p.keyboard.press("2");
+      await p.waitForTimeout(2600);
+    },
+  ],
+
   // 08 Matrix
   ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
   [

@@ -16,6 +16,7 @@ const PAGES: Record<string, ComponentType> = {
   "frutiger-aero": dynamic(() => import("./frutiger-aero")),
   "early-internet": dynamic(() => import("./early-internet")),
   matrix: dynamic(() => import("./matrix")),
+  bbs: dynamic(() => import("./bbs")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };
