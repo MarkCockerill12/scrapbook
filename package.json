@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "oxlint .",
     "typecheck": "tsc --noEmit",
-    "check": "bun run typecheck && bun run lint"
+    "check": "bun run typecheck && bun run lint",
+    "assets:process": "node scripts/images/process.mjs",
+    "assets:usage": "node scripts/r2/usage.mjs",
+    "assets:upload": "node scripts/r2/upload.mjs",
+    "shots": "node scripts/shots.mjs"
   },
   "dependencies": {
     "animejs": "^4.5.0",
