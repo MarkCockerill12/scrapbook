@@ -1,0 +1,415 @@
+/*
+ * Early Internet — GeoCities, 1997.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The hard part of this aesthetic is that bad-on-purpose reads as broken-by-accident
+ * unless the composition is deliberate. Real GeoCities pages were badly laid out in
+ * SPECIFIC, repeatable ways, and copying those beats inventing new ugliness:
+ *
+ *   1. NESTED BEVELS. Tables inside tables, each with its own outset/inset border and
+ *      a different bgcolor. Depth by border, never by shadow.
+ *   2. CENTRED EVERYTHING, at inconsistent widths. <center> was the layout engine, so
+ *      blocks stack down the middle and never line up with each other.
+ *   3. COMPETING TILED BACKGROUNDS. Different tiles in different cells, none of them
+ *      considering contrast with the text on top.
+ *   4. TOO MANY TYPEFACES AT TOO MANY SIZES. Comic Sans, Times, Arial, all at once.
+ *   5. SATURATED PRIMARIES ON BLACK. #0f0, #ff0, #f0f — never a tint, never a tone.
+ *
+ * Restraint is the one thing that would be wrong here.
+ */
+
+.root {
+  --ei-green: #00ff00;
+  --ei-yellow: #ffff00;
+  --ei-magenta: #ff00ff;
+  --ei-cyan: #00ffff;
+  --ei-link: #4444ff;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: #000033;
+  color: var(--ei-yellow);
+  font-family: "Times New Roman", Times, serif;
+  font-size: 15px;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><polygon points='2,2 2,20 7,15 11,22 14,20 10,13 17,13' fill='white' stroke='black'/></svg>")
+      2 2,
+    auto;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.root button {
+  font: inherit;
+  cursor: inherit;
+}
+
+/* starfield backdrop */
+.stars {
+  position: absolute;
+  inset: 0;
+  background-color: #000018;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 70% 60%, #fff, transparent),
+    radial-gradient(2px 2px at 40% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 10% 70%, #ccf, transparent),
+    radial-gradient(1.5px 1.5px at 55% 15%, #fff, transparent);
+  background-size: 260px 260px, 340px 340px, 420px 420px, 300px 300px, 380px 380px, 290px 290px;
+}
+
+.layout {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 232px 1fr 250px;
+  gap: 12px;
+  padding: 14px 18px 10px;
+}
+
+/* ---------- the universal 90s box ---------- */
+
+.box {
+  border: 4px outset #888;
+  background: #000044;
+  padding: 8px;
+}
+
+.boxTitle {
+  background: var(--ei-magenta);
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+  padding: 3px;
+  border: 2px inset #fff;
+  margin-bottom: 7px;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- header ---------- */
+
+.header {
+  grid-column: 1 / -1;
+  text-align: center;
+  border: 5px ridge var(--ei-yellow);
+  background: linear-gradient(90deg, #300 0%, #003 50%, #030 100%);
+  padding: 6px 0 8px;
+}
+
+.title {
+  font-family: "Comic Sans MS", "Chalkboard SE", cursive;
+  font-size: 34px;
+  color: var(--ei-yellow);
+  text-shadow:
+    2px 2px 0 #f00,
+    4px 4px 0 #00f;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+}
+
+.subtitle {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: var(--ei-cyan);
+  margin-top: 3px;
+}
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  margin-top: 5px;
+  border-top: 2px groove #666;
+  border-bottom: 2px groove #666;
+  background: #000;
+  padding: 2px 0;
+}
+
+.marqueeInner {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scrollLeft 17s linear infinite;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: var(--ei-green);
+  font-weight: bold;
+}
+
+@keyframes scrollLeft {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* ---------- blink ---------- */
+
+.blink {
+  animation: blinker 1.05s steps(2, start) infinite;
+}
+
+@keyframes blinker {
+  50% {
+    visibility: hidden;
+  }
+}
+
+/* ---------- nav ---------- */
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.navBtn {
+  display: block;
+  width: 100%;
+  border: 3px outset #aaa;
+  background: #202060;
+  color: var(--ei-yellow);
+  font-family: "Comic Sans MS", cursive;
+  font-size: 13px;
+  padding: 4px 6px;
+  text-align: left;
+}
+
+.navBtn:hover {
+  border-style: inset;
+  background: var(--ei-magenta);
+  color: #fff;
+}
+
+.navBtnHot {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+/* ---------- badge walls ---------- */
+
+.badgeWall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-content: flex-start;
+  overflow: hidden;
+}
+
+.badge {
+  display: block;
+  border: 1px solid #444;
+  line-height: 0;
+  flex: 0 0 auto;
+}
+
+.badge:hover {
+  border-color: var(--ei-yellow);
+}
+
+/* ---------- main column ---------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.welcome {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #fff;
+}
+
+.welcome b {
+  color: var(--ei-green);
+}
+
+.welcome i {
+  color: var(--ei-cyan);
+}
+
+.hr {
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    #f00 0 14px,
+    #ff0 14px 28px,
+    #0f0 28px 42px,
+    #0ff 42px 56px,
+    #00f 56px 70px,
+    #f0f 70px 84px
+  );
+  border: 1px solid #fff;
+}
+
+/* ---------- guestbook ---------- */
+
+.gbList {
+  /* Fills whatever height the box has left. A fixed height left a large dead area
+     underneath it, which reads as a broken layout rather than a period one. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border: 3px inset #666;
+  background: #000;
+  padding: 5px;
+  font-size: 13px;
+}
+
+.gbEntry {
+  padding: 3px 0;
+  border-bottom: 1px dotted #444;
+  line-height: 1.35;
+}
+
+.gbForm {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.gbInput {
+  flex: 1;
+  border: 3px inset #888;
+  background: #fff;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  padding: 3px 5px;
+  min-width: 0;
+}
+
+.gbSubmit {
+  border: 3px outset #ccc;
+  background: #c0c0c0;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 3px 12px;
+}
+
+.gbSubmit:active {
+  border-style: inset;
+}
+
+/* ---------- counter ---------- */
+
+.counter {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.counterDigit {
+  background: #000;
+  color: #0f0;
+  border: 2px inset #555;
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  font-size: 22px;
+  padding: 1px 5px;
+  text-shadow: 0 0 6px #0f0;
+}
+
+/* ---------- webring ---------- */
+
+.webring {
+  grid-column: 1 / -1;
+  border: 4px ridge #0a0;
+  background: #001100;
+  /* Wide right pad: the dial is fixed to the viewport's bottom-right and was sitting
+     directly on top of the NEXT button. */
+  padding: 5px 320px 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: var(--ei-green);
+}
+
+.webringBtn {
+  border: 3px outset #0a0;
+  background: #003300;
+  color: var(--ei-green);
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
+.webringBtn:hover {
+  background: var(--ei-green);
+  color: #000;
+}
+
+/* ---------- misc ---------- */
+
+.underConstruction {
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  color: #ff8800;
+  font-weight: bold;
+}
+
+.broken {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #888;
+  background: #fff;
+  color: #f00;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  line-height: 24px;
+  text-align: center;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.secret {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  color: #0f0;
+  font-family: "Courier New", monospace;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 60px;
+}
+
+.secretTitle {
+  font-family: "Comic Sans MS", cursive;
+  font-size: 40px;
+  color: var(--ei-magenta);
+  text-shadow: 3px 3px 0 var(--ei-yellow);
+  margin-bottom: 22px;
+}
+
+.small {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  color: #aaa;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeInner,
+  .blink {
+    animation: none;
+  }
+}

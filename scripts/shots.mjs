@@ -102,6 +102,9 @@ const SHOTS = [
     },
   ],
 
+  // 02 Early Internet
+  ["earlynet", "/early-internet", "desktop", async (p) => p.waitForTimeout(2200)],
+
   // 08 Matrix
   ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
   [
