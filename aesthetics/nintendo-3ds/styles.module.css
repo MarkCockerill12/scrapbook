@@ -1,0 +1,551 @@
+/*
+ * Japanese 3DS — a borrowed console, left on the drawing app.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * Drawing a handheld in CSS lives or dies on plastic, and plastic is four things:
+ *   1. A HARD SPECULAR LINE ALONG THE TOP EDGE, not a soft gradient. Injection-moulded
+ *      ABS has a sharp highlight where the surface turns.
+ *   2. THE SCREEN IS A HOLE, NOT A PANEL. Deep inset shadow all round, and the glass
+ *      sits *in front* of the bezel with its own reflection.
+ *   3. SEAMS AND PARTING LINES. Two shell halves meeting, a hinge, a battery door.
+ *      Perfectly smooth objects read as icons, not hardware.
+ *   4. THE BACKGROUND IS OUT OF FOCUS. A device photographed at arm's length has a
+ *      shallow depth of field; a sharp background makes it read as a render.
+ */
+
+.root {
+  --shell: #23272e;
+  --shell-lit: #3c424c;
+  --pink: #e64c8c;
+  --ink: #f2f4f8;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #06070c;
+  color: var(--ink);
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ---------- night street ---------- */
+
+.street {
+  position: absolute;
+  inset: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(16px) brightness(0.5) saturate(1.25) hue-rotate(-12deg);
+}
+
+.streetTint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 40% at 22% 18%, rgba(230, 76, 140, 0.18), transparent 70%),
+    radial-gradient(ellipse 46% 40% at 84% 30%, rgba(60, 180, 230, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(4, 6, 12, 0.4), rgba(4, 6, 12, 0.85));
+}
+
+/* Overhead cables. Every Japanese street photo has them and nothing else says it faster. */
+.wires {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 300px;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* ---------- the console ---------- */
+
+.console {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  width: 1080px;
+  transform: translateX(-50%);
+  perspective: 1800px;
+}
+
+.half {
+  position: relative;
+  width: 1080px;
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0 2px, transparent 2px),
+    linear-gradient(178deg, var(--shell-lit) 0%, var(--shell) 34%, #171a20 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 30px 60px rgba(0, 0, 0, 0.7);
+}
+
+.top {
+  height: 430px;
+  transform-origin: 50% 100%;
+  transition: transform 900ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.closed {
+  transform: rotateX(-88deg);
+}
+
+.bottom {
+  height: 430px;
+  margin-top: 6px;
+  border-radius: 10px 10px 26px 26px;
+}
+
+/* The hinge: the one place both shells meet, and the only bright metal on the unit. */
+.hinge {
+  position: absolute;
+  left: 50%;
+  top: 424px;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #6d747f, #2a2e35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  z-index: 5;
+}
+
+/* ---------- screens ---------- */
+
+.screenWell {
+  position: absolute;
+  border-radius: 4px;
+  background: #05060a;
+  box-shadow:
+    inset 0 0 0 2px #0b0d12,
+    inset 0 4px 14px rgba(0, 0, 0, 0.95),
+    0 0 0 12px #16181e;
+  overflow: hidden;
+}
+
+.topScreen {
+  left: 230px;
+  top: 30px;
+  width: 620px;
+  height: 372px;
+}
+
+/*
+ * 456x342 at top:16, not 496x372 at top:26 — the taller well pushed its outer
+ * shadow onto SELECT/START/HOME along the bottom lip of the shell.
+ */
+.bottomScreen {
+  left: 312px;
+  top: 16px;
+  width: 456px;
+  height: 342px;
+}
+
+/* Glass sits in front of the bezel and catches the room. */
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  background: linear-gradient(122deg, rgba(255, 255, 255, 0.1) 0 26%, transparent 42%);
+}
+
+.sleeping {
+  filter: brightness(0.04);
+}
+
+/* ---------- top screen content ---------- */
+
+.layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.sky {
+  background: linear-gradient(180deg, #1a1140 0%, #4a1f56 46%, #b2456a 78%, #f2915c 100%);
+}
+
+.moon {
+  position: absolute;
+  right: 88px;
+  top: 44px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #fff6d8, #ffdca0 60%, #e0b070);
+  box-shadow: 0 0 60px 12px rgba(255, 220, 160, 0.4);
+}
+
+.skylineFar,
+.skylineNear {
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  bottom: 0;
+}
+
+.building {
+  position: absolute;
+  bottom: 0;
+  background: #170f2c;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.06);
+}
+
+.buildingNear {
+  background: #0b0718;
+}
+
+.win {
+  position: absolute;
+  width: 4px;
+  height: 6px;
+  background: #ffd98a;
+  opacity: 0.8;
+}
+
+.appBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 6;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(226, 232, 240, 0.82));
+  color: #1d2430;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.appBadge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+/* StreetPass ticker: Miis walk past along the bottom of the top screen. */
+.parade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  height: 78px;
+  background: linear-gradient(180deg, transparent, rgba(10, 6, 20, 0.7));
+}
+
+.walker {
+  position: absolute;
+  bottom: 8px;
+  width: 40px;
+  text-align: center;
+  font-size: 9px;
+  color: #ffe6f2;
+  text-shadow: 0 1px 3px #000;
+}
+
+.walkerHead {
+  width: 26px;
+  height: 26px;
+  margin: 0 auto 3px;
+  border-radius: 50%;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.18), 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- bottom screen (the drawing app) ---------- */
+
+.paper {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 140, 180, 0.14) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(120, 140, 180, 0.14) 0 1px, transparent 1px 24px),
+    #f6f4ea;
+}
+
+.draw {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.tools {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: linear-gradient(180deg, #cfd6e2, #9aa5b8);
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.swatchOn {
+  outline: 2px solid #1d2430;
+  outline-offset: 2px;
+}
+
+.tool {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1d2430;
+  background: linear-gradient(180deg, #ffffff, #d5dbe6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ---------- physical controls ---------- */
+
+.dpad {
+  position: absolute;
+  left: 120px;
+  top: 250px;
+  width: 96px;
+  height: 96px;
+}
+
+.dpad span {
+  position: absolute;
+  background: linear-gradient(180deg, #40454e, #23272e);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 4px rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+}
+
+.pad {
+  position: absolute;
+  left: 128px;
+  top: 132px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, #4a505b, #1d2027 72%);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.pad::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #5a616e, #2a2e36);
+  box-shadow: inset 0 -3px 5px rgba(0, 0, 0, 0.5);
+}
+
+.face {
+  position: absolute;
+  right: 118px;
+  top: 140px;
+  width: 130px;
+  height: 130px;
+}
+
+.faceBtn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #565d69, #262a31 70%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), 0 3px 0 rgba(0, 0, 0, 0.65);
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  color: #aeb6c4;
+  transition: transform 60ms ease, box-shadow 60ms ease;
+}
+
+.faceBtn:active,
+.btnDown {
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.smallBtn {
+  position: absolute;
+  bottom: 16px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #aeb6c4;
+  background: linear-gradient(180deg, #3a4049, #22262c);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.home {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: 74px;
+  height: 22px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #3a4049, #1c2026);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 0 rgba(0, 0, 0, 0.6);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #8f97a5;
+  display: grid;
+  place-items: center;
+}
+
+/* The 3D slider, on the right edge of the upper shell. */
+.slider3d {
+  position: absolute;
+  right: 34px;
+  top: 96px;
+  width: 34px;
+  height: 190px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #14161b, #24282f);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.slider3dKnob {
+  position: absolute;
+  left: 3px;
+  width: 28px;
+  height: 34px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #7c848f, #3c424b);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.slider3dLabel {
+  position: absolute;
+  right: 76px;
+  top: 96px;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: #7f8794;
+  writing-mode: vertical-rl;
+}
+
+.led {
+  position: absolute;
+  left: 40px;
+  top: 400px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #12161c;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.ledOn {
+  background: #4ab8ff;
+  box-shadow: 0 0 16px 4px rgba(74, 184, 255, 0.8);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+.camera {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #4a5666, #06080c 70%);
+  box-shadow: 0 0 0 2px #14171d;
+}
+
+.grille {
+  position: absolute;
+  top: 60px;
+  width: 14px;
+  height: 100px;
+  background: repeating-linear-gradient(180deg, #14171d 0 3px, transparent 3px 8px);
+  border-radius: 4px;
+}
+
+/* ---------- chrome ---------- */
+
+.hint {
+  position: absolute;
+  left: 40px;
+  bottom: 26px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(242, 244, 248, 0.45);
+  line-height: 2;
+  pointer-events: none;
+}
+
+.lid {
+  position: absolute;
+  right: 40px;
+  bottom: 26px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #dfe5ef;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.lid:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledOn,
+  .top {
+    animation: none;
+    transition: none;
+  }
+}

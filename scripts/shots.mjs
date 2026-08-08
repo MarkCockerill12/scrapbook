@@ -179,6 +179,37 @@ const SHOTS = [
     },
   ],
 
+  // 03 Cottagecore
+  ["cottage", "/cottagecore", "desktop", async (p) => p.waitForTimeout(2000)],
+  [
+    "cottage-autumn",
+    "/cottagecore",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.getByRole("button", { name: "autumn" }).click();
+      await p.waitForTimeout(1800);
+    },
+  ],
+
+  // 12 Japanese 3DS
+  ["n3ds", "/nintendo-3ds", "desktop", async (p) => p.waitForTimeout(1800)],
+  [
+    "n3ds-draw",
+    "/nintendo-3ds",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.mouse.move(700, 620);
+      await p.mouse.down();
+      for (let i = 0; i < 40; i++) {
+        await p.mouse.move(660 + Math.sin(i / 4) * 130, 600 + Math.cos(i / 3) * 90);
+      }
+      await p.mouse.up();
+      await p.waitForTimeout(500);
+    },
+  ],
+
   // 13 Dead Mall
   ["deadmall-top", "/dead-mall", "desktop", async (p) => p.waitForTimeout(1800)],
   [

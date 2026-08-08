@@ -91,6 +91,30 @@ export function cut(
   return pool[((pick % pool.length) + pool.length) % pool.length];
 }
 
+/**
+ * The inverse of `cutouts`: only the ORIGINAL photographs in a slot.
+ *
+ * After the cutout stage a slot holds both, and `one()` walks the lot — so a page
+ * that wants a backdrop and asks for `one(slot, 2)` can silently get a matted
+ * version, which renders as a mostly-transparent hole. Backdrops must use this.
+ */
+export function photos(aesthetic: string, slotId: string): AssetEntry[] {
+  const all = slot(aesthetic, slotId);
+  const flat = all.filter((e) => !e.hasAlpha);
+  return flat.length ? flat : all;
+}
+
+/** One original photograph from a slot, wrapping like `one()`. */
+export function pic(
+  aesthetic: string,
+  slotId: string,
+  pick = 0,
+): AssetEntry | null {
+  const pool = photos(aesthetic, slotId);
+  if (!pool.length) return null;
+  return pool[((pick % pool.length) + pool.length) % pool.length];
+}
+
 /** How many images a slot has. Useful for laying out "as many as we've got" grids. */
 export function count(aesthetic: string, slotId: string): number {
   return DATA.aesthetics?.[aesthetic]?.[slotId]?.length ?? 0;
