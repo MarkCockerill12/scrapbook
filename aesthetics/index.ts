@@ -19,6 +19,8 @@ const PAGES: Record<string, ComponentType> = {
   bbs: dynamic(() => import("./bbs")),
   "deep-sea": dynamic(() => import("./deep-sea")),
   neon: dynamic(() => import("./neon")),
+  // tiki: built, but held back pending curated photography — see its README.
+  // tiki: dynamic(() => import("./tiki")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };

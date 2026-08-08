@@ -155,6 +155,21 @@ const SHOTS = [
     },
   ],
 
+  // 05 Tiki
+  ["tiki", "/tiki", "desktop", async (p) => p.waitForTimeout(1800)],
+  [
+    "tiki-dark",
+    "/tiki",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      for (let i = 1; i <= 4; i++) {
+        await p.getByRole("button", { name: `Torch ${i}` }).click();
+      }
+      await p.waitForTimeout(1200);
+    },
+  ],
+
   // 08 Matrix
   ["matrix", "/matrix", "desktop", async (p) => p.waitForTimeout(2200)],
   [

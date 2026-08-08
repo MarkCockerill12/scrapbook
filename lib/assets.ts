@@ -66,6 +66,31 @@ export function one(
   return entries[((pick % entries.length) + entries.length) % entries.length];
 }
 
+/**
+ * Only the alpha-bearing versions of a slot.
+ *
+ * After the cutout stage a slot holds BOTH the original photo and its matted version,
+ * because process.mjs walks `raw/<a>/` and `raw/<a>/cutout/` into the same slot. A
+ * collage wants the cutouts; a backdrop wants the originals. Falls back to everything
+ * when nothing has been cut yet, so pages work before the stage has been run.
+ */
+export function cutouts(aesthetic: string, slotId: string): AssetEntry[] {
+  const all = slot(aesthetic, slotId);
+  const alpha = all.filter((e) => e.hasAlpha);
+  return alpha.length ? alpha : all;
+}
+
+/** One cutout from a slot, wrapping like `one()`. */
+export function cut(
+  aesthetic: string,
+  slotId: string,
+  pick = 0,
+): AssetEntry | null {
+  const pool = cutouts(aesthetic, slotId);
+  if (!pool.length) return null;
+  return pool[((pick % pool.length) + pool.length) % pool.length];
+}
+
 /** How many images a slot has. Useful for laying out "as many as we've got" grids. */
 export function count(aesthetic: string, slotId: string): number {
   return DATA.aesthetics?.[aesthetic]?.[slotId]?.length ?? 0;

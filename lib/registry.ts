@@ -204,8 +204,11 @@ const ROSTER: Omit<Aesthetic, "channel">[] = [
     name: "Tropical Night",
     tagline: "Kai's Tiki Lounge",
     accent: "#ff7a3d",
+    // Code is complete and the cutout pipeline works; held back because the
+    // auto-harvested photography is the wrong material (see aesthetics/tiki/README.md).
     status: "planned",
     canvas: FIT,
+    letterbox: "#06080f",
     map: { x: 34, y: 8 },
     tags: ["warm", "dark", "fire", "beach"],
   },
