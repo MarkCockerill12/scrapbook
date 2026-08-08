@@ -21,6 +21,7 @@ const PAGES: Record<string, ComponentType> = {
   neon: dynamic(() => import("./neon")),
   // tiki: built, but held back pending curated photography — see its README.
   // tiki: dynamic(() => import("./tiki")),
+  win98: dynamic(() => import("./win98")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };

@@ -155,18 +155,22 @@ const SHOTS = [
     },
   ],
 
-  // 05 Tiki
-  ["tiki", "/tiki", "desktop", async (p) => p.waitForTimeout(1800)],
+  // 18 Windows 98
+  ["win98", "/win98", "desktop", async (p) => p.waitForTimeout(1500)],
   [
-    "tiki-dark",
-    "/tiki",
+    "win98-errors",
+    "/win98",
     "desktop",
     async (p) => {
-      await p.waitForTimeout(1400);
-      for (let i = 1; i <= 4; i++) {
-        await p.getByRole("button", { name: `Torch ${i}` }).click();
-      }
       await p.waitForTimeout(1200);
+      await p.getByRole("button", { name: "Recycle Bin" }).click();
+      await p.waitForTimeout(500);
+      const ok = p.getByRole("button", { name: "OK" }).first();
+      if (await ok.count()) await ok.click();
+      await p.waitForTimeout(500);
+      const ok2 = p.getByRole("button", { name: "OK" }).first();
+      if (await ok2.count()) await ok2.click();
+      await p.waitForTimeout(900);
     },
   ],
 
