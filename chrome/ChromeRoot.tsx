@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { BootScreen } from "@/chrome/BootScreen";
 import { ConsentModal } from "@/chrome/ConsentModal";
 import { Dial } from "@/chrome/Dial";
 import { Transition } from "@/chrome/Transition";
@@ -22,6 +23,8 @@ export function ChromeRoot() {
   const hydrate = useShell((s) => s.hydrate);
   const markVisited = useShell((s) => s.markVisited);
   const setMapOpen = useShell((s) => s.setMapOpen);
+  const booted = useShell((s) => s.booted);
+  const setBooted = useShell((s) => s.setBooted);
 
   useEffect(() => {
     hydrate();
@@ -35,15 +38,23 @@ export function ChromeRoot() {
   }, [current, markVisited]);
 
   // Landing anywhere that isn't a channel (the root, a bad slug) should present the
-  // map rather than a dead end.
+  // map rather than a dead end — but not until the title sequence has cleared, or
+  // the map pops up behind it.
   useEffect(() => {
-    if (!current) setMapOpen(true);
-  }, [current, setMapOpen]);
+    if (!current && booted) setMapOpen(true);
+  }, [current, booted, setMapOpen]);
+
+  // Arriving directly on a channel skips the title sequence entirely: it's the site's
+  // introduction, and someone following a deep link has already been introduced.
+  useEffect(() => {
+    if (current && !booted) setBooted(true);
+  }, [current, booted, setBooted]);
 
   return (
     <>
       <Transition />
       <WorldMap />
+      {!current && <BootScreen />}
       <ConsentModal />
       {current && <Dial current={current} />}
     </>

@@ -28,6 +28,12 @@ export interface Aesthetic {
   accent: string;
   status: AestheticStatus;
   canvas: { width: number; height: number; mode: CanvasMode };
+  /**
+   * Painted around the canvas when the viewport aspect doesn't match. Treat it as
+   * part of the composition — a CRT bezel, the desk the scrapbook sits on, mall
+   * carpet, sand — not as dead space. Defaults to black.
+   */
+  letterbox?: string;
   /** Position on the world map, as percentages of the map's own coordinate space. */
   map: { x: number; y: number };
   tags: string[];

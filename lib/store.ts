@@ -26,11 +26,14 @@ interface ShellState {
   /** Slugs the visitor has landed on. Drives map "seen" markers and unlock eggs. */
   visited: string[];
   mapOpen: boolean;
+  /** The title sequence has finished (or been skipped). Gates the map on the root route. */
+  booted: boolean;
   phase: TransitionPhase;
   /** Slug we're travelling to, so the transition can theme itself to the destination. */
   travellingTo: string | null;
 
   hydrate: () => void;
+  setBooted: (booted: boolean) => void;
   decideConsent: (granted: boolean) => void;
   setMuted: (muted: boolean) => void;
   toggleMute: () => void;
@@ -46,8 +49,11 @@ export const useShell = create<ShellState>((set, get) => ({
   muted: true, // always muted until the visitor asks otherwise
   visited: [],
   mapOpen: false,
+  booted: false,
   phase: "idle",
   travellingTo: null,
+
+  setBooted: (booted) => set({ booted }),
 
   hydrate: () => {
     if (get().hydrated) return;

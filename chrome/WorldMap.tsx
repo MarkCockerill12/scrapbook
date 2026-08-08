@@ -1,26 +1,54 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { CanvasStage } from "@/components/CanvasStage";
 import { AESTHETICS, type Aesthetic } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 
 /**
- * The map. Tier 2 of the nav: zoom out from a single channel to the whole roster and
- * jump straight to any of them without cycling.
+ * The map. Tier 2 of the nav: zoom out from a channel to the whole roster.
  *
- * ART DIRECTION IS PROVISIONAL. See OPEN_QUESTIONS.md #6 — this is the one surface
- * the site is allowed a personality of its own, and it's the thing people will
- * screenshot. Current treatment is a star-chart/graticule placeholder: deliberately
- * neutral, laid out so the pin positions and interactions survive a full repaint.
+ * It's the open scrapbook itself — a desk, a spread, and every channel taped down as
+ * a photo with a handwritten label. This is the one surface where the SITE has a
+ * personality rather than borrowing an aesthetic's, so it leans all the way into the
+ * name.
+ *
+ * Runs on the same 1600x900 scaled canvas as the pages, so the spread composes
+ * identically everywhere instead of reflowing into a responsive grid — a scrapbook
+ * that re-columns on a phone stops reading as an object.
+ *
+ * TODO(assets): the photo wells are accent gradients standing in for real cutouts.
+ * IMAGE_MANIFEST.md slot `map_thumb_<slug>`. The label font is a system-cursive
+ * fallback until a hand font is self-hosted.
  */
+
+const HAND = '"Segoe Script", "Bradley Hand", "Comic Sans MS", cursive';
+
+const GRID = {
+  cols: 6,
+  startX: 138,
+  startY: 208,
+  colW: 222,
+  rowH: 157,
+  cardW: 196,
+  cardH: 112,
+};
+
+/** Deterministic scatter — seeded off the index so server and client agree. */
+function scatter(i: number) {
+  return {
+    rotate: (((i * 53) % 11) - 5) * 0.7,
+    dx: (((i * 29) % 7) - 3) * 2,
+    dy: (((i * 17) % 5) - 2) * 2,
+  };
+}
+
 export function WorldMap() {
   const open = useShell((s) => s.mapOpen);
   const setMapOpen = useShell((s) => s.setMapOpen);
   const begin = useShell((s) => s.beginTransition);
   const visited = useShell((s) => s.visited);
-
   const [hovered, setHovered] = useState<Aesthetic | null>(null);
-  const fieldRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -31,21 +59,6 @@ export function WorldMap() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, setMapOpen]);
 
-  // Gentle parallax so the field feels like a space you're above rather than a list.
-  useEffect(() => {
-    if (!open) return;
-    const el = fieldRef.current;
-    if (!el) return;
-    const onMove = (e: PointerEvent) => {
-      const dx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const dy = (e.clientY / window.innerHeight - 0.5) * 2;
-      el.style.setProperty("--px", `${dx * 14}px`);
-      el.style.setProperty("--py", `${dy * 14}px`);
-    };
-    window.addEventListener("pointermove", onMove);
-    return () => window.removeEventListener("pointermove", onMove);
-  }, [open]);
-
   if (!open) return null;
 
   const travel = (slug: string) => {
@@ -54,114 +67,219 @@ export function WorldMap() {
   };
 
   return (
-    <div className="fixed inset-0 z-[8500] bg-[#05070c] font-mono text-white">
-      {/* graticule */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.14]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, #6ea8ff 1px, transparent 1px), linear-gradient(to bottom, #6ea8ff 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 45%, rgba(70,110,190,.22), transparent 62%)",
-        }}
-      />
+    <div className="fixed inset-0 z-[8500]">
+      <CanvasStage letterbox="#1d140d">
+        {/* the desk */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 34%, #4a3423 0%, #2c1e14 58%, #170f09 100%)",
+          }}
+        />
+        {/* wood grain */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.16]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(92deg, rgba(0,0,0,.5) 0 2px, transparent 2px 7px), repeating-linear-gradient(88deg, rgba(255,220,170,.25) 0 1px, transparent 1px 13px)",
+          }}
+        />
 
-      <header className="absolute left-8 top-7 z-10">
-        <h1 className="text-sm uppercase tracking-[0.42em] text-white/85">
-          Scrap&thinsp;Book
-        </h1>
-        <p className="mt-1.5 text-[11px] tracking-[0.2em] text-white/35">
-          {AESTHETICS.length} channels · {visited.length} visited
-        </p>
-      </header>
+        {/* the open spread */}
+        <div
+          className="absolute"
+          style={{
+            left: 84,
+            top: 58,
+            width: 1432,
+            height: 784,
+            background:
+              "linear-gradient(178deg, #f4ead6 0%, #efe2c9 46%, #e8d9bd 100%)",
+            boxShadow:
+              "0 42px 80px -28px rgba(0,0,0,.85), 0 4px 0 rgba(255,255,255,.14) inset",
+            borderRadius: 3,
+          }}
+        >
+          {/* paper grain */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.35]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 22% 34%, rgba(150,120,80,.16) 0 2px, transparent 3px), radial-gradient(circle at 71% 66%, rgba(150,120,80,.13) 0 2px, transparent 3px)",
+              backgroundSize: "37px 41px, 53px 47px",
+            }}
+          />
+          {/* centre gutter */}
+          <div
+            className="pointer-events-none absolute inset-y-0"
+            style={{
+              left: "50%",
+              width: 74,
+              transform: "translateX(-50%)",
+              background:
+                "linear-gradient(90deg, transparent, rgba(60,38,18,.30) 42%, rgba(60,38,18,.42) 50%, rgba(60,38,18,.30) 58%, transparent)",
+            }}
+          />
 
-      <button
-        type="button"
-        onClick={() => setMapOpen(false)}
-        className="absolute right-8 top-7 z-10 rounded-lg border border-white/15 px-3.5 py-2 text-[11px] uppercase tracking-[0.2em] text-white/60 transition hover:bg-white/10 hover:text-white"
-      >
-        Close · esc
-      </button>
+          <h1
+            className="absolute text-[38px] leading-none text-[#2f2418]"
+            style={{ left: 54, top: 44, fontFamily: HAND, transform: "rotate(-1.4deg)" }}
+          >
+            Scrap<span className="text-[#8a5a2b]">book</span>
+          </h1>
+          <p
+            className="absolute text-[15px] text-[#6b5539]"
+            style={{ left: 58, top: 96, fontFamily: HAND, transform: "rotate(-0.8deg)" }}
+          >
+            {AESTHETICS.length} channels &middot; {visited.length} visited
+          </p>
 
-      {/* the field */}
-      <div
-        ref={fieldRef}
-        className="absolute inset-x-[7%] inset-y-[16%]"
-        style={{ transform: "translate(var(--px, 0), var(--py, 0))" }}
-      >
-        {AESTHETICS.map((a) => {
+          <button
+            type="button"
+            onClick={() => setMapOpen(false)}
+            className="absolute text-[15px] text-[#6b5539] underline decoration-[#b39264] decoration-wavy underline-offset-4 transition hover:text-[#2f2418]"
+            style={{ right: 56, top: 52, fontFamily: HAND, transform: "rotate(1.2deg)" }}
+          >
+            close &middot; esc
+          </button>
+        </div>
+
+        {/* the taped-in channels */}
+        {AESTHETICS.map((a, i) => {
+          const col = i % GRID.cols;
+          const row = Math.floor(i / GRID.cols);
+          const { rotate, dx, dy } = scatter(i);
           const seen = visited.includes(a.slug);
           const isHovered = hovered?.slug === a.slug;
+
           return (
             <button
               key={a.slug}
               type="button"
               onClick={() => travel(a.slug)}
               onPointerEnter={() => setHovered(a)}
-              onPointerLeave={() => setHovered((h) => (h?.slug === a.slug ? null : h))}
+              onPointerLeave={() =>
+                setHovered((h) => (h?.slug === a.slug ? null : h))
+              }
               onFocus={() => setHovered(a)}
-              className="group absolute -translate-x-1/2 -translate-y-1/2 outline-none"
-              style={{ left: `${a.map.x}%`, top: `${a.map.y}%` }}
+              onBlur={() => setHovered((h) => (h?.slug === a.slug ? null : h))}
+              className="group absolute text-left outline-none"
+              style={{
+                left: GRID.startX + col * GRID.colW + dx,
+                top: GRID.startY + row * GRID.rowH + dy,
+                width: GRID.cardW,
+                transform: `rotate(${isHovered ? 0 : rotate}deg) translateY(${isHovered ? -7 : 0}px) scale(${isHovered ? 1.045 : 1})`,
+                transformOrigin: "center center",
+                transition: "transform 180ms cubic-bezier(.2,.9,.3,1)",
+                zIndex: isHovered ? 50 : 10,
+              }}
             >
-              <span
-                className="block rounded-full transition-all duration-200 group-hover:scale-[1.6] group-focus-visible:scale-[1.6]"
+              {/* the photo */}
+              <div
+                className="relative overflow-hidden"
                 style={{
-                  width: isHovered ? 16 : 11,
-                  height: isHovered ? 16 : 11,
-                  background: a.accent,
-                  opacity: seen ? 1 : 0.5,
-                  boxShadow: `0 0 ${isHovered ? 30 : 14}px ${a.accent}`,
+                  height: GRID.cardH,
+                  // Angle varies per card so 23 placeholders don't read as one repeated
+                  // swatch. Goes away entirely once real cutouts land.
+                  background: `linear-gradient(${118 + ((i * 47) % 80)}deg, ${a.accent} 0%, ${a.accent}44 62%, #14181f 100%)`,
+                  border: "5px solid #fbf6ea",
+                  boxShadow: isHovered
+                    ? "0 16px 26px -8px rgba(0,0,0,.6)"
+                    : "0 6px 12px -5px rgba(0,0,0,.5)",
+                }}
+              >
+                <span
+                  className="absolute left-1.5 top-1 font-mono text-[11px] tabular-nums text-white/85"
+                  style={{ textShadow: "0 1px 3px rgba(0,0,0,.7)" }}
+                >
+                  {String(a.channel).padStart(2, "0")}
+                </span>
+
+                {seen && (
+                  <span
+                    aria-hidden
+                    className="absolute font-mono text-[8px] uppercase tracking-[0.16em]"
+                    style={{
+                      right: 5,
+                      top: 6,
+                      color: "#e2503a",
+                      border: "1.5px solid #e2503a",
+                      borderRadius: 2,
+                      padding: "1px 3px",
+                      opacity: 0.85,
+                      transform: "rotate(-9deg)",
+                      textShadow: "0 1px 2px rgba(0,0,0,.5)",
+                    }}
+                  >
+                    seen
+                  </span>
+                )}
+
+                {a.status === "planned" && (
+                  <span
+                    className="absolute bottom-1 left-1.5 font-mono text-[7px] uppercase tracking-[0.2em] text-white/40"
+                    aria-hidden
+                  >
+                    not built
+                  </span>
+                )}
+              </div>
+
+              {/* tape — translucent, so the photo edge reads through it */}
+              <span
+                aria-hidden
+                className="absolute"
+                style={{
+                  left: -13,
+                  top: -8,
+                  width: 54,
+                  height: 17,
+                  background:
+                    "linear-gradient(180deg, rgba(255,250,228,.42), rgba(238,228,196,.30))",
+                  borderLeft: "1px solid rgba(255,255,255,.28)",
+                  borderRight: "1px solid rgba(255,255,255,.28)",
+                  boxShadow: "0 1px 4px rgba(90,60,25,.22)",
+                  transform: `rotate(${-36 + (i % 3) * 7}deg)`,
                 }}
               />
+
               <span
-                className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-[0.16em] transition-opacity duration-200"
-                style={{ opacity: isHovered ? 1 : 0.4 }}
+                className="mt-2 block truncate text-[16px] leading-tight text-[#2f2418]"
+                style={{ fontFamily: HAND }}
               >
-                <span className="tabular-nums text-white/40">
-                  {String(a.channel).padStart(2, "0")}
-                </span>{" "}
-                <span className="text-white/85">{a.name}</span>
+                {a.name}
               </span>
-              {a.status === "planned" && (
-                <span
-                  className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed"
-                  style={{ borderColor: `${a.accent}55` }}
-                />
-              )}
             </button>
           );
         })}
-      </div>
 
-      <footer className="absolute inset-x-0 bottom-8 flex justify-center">
-        <div className="min-h-[52px] text-center">
+        {/* margin note — the hovered channel's tagline, scribbled in the empty slot */}
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            left: GRID.startX + 5 * GRID.colW - 8,
+            top: GRID.startY + 3 * GRID.rowH + 6,
+            width: 232,
+          }}
+        >
           {hovered ? (
-            <>
-              <p className="text-base tracking-[0.16em] text-white/90">
-                {hovered.name}
-              </p>
-              <p className="mt-1 text-[11px] tracking-[0.12em] text-white/45">
-                {hovered.tagline}
-              </p>
-              {hovered.status === "planned" && (
-                <p className="mt-1.5 text-[9px] uppercase tracking-[0.3em] text-amber-300/60">
-                  Not yet built
-                </p>
-              )}
-            </>
+            <p
+              className="text-[17px] leading-snug text-[#6b5539]"
+              style={{ fontFamily: HAND, transform: "rotate(-2.2deg)" }}
+            >
+              &ldquo;{hovered.tagline}&rdquo;
+            </p>
           ) : (
-            <p className="text-[11px] uppercase tracking-[0.3em] text-white/25">
-              Select a channel
+            <p
+              className="text-[15px] leading-snug text-[#a08b68]"
+              style={{ fontFamily: HAND, transform: "rotate(-2deg)" }}
+            >
+              pick one &rarr;
             </p>
           )}
         </div>
-      </footer>
+      </CanvasStage>
     </div>
   );
 }

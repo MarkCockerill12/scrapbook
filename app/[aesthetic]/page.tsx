@@ -33,7 +33,7 @@ export default async function AestheticPage({ params }: PageProps<"/[aesthetic]"
       width={a.canvas.width}
       height={a.canvas.height}
       mode={a.canvas.mode}
-      letterbox="#000"
+      letterbox={a.letterbox ?? "#000"}
     >
       {Page ? <Page /> : <ChannelOffline aesthetic={a} />}
     </CanvasStage>
