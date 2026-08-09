@@ -171,7 +171,27 @@ if (!aesthetics.length) {
   process.exit(0);
 }
 
-const manifest = {};
+/**
+ * Seeded from the committed manifest, NOT empty.
+ *
+ * This started as `{}`, which meant `process.mjs <one-aesthetic>` silently deleted
+ * every other aesthetic's entries — the whole file is rewritten at the end. Nothing
+ * errors: pages whose slots have vanished just render placeholders, so a channel
+ * built last week quietly loses all its photography the next time someone processes
+ * a different one. It cost this project every image on seven channels at once.
+ *
+ * Processing an aesthetic still REPLACES that aesthetic's own entry, which is what
+ * you want — deleted source files should disappear from the manifest.
+ */
+const manifest = await (async () => {
+  if (!only) return {}; // A full run regenerates everything anyway.
+  try {
+    const raw = await readFile(resolve(PROJECT_ROOT, "lib/asset-manifest.json"), "utf8");
+    return JSON.parse(raw).aesthetics ?? {};
+  } catch {
+    return {};
+  }
+})();
 let totalBytes = 0;
 let totalFiles = 0;
 let skipped = 0;

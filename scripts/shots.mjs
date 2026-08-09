@@ -21,6 +21,8 @@ const ONLY = process.argv.find((a) => a.startsWith("--only="))?.slice(7) ?? "";
 const VIEWPORTS = {
   desktop: { width: 1600, height: 900 },
   laptop: { width: 1280, height: 720 },
+  /* 0.4x — the low end of quality gate 1 in TECHNICAL_SPECS. */
+  small: { width: 640, height: 360 },
   phone: { width: 390, height: 844 },
 };
 
@@ -53,7 +55,8 @@ const SHOTS = [
     },
   ],
   ["map-phone", "/", "phone", async (p) => p.waitForTimeout(4200)],
-  ["channel-offline", "/dead-mall", "desktop", async (p) => p.waitForTimeout(900)],
+  /* Must point at a channel that is still `planned`, or it stops testing anything. */
+  ["channel-offline", "/jdm", "desktop", async (p) => p.waitForTimeout(900)],
 
   // 01 Frutiger Aero
   [
@@ -457,10 +460,29 @@ const SHOTS = [
   ],
 ];
 
+/**
+ * `--gate` runs quality gate 1 instead of the curated shot list: every live channel
+ * at 1.0x and at 0.4x, reporting console errors. It is the cheap way to catch a
+ * cross-cutting change (a shared reset, a primitive, a lib helper) having broken a
+ * page nobody re-opened.
+ */
+const GATE = process.argv.includes("--gate");
+const LIVE = [
+  "", "frutiger-aero", "early-internet", "cottagecore", "xbox-360", "liminal",
+  "neon", "bbs", "game-beach", "deep-sea", "vaporwave", "aztec", "nintendo-3ds",
+  "dead-mall", "wii", "matrix", "ps1", "win98", "arcade", "news", "cyber-sigilism",
+];
+const GATE_SHOTS = LIVE.flatMap((slug) => [
+  [`gate-${slug || "map"}`, `/${slug}`, "desktop", async (p) => p.waitForTimeout(2200)],
+  [`gate-${slug || "map"}-04x`, `/${slug}`, "small", async (p) => p.waitForTimeout(2200)],
+]);
+
 const browser = await chromium.launch();
 await mkdir(OUT, { recursive: true });
 
-for (const [label, path, vp, prep] of SHOTS.filter(([l]) => l.includes(ONLY))) {
+const RUN = (GATE ? GATE_SHOTS : SHOTS).filter(([l]) => l.includes(ONLY));
+
+for (const [label, path, vp, prep] of RUN) {
   const ctx = await browser.newContext({ viewport: VIEWPORTS[vp] });
   const page = await ctx.newPage();
   if (!VIRGIN) await page.addInitScript(SEED);
