@@ -183,6 +183,20 @@ const SHOTS = [
   ],
 
   // 08 Game Beach
+  ["zine", "/skate-zine", "desktop", async (p) => p.waitForTimeout(2000)],
+  [
+    "zine-gen10",
+    "/skate-zine",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      for (let i = 0; i < 10; i++) {
+        await p.getByRole("button", { name: /copy the copy|it is jammed/ }).click();
+        await p.waitForTimeout(120);
+      }
+      await p.waitForTimeout(900);
+    },
+  ],
   ["tiki", "/tiki", "desktop", async (p) => p.waitForTimeout(2000)],
   ["gbeach", "/game-beach", "desktop", async (p) => p.waitForTimeout(1800)],
   [
@@ -471,7 +485,7 @@ const GATE = process.argv.includes("--gate");
 const LIVE = [
   "", "frutiger-aero", "early-internet", "cottagecore", "xbox-360", "liminal",
   "neon", "bbs", "game-beach", "deep-sea", "vaporwave", "aztec", "nintendo-3ds",
-  "dead-mall", "wii", "matrix", "ps1", "win98", "arcade", "news", "cyber-sigilism", "tiki",
+  "dead-mall", "wii", "matrix", "ps1", "win98", "arcade", "news", "cyber-sigilism", "tiki", "skate-zine",
 ];
 const GATE_SHOTS = LIVE.flatMap((slug) => [
   [`gate-${slug || "map"}`, `/${slug}`, "desktop", async (p) => p.waitForTimeout(2200)],

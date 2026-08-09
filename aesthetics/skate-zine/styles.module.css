@@ -1,0 +1,363 @@
+/*
+ * Skate Zine — SHRED WEEKLY #12.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * The project's thesis statement, so the rules matter more here than anywhere:
+ *   1. A PHOTOCOPY IS 1-BIT, NOT GREYSCALE. Mid-tones do not exist — they resolve to
+ *      black or to nothing. `grayscale(1) contrast(N)` with N large is the whole
+ *      effect, and it is why this is the one page where a merely-adequate photograph
+ *      becomes correct material.
+ *   2. NOTHING IS SQUARE TO ANYTHING. Every scrap is rotated a degree or three. A
+ *      grid-aligned collage reads as a layout, not as glue.
+ *   3. EDGES ARE TORN OR CUT, NEVER ROUNDED. Hard irregular clip paths. A border-radius
+ *      anywhere on this page is a mistake.
+ *   4. GENERATION LOSS COMPOUNDS. Each copy of a copy loses the faint end and thickens
+ *      the dark end. Ten generations is not ten times worse, it is unreadable.
+ */
+
+.root {
+  --paper: #f6f4ee;
+  --ink: #17151230;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(94deg, rgba(0, 0, 0, 0.16) 0 2px, transparent 2px 7px),
+    linear-gradient(160deg, #2f2a26 0%, #1d1a17 60%, #141210 100%);
+  color: #171512;
+  font-family: "Courier New", ui-monospace, monospace;
+  cursor: default;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ---------- the spread ---------- */
+
+.spread {
+  position: absolute;
+  left: 130px;
+  top: 22px;
+  width: 1290px;
+  height: 856px;
+  /*
+   * The whole degradation lives here, driven by --gen (0..10). Everything inside is
+   * copied together, which is the point — you cannot photocopy one scrap.
+   */
+  filter:
+    grayscale(calc(var(--gen, 0) * 0.1))
+    contrast(calc(1 + var(--gen, 0) * 0.62))
+    brightness(calc(1 + var(--gen, 0) * 0.035));
+  transition: filter 260ms linear;
+}
+
+.page {
+  position: absolute;
+  top: 0;
+  width: 630px;
+  height: 856px;
+  background: var(--paper);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  transition: transform 700ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+.pageLeft {
+  left: 0;
+  transform-origin: 100% 50%;
+}
+
+.pageRight {
+  right: 0;
+  transform-origin: 0% 50%;
+}
+
+/* Pages come apart once the last staple is out. */
+.loose.pageLeft {
+  transform: translate(-70px, 26px) rotate(-4deg);
+}
+
+.loose.pageRight {
+  transform: translate(70px, 18px) rotate(3.4deg);
+}
+
+/* Halftone. A real photocopier screen, not a texture: a dot grid, multiplied. */
+.halftone {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: calc(0.12 + var(--gen, 0) * 0.055);
+  background-image: radial-gradient(circle at 50% 50%, #000 32%, transparent 33%);
+  background-size: 4px 4px;
+}
+
+/* Toner speckle: the dark end thickening, generation by generation. */
+.speckle {
+  position: absolute;
+  inset: 0;
+  z-index: 41;
+  pointer-events: none;
+  opacity: calc(var(--gen, 0) * 0.075);
+  background-image:
+    radial-gradient(circle at 12% 24%, #000 0 1px, transparent 1px),
+    radial-gradient(circle at 63% 11%, #000 0 1.5px, transparent 1.5px),
+    radial-gradient(circle at 31% 77%, #000 0 1px, transparent 1px),
+    radial-gradient(circle at 87% 62%, #000 0 2px, transparent 2px),
+    radial-gradient(circle at 45% 45%, #000 0 1px, transparent 1px);
+  background-size: 37px 41px, 53px 47px, 29px 31px, 71px 67px, 23px 19px;
+}
+
+/* ---------- the gutter ---------- */
+
+.gutter {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  margin-left: -15px;
+  z-index: 20;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 40%, transparent 60%, rgba(0, 0, 0, 0.28));
+  pointer-events: none;
+}
+
+.staple {
+  position: absolute;
+  left: 50%;
+  width: 34px;
+  height: 13px;
+  margin-left: -17px;
+  z-index: 30;
+  background: linear-gradient(180deg, #d8dade 0 4px, #8d9196 4px 9px, #5e6266 9px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: transform 320ms ease, opacity 320ms ease;
+}
+
+.staple::before,
+.staple::after {
+  content: "";
+  position: absolute;
+  top: 11px;
+  width: 4px;
+  height: 9px;
+  background: #8d9196;
+}
+
+.staple::before { left: 2px; }
+.staple::after { right: 2px; }
+
+.staplePulled {
+  transform: translateY(-70px) rotate(38deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- scraps ---------- */
+
+/*
+ * Torn on three sides, cut on one — which is what happens when you rip something out
+ * of a magazine against a ruler. Uniform tearing looks generated.
+ */
+.scrap {
+  position: absolute;
+  z-index: 10;
+  cursor: grab;
+  touch-action: none;
+  background: #fffdf6;
+  padding: 7px;
+  box-shadow: 3px 5px 0 rgba(0, 0, 0, 0.22);
+  clip-path: polygon(
+    0 2%, 4% 0, 18% 3%, 33% 0, 51% 2%, 68% 0, 84% 3%, 97% 0, 100% 4%,
+    99% 22%, 100% 41%, 98% 63%, 100% 82%, 99% 97%, 92% 100%, 74% 98%,
+    57% 100%, 39% 97%, 21% 100%, 6% 98%, 0 95%, 2% 74%, 0 52%, 2% 31%
+  );
+}
+
+.scrap:active {
+  cursor: grabbing;
+}
+
+.photo {
+  display: block;
+  /* Threshold, not desaturate: the photograph has to become 1-bit to be zine material. */
+  filter: grayscale(1) contrast(2.4) brightness(1.14);
+}
+
+.caption {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding-top: 5px;
+  text-transform: uppercase;
+}
+
+/* ---------- ransom lettering ---------- */
+
+.ransom {
+  display: inline-block;
+  padding: 2px 5px 3px;
+  margin: 0 1px;
+  line-height: 1;
+  box-shadow: 1px 2px 0 rgba(0, 0, 0, 0.25);
+  /* Cut, never torn — scissors through a magazine leave a straight edge. */
+  clip-path: polygon(0 4%, 100% 0, 98% 100%, 2% 96%);
+}
+
+/* ---------- body copy ---------- */
+
+.column {
+  position: absolute;
+  font-size: 11.5px;
+  line-height: 1.62;
+  text-align: justify;
+}
+
+.column p + p {
+  margin-top: 8px;
+  text-indent: 14px;
+}
+
+.head {
+  position: absolute;
+  font-family: "Impact", "Arial Black", sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Sharpie: a real marker bleeds into the paper and never has a clean edge. */
+.sharpie {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  touch-action: none;
+}
+
+.sprayCursor {
+  position: absolute;
+  z-index: 60;
+  width: 74px;
+  height: 74px;
+  margin: -37px 0 0 -37px;
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ---------- the hidden message ---------- */
+
+/*
+ * Printed in mid-grey. On the first generation it is a faint smudge lost in the
+ * halftone; by the tenth, contrast has collapsed every mid-tone to solid black and it
+ * is the boldest thing on the page. This is genuinely how it works — a photocopier
+ * destroys the middle, not the ends.
+ */
+.secret {
+  position: absolute;
+  z-index: 12;
+  color: #7a7a7a;
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.34;
+  transform: rotate(-2.4deg);
+  pointer-events: none;
+}
+
+/* ---------- desk furniture ---------- */
+
+.toolbar {
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  z-index: 70;
+  width: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tool {
+  padding: 9px 6px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ded9cf;
+  background: #302a25;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 2px 3px 0 rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.toolOn {
+  color: #171512;
+  background: #ded9cf;
+}
+
+.copier {
+  position: absolute;
+  right: 22px;
+  top: 22px;
+  z-index: 70;
+  width: 190px;
+  padding: 13px 14px;
+  background: #302a25;
+  color: #ded9cf;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 3px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+.copierTitle {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-bottom: 9px;
+}
+
+.copierGen {
+  font-family: "Impact", "Arial Black", sans-serif;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.copierBtn {
+  width: 100%;
+  margin-top: 9px;
+  padding: 8px 0;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #171512;
+  background: #ded9cf;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.hint {
+  position: absolute;
+  left: 22px;
+  bottom: 18px;
+  z-index: 70;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(222, 217, 207, 0.45);
+  line-height: 2;
+  pointer-events: none;
+}

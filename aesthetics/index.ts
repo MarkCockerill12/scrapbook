@@ -34,6 +34,7 @@ const PAGES: Record<string, ComponentType> = {
   cottagecore: dynamic(() => import("./cottagecore")),
   "cyber-sigilism": dynamic(() => import("./cyber-sigilism")),
   "game-beach": dynamic(() => import("./game-beach")),
+  "skate-zine": dynamic(() => import("./skate-zine")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };
