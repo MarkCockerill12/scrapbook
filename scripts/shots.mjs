@@ -179,6 +179,34 @@ const SHOTS = [
     },
   ],
 
+  // 08 Game Beach
+  ["gbeach", "/game-beach", "desktop", async (p) => p.waitForTimeout(1800)],
+  [
+    "gbeach-sign",
+    "/game-beach",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(1400);
+      await p.getByRole("button", { name: "TOURIST INFORMATION" }).click();
+      await p.waitForTimeout(3200);
+    },
+  ],
+
+  // 23 Cyber Sigilism
+  ["sigil", "/cyber-sigilism", "desktop", async (p) => p.waitForTimeout(3200)],
+  [
+    "sigil-on",
+    "/cyber-sigilism",
+    "desktop",
+    async (p) => {
+      await p.waitForTimeout(2000);
+      await p.getByRole("button", { name: "Open the phone" }).click();
+      await p.getByRole("button", { name: "Power on" }).click();
+      await p.mouse.click(356, 538);
+      await p.waitForTimeout(2600);
+    },
+  ],
+
   // 03 Cottagecore
   ["cottage", "/cottagecore", "desktop", async (p) => p.waitForTimeout(2000)],
   [

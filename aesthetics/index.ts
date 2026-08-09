@@ -33,6 +33,8 @@ const PAGES: Record<string, ComponentType> = {
   "dead-mall": dynamic(() => import("./dead-mall")),
   "nintendo-3ds": dynamic(() => import("./nintendo-3ds")),
   cottagecore: dynamic(() => import("./cottagecore")),
+  "cyber-sigilism": dynamic(() => import("./cyber-sigilism")),
+  "game-beach": dynamic(() => import("./game-beach")),
 
   // "jdm": dynamic(() => import("./jdm")),
 };

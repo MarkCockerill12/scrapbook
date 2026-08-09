@@ -1,0 +1,452 @@
+/*
+ * Cyber Sigilism / Silver Tech — a drawer of dead devices.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * Chrome is the whole aesthetic and chrome is a specific, learnable thing:
+ *   1. CHROME IS A REFLECTION, NOT A GRADIENT. A metal surface reflects a HORIZON —
+ *      light sky above, dark ground below, with a hard flip in the middle. A soft
+ *      grey gradient reads as plastic every time.
+ *   2. THE FLIP HAS TO BE SHARP. Sky-to-ground over 2% of the height, not 40%.
+ *   3. SIGIL LINEWORK IS DRAWN *OVER* THE PHOTOGRAPHS, in silver, at low opacity
+ *      with screen blending — the way it was airbrushed onto Y2K packaging.
+ *   4. THE FLAT-LAY IS LIT FROM ONE SIDE AND EVERYTHING CASTS THE SAME SHADOW.
+ *      Mixed shadow directions are what make a collage look assembled.
+ */
+
+.root {
+  --steel: #b8c0cc;
+  --steel-dark: #5b6472;
+  --ink: #e7ecf3;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 24% 14%, #6d7787 0%, transparent 66%),
+    radial-gradient(ellipse 54% 46% at 82% 84%, #454c58 0%, transparent 70%),
+    linear-gradient(168deg, #59616e 0%, #383e48 52%, #262b33 100%);
+  color: var(--ink);
+  font-family: "Eurostile", "Bahnschrift", "Arial Narrow", Arial, sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Brushed-metal grain across the whole drawer. */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background: repeating-linear-gradient(
+    92deg,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* ---------- chrome type ---------- */
+
+/*
+ * The horizon flip is at 50% and it is INSTANT. That single hard stop is the
+ * difference between chrome and grey plastic, and it moves with the cursor because
+ * a reflection has to.
+ */
+.wordmark {
+  position: absolute;
+  left: 60px;
+  top: 48px;
+  font-size: 62px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #cfd7e2 var(--flip, 44%),
+    #7d8794 var(--flip, 44%),
+    #eef2f7 calc(var(--flip, 44%) + 6%),
+    #59616e 78%,
+    #aeb7c4 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 22px rgba(190, 205, 225, 0.25));
+}
+
+.sub {
+  position: absolute;
+  left: 64px;
+  top: 122px;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(231, 236, 243, 0.5);
+}
+
+/* ---------- sigils ---------- */
+
+.sigils {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.sigilPath {
+  fill: none;
+  stroke: #dfe7f2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(200, 220, 255, 0.5));
+  stroke-dasharray: 2600;
+  stroke-dashoffset: 2600;
+  animation: inkOn 2600ms cubic-bezier(0.25, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes inkOn {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ---------- flat-lay clutter ---------- */
+
+.clutter {
+  position: absolute;
+  z-index: 8;
+  cursor: grab;
+  touch-action: none;
+  /* One light source, upper left, so every shadow falls the same way. */
+  filter:
+    drop-shadow(18px 22px 14px rgba(10, 14, 20, 0.55))
+    saturate(0.42) contrast(1.06) brightness(1.04);
+}
+
+.clutter:active {
+  cursor: grabbing;
+}
+
+/* ---------- devices ---------- */
+
+.device {
+  position: absolute;
+  z-index: 12;
+  cursor: grab;
+  touch-action: none;
+  filter: drop-shadow(18px 22px 16px rgba(10, 14, 20, 0.6));
+}
+
+.device:active {
+  cursor: grabbing;
+}
+
+.shell {
+  position: relative;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px),
+    linear-gradient(174deg, #f2f5f9 0%, #cfd6e0 46%, #8c95a3 47%, #b9c1cd 100%);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(20, 26, 34, 0.45);
+}
+
+.shellDark {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0 2px, transparent 2px),
+    linear-gradient(174deg, #8e97a5 0%, #5d6673 46%, #3a4150 47%, #6a7280 100%);
+}
+
+.screen {
+  position: absolute;
+  border-radius: 3px;
+  background: #10161c;
+  box-shadow: inset 0 0 0 2px #262d36, inset 0 3px 10px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  font-family: ui-monospace, "Courier New", monospace;
+}
+
+.screenOn {
+  background: #16241a;
+  box-shadow:
+    inset 0 0 0 2px #262d36,
+    inset 0 3px 10px rgba(0, 0, 0, 0.6),
+    0 0 22px rgba(150, 255, 190, 0.28);
+}
+
+.lcdRow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  color: #9ff5c2;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.lcdSel {
+  background: #9ff5c2;
+  color: #10201a;
+}
+
+.lcdHead {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  color: #6fcf9b;
+  border-bottom: 1px solid rgba(159, 245, 194, 0.28);
+}
+
+/* iPod click wheel */
+.wheel {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, #ffffff, #dfe4ec 62%, #b6bec9);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.9), inset 0 -3px 6px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+  touch-action: none;
+}
+
+.wheel::after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, #ffffff, #cfd6e0);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.wheelMark {
+  position: absolute;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: #6e7886;
+}
+
+/* Game Boy d-pad and buttons */
+.gbPad {
+  position: absolute;
+  background: #2a2f38;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.gbBtn {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #d05a7a, #8e2b48 70%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.power {
+  position: absolute;
+  width: 44px;
+  height: 16px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #dfe4ec, #9aa3b0);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.powerKnob {
+  position: absolute;
+  top: 2px;
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #7d848f, #444b56);
+  transition: transform 140ms ease;
+}
+
+.hinged {
+  transform-origin: 50% 100%;
+  transition: transform 520ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+.flipShut {
+  transform: rotateX(-84deg);
+}
+
+.label {
+  position: absolute;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(231, 236, 243, 0.55);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Annotation: the photographs are captioned, in silver, like a catalogue plate. */
+.plate {
+  position: absolute;
+  z-index: 20;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(223, 231, 242, 0.62);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.plate::before {
+  content: "";
+  position: absolute;
+  left: -26px;
+  top: 6px;
+  width: 20px;
+  height: 1px;
+  background: rgba(223, 231, 242, 0.5);
+}
+
+/* ---------- earbud cable ---------- */
+
+/*
+ * The SVG spans the whole canvas at z-index 25, so without pointer-events: none it
+ * swallows every click meant for the devices underneath — the click wheel, the flip
+ * phone and the power switch were all completely dead. Only the handles take input.
+ */
+.cable {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.cableLine {
+  fill: none;
+  stroke: #f2f5fa;
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(6px 8px 5px rgba(10, 14, 20, 0.6));
+}
+
+.cableHandle {
+  pointer-events: auto;
+  fill: #dfe7f2;
+  stroke: #2a303a;
+  stroke-width: 2;
+  cursor: grab;
+}
+
+.cableHandle:active {
+  cursor: grabbing;
+}
+
+/* ---------- panel ---------- */
+
+.panel {
+  position: absolute;
+  right: 56px;
+  top: 56px;
+  z-index: 35;
+  width: 260px;
+  padding: 18px 20px;
+  background: rgba(20, 25, 32, 0.62);
+  border: 1px solid rgba(223, 231, 242, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+.panelTitle {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(231, 236, 243, 0.5);
+  margin-bottom: 12px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(223, 231, 242, 0.12);
+}
+
+.action {
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 0;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #10161c;
+  background: linear-gradient(180deg, #ffffff 0 46%, #cfd6e0 46%, #9aa3b0 47%, #e3e9f1 100%);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.action:hover {
+  filter: brightness(1.08);
+}
+
+.hint {
+  position: absolute;
+  left: 60px;
+  bottom: 28px;
+  z-index: 35;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(231, 236, 243, 0.4);
+  line-height: 2;
+  pointer-events: none;
+}
+
+/* ---------- sync ---------- */
+
+.sync {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(190, 230, 255, 0.35), transparent 70%);
+  animation: syncFlash 2600ms ease-out forwards;
+}
+
+@keyframes syncFlash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.syncText {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  font-size: 15px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: #eaf3ff;
+  text-shadow: 0 0 22px rgba(150, 210, 255, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sigilPath,
+  .sync {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

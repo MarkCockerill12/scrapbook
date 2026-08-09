@@ -1,0 +1,451 @@
+/*
+ * Game Beach — Isle Delfino tourist board.
+ *
+ * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
+ *
+ * Toon-shaded 2002 games are not "bright colours". They are a specific rendering
+ * model and it has rules:
+ *   1. SHADING IS BANDED, NOT SMOOTH. Two or three flat steps with hard edges
+ *      between them. A gradient anywhere and it collapses into 2015 flat design.
+ *   2. EVERYTHING HAS AN OUTLINE, AND THE OUTLINE IS DARKER VERSION OF THE FILL,
+ *      never black. Black outlines read as a cartoon; tinted outlines read as a
+ *      shader.
+ *   3. THE WATER IS THE MOST SATURATED THING ON SCREEN, and it is a colour no
+ *      ocean has ever been. That impossible turquoise is the whole memory.
+ *   4. THE HUD IS CHUNKY, DROP-SHADOWED AND SITS IN THE CORNERS. It is not a UI
+ *      overlay, it is furniture.
+ */
+
+.root {
+  --sea: #23c9d8;
+  --sea-deep: #0e8fa8;
+  --sand: #f2dfa8;
+  --leaf: #3fae4a;
+  --ink: #10323c;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #6fd2f5 0%, #a9e8fb 46%, #d8f6ff 58%);
+  color: #ffffff;
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  cursor: crosshair;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: crosshair;
+}
+
+.night {
+  filter: saturate(0.78) brightness(0.52) hue-rotate(-16deg);
+  transition: filter 1400ms ease;
+}
+
+.day {
+  transition: filter 1400ms ease;
+}
+
+/* ---------- sky ---------- */
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Cel clouds: hard-edged lumps, two tones, no blur anywhere. */
+.cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow:
+    0 10px 0 0 #d6eefb,
+    0 0 0 6px rgba(255, 255, 255, 0.55);
+}
+
+.sunDisc {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: #fff6c2;
+  box-shadow: 0 0 0 18px rgba(255, 246, 194, 0.35), 0 0 0 38px rgba(255, 246, 194, 0.16);
+}
+
+/*
+ * Masked to an island shape and sat ON the horizon. Unmasked it is a hard-edged
+ * rectangle of photograph floating in a cel-shaded sky, which is the single most
+ * obvious way to break this aesthetic.
+ */
+.island {
+  position: absolute;
+  object-fit: cover;
+  filter: saturate(1.7) contrast(1.35) brightness(1.06) hue-rotate(-6deg);
+  mask-image: radial-gradient(ellipse 46% 74% at 50% 96%, #000 42%, transparent 74%);
+}
+
+/* ---------- sea ---------- */
+
+.sea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 460px;
+  bottom: 0;
+  display: block;
+  cursor: crosshair;
+}
+
+.splash {
+  position: absolute;
+  border-radius: 50%;
+  border: 5px solid #ffffff;
+  pointer-events: none;
+  animation: splash 700ms ease-out forwards;
+}
+
+@keyframes splash {
+  from { width: 10px; height: 10px; margin: -5px 0 0 -5px; opacity: 1; }
+  to { width: 190px; height: 190px; margin: -95px 0 0 -95px; opacity: 0; }
+}
+
+/* ---------- beach ---------- */
+
+.beach {
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  bottom: -30px;
+  height: 300px;
+  border-radius: 60% 40% 0 0 / 90px 70px 0 0;
+  background: linear-gradient(180deg, #fbeec4 0 26px, var(--sand) 26px 90px, #dcc182 90px);
+  box-shadow: inset 0 4px 0 #ffffff;
+}
+
+/* ---------- palms ---------- */
+
+.palm {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(10px 16px 0 rgba(16, 50, 60, 0.16));
+}
+
+/* ---------- coins ---------- */
+
+.coin {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fff6b0 0 34%, #ffd93b 34% 66%, #e0a80f 66%);
+  box-shadow: 0 0 0 4px #b8830a, 0 6px 0 rgba(16, 50, 60, 0.18);
+  animation: bob 1.6s ease-in-out infinite alternate, flip 1.9s linear infinite;
+  z-index: 12;
+}
+
+@keyframes bob {
+  from { transform: translateY(-6px); }
+  to { transform: translateY(6px); }
+}
+
+@keyframes flip {
+  0%, 100% { width: 40px; margin-left: -20px; }
+  50% { width: 12px; margin-left: -6px; }
+}
+
+.coinPop {
+  position: absolute;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff6b0;
+  text-shadow: 2px 2px 0 #b8830a;
+  pointer-events: none;
+  animation: pop 700ms ease-out forwards;
+  z-index: 20;
+}
+
+@keyframes pop {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-60px); opacity: 0; }
+}
+
+/* ---------- HUD ---------- */
+
+/*
+ * The HUD is furniture: chunky, outlined in a darker tint of its own fill, with a
+ * hard offset shadow. Nothing here is translucent.
+ */
+.hud {
+  position: absolute;
+  z-index: 30;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0 50%, #e2f4fb 50%);
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hudCoin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fff6b0 0 34%, #ffd93b 34% 66%, #e0a80f 66%);
+  box-shadow: 0 0 0 3px #b8830a;
+}
+
+.hudNum {
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hearts {
+  display: flex;
+  gap: 5px;
+}
+
+.heart {
+  width: 22px;
+  height: 22px;
+  background: #ff5a5a;
+  box-shadow: 0 0 0 3px #b32222;
+  clip-path: polygon(50% 100%, 0 38%, 18% 8%, 50% 26%, 82% 8%, 100% 38%);
+}
+
+.minimap {
+  position: absolute;
+  z-index: 30;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #7fe3f5 0 58%, #2aa4c4 58%);
+  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.25);
+  overflow: hidden;
+}
+
+.mapBlip {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #ffd93b;
+  box-shadow: 0 0 0 2px #b8830a;
+}
+
+.mapYou {
+  background: #ff5a5a;
+  box-shadow: 0 0 0 2px #b32222;
+}
+
+/* ---------- level cards ---------- */
+
+.card {
+  position: absolute;
+  z-index: 16;
+  width: 210px;
+  padding: 12px 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0 46%, #eaf7fd 46%);
+  color: var(--ink);
+  box-shadow: 0 0 0 5px #2aa4c4, 0 12px 0 rgba(16, 50, 60, 0.22);
+  animation: float 3.4s ease-in-out infinite alternate;
+  text-align: center;
+}
+
+@keyframes float {
+  from { transform: translateY(-8px) rotate(-1deg); }
+  to { transform: translateY(8px) rotate(1deg); }
+}
+
+.card:hover {
+  filter: brightness(1.06);
+}
+
+.cardArt {
+  height: 92px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 3px rgba(16, 50, 60, 0.25);
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 2px 2px 0 rgba(16, 50, 60, 0.4);
+}
+
+.cardName {
+  display: block;
+  margin-top: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.cardSub {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5b7d88;
+}
+
+/* ---------- signpost ---------- */
+
+.signpost {
+  position: absolute;
+  z-index: 18;
+  cursor: pointer;
+}
+
+.signBoard {
+  width: 190px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #e2b169 0 40%, #c08c42 40%);
+  color: #3a260f;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  box-shadow: 0 0 0 5px #8a5f28, 0 8px 0 rgba(16, 50, 60, 0.2);
+}
+
+.signPost {
+  width: 22px;
+  height: 90px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #c08c42 0 50%, #8a5f28 50%);
+  box-shadow: 0 0 0 4px #8a5f28;
+}
+
+/* The text box. Chunky border, opaque, sits above the bottom of frame. */
+.textbox {
+  position: absolute;
+  left: 50%;
+  bottom: 68px;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 820px;
+  min-height: 130px;
+  padding: 20px 26px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0 12%, #eaf7fd 12%);
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.7;
+  box-shadow: 0 0 0 6px #2aa4c4, 0 12px 0 rgba(16, 50, 60, 0.25);
+}
+
+.textboxMore {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  font-size: 18px;
+  color: #2aa4c4;
+  animation: bob 0.7s ease-in-out infinite alternate;
+}
+
+/* ---------- toggles ---------- */
+
+.toggle {
+  position: absolute;
+  z-index: 30;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0 50%, #e2f4fb 50%);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.25);
+}
+
+.hint {
+  position: absolute;
+  left: 40px;
+  bottom: 26px;
+  z-index: 30;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2px 0 rgba(16, 50, 60, 0.4);
+  line-height: 2;
+  pointer-events: none;
+}
+
+/* ---------- 1-UP ---------- */
+
+.oneup {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  gap: 20px;
+  align-content: center;
+  background: rgba(16, 50, 60, 0.55);
+  animation: fadeIn 300ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+.oneupText {
+  font-size: 62px;
+  font-weight: 700;
+  font-style: italic;
+  color: #ffd93b;
+  text-shadow: 4px 4px 0 #b8830a, 8px 8px 0 rgba(16, 50, 60, 0.4);
+}
+
+.oneupSub {
+  font-size: 15px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.oneupGo {
+  margin-top: 8px;
+  padding: 14px 32px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0 50%, #e2f4fb 50%);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coin,
+  .card,
+  .textboxMore,
+  .oneup {
+    animation: none;
+  }
+}
