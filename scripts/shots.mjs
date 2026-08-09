@@ -183,6 +183,7 @@ const SHOTS = [
   ],
 
   // 08 Game Beach
+  ["tiki", "/tiki", "desktop", async (p) => p.waitForTimeout(2000)],
   ["gbeach", "/game-beach", "desktop", async (p) => p.waitForTimeout(1800)],
   [
     "gbeach-sign",
@@ -470,7 +471,7 @@ const GATE = process.argv.includes("--gate");
 const LIVE = [
   "", "frutiger-aero", "early-internet", "cottagecore", "xbox-360", "liminal",
   "neon", "bbs", "game-beach", "deep-sea", "vaporwave", "aztec", "nintendo-3ds",
-  "dead-mall", "wii", "matrix", "ps1", "win98", "arcade", "news", "cyber-sigilism",
+  "dead-mall", "wii", "matrix", "ps1", "win98", "arcade", "news", "cyber-sigilism", "tiki",
 ];
 const GATE_SHOTS = LIVE.flatMap((slug) => [
   [`gate-${slug || "map"}`, `/${slug}`, "desktop", async (p) => p.waitForTimeout(2200)],

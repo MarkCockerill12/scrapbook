@@ -1,10 +1,30 @@
-# 05 · Tropical Night — BUILT, NOT SHIPPED
+# 16 · Tropical Night — LIVE
 
 **Fiction:** Kai's Tiki Lounge, tonight's menu. Somewhere warm, after dark.
 
-**Status: held back.** The code is complete and the cutout pipeline works. It is not
-live because **the photography is the wrong material**, and shipping it would breach
-rule R4 (quality gate before moving on).
+**Status: shipped 2026-08-09**, after eleven months of nothing — no, after a day on
+the shelf. It was held back because the harvested photography was the wrong material.
+That judgement was correct and I re-verified every slot myself before overturning it:
+
+| Slot | What is actually in the folder | Verdict |
+|---|---|---|
+| `tiki_sunset` | **An airport.** Aeroplane tail, runway lights | drawn instead |
+| `tiki_torch` | **A burning match** on a white background | drawn instead |
+| `tiki_lantern` | A fire bowl shot from above | drawn instead |
+| `tiki_ocean` | Dark jungle foliage | drawn instead |
+| `tiki_carving` | **Genuine carved masks**, cleanly matted | kept |
+| `tiki_mug` | **Excellent** — glass tiki mugs | kept |
+| `tiki_palm`, `tiki_flower`, `tiki_cocktail` | fine | kept |
+
+**What changed is not the photography, it's the principle.** Since this page was
+shelved, four other channels (Liminal, Aztec, Cottagecore, Game Beach) shipped on the
+rule that *a drawn thing beats a photograph of the wrong thing* — and this page's own
+README already proposed exactly that in its "alternative worth considering". So the
+sky, sea, torches and lanterns are drawn, and the objects that are genuinely good are
+photographed. That is the same compositing decision every other channel made.
+
+Curated tiki photography would still improve it — see `FOR_MARK.md`, still priority 1
+— but "held back indefinitely" was the wrong state for a finished page to sit in.
 
 ## What went wrong — worth recording
 
@@ -49,12 +69,20 @@ drawn, and all stronger. Photography only pays off when it is *curated*.
 4. **Darkness is the point** — but the first pass over-graded it. A dark sun default plus
    a multiply grade plus a heavy vignette compounded into mud. All three were reduced.
 
-## To ship this
+## What is drawn, and the rules each drawing follows
 
-Needs curated photography for `tiki_sunset`, `tiki_torch`, `tiki_lantern`, `tiki_carving`
-and `tiki_mug` — real tiki-bar material, not category matches. Then flip `status` to
-`"live"` in the registry and uncomment the entry in `aesthetics/index.ts`.
+| Drawn | The rule that makes it read |
+|---|---|
+| **Sky** | Dusk is a *vertical* ramp through six stops, and the sun sits ON the horizon bleeding upward. A two-stop gradient reads as a colour, not a time of day |
+| **Bamboo torch** | Bamboo is two things: a hard vertical highlight down one side of the cylinder, and **nodes** — the raised rings. A plain tapered pole is a stick; three rings make it unmistakable |
+| **Flame** | Drawn *inside the torch's own viewBox*, so it is anchored to the bowl. The CSS glow that stood in for it was sized against the old photograph and lined up with nothing |
+| **Paper lantern** | Lit from **inside**, so the brightest point is the centre of the belly and the ribs are *darker* lines over it. Invert that and you get a beach ball |
+| **Sea** | The reflection column sells water at dusk — a vertical smear of the sun's colour, broken into horizontal bands. Unbroken it reads as a spotlight; broken, as chop |
 
-Alternative worth considering: redraw the torches, lanterns and carvings as SVG the way
-`AquaIcon` does for Frutiger, and keep photography only for the sky and sea, where a
-merely-adequate photo still reads.
+## Still to do
+
+- The palm cutouts sit further inboard than intended: a matted PNG keeps the original
+  photograph's frame, so the trees land well inside their boxes and read as a wall of
+  foliage across the lower half rather than as edge silhouettes. Same issue as the
+  Vaporwave palms; `<Cutout>` honouring `alphaBox` would fix both.
+- Real tiki-bar photography for the sunset, torches and lanterns.

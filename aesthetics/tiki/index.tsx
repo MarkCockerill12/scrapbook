@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useCanvas } from "@/components/CanvasStage";
 import { chime, tick, tone } from "@/lib/audio";
-import { cut, one } from "@/lib/assets";
+import { cut } from "@/lib/assets";
 import { sbGet, sbSet } from "@/lib/storage";
 import styles from "./styles.module.css";
 
@@ -200,8 +200,6 @@ export default function Tiki() {
     }
   };
 
-  const sky = one(A, "tiki_sunset", 3);
-  const sea = one(A, "tiki_ocean", 0);
   const recipe = RECIPES[drink] ?? RECIPES["Mai Tai"];
 
   // Every lit torch adds light; with all of them out the scene falls to the plankton.
@@ -212,15 +210,21 @@ export default function Tiki() {
       className={styles.root}
       style={{ "--tk-sun": sun } as React.CSSProperties}
     >
-      {/* sky */}
+      {/* sky — drawn, because the harvested "sunset" is an airport */}
       <div className={styles.sky}>
-        {sky && <img className={styles.skyPhoto} src={sky.src} alt="" />}
+        <div className={styles.skyDrawn} />
+        <div
+          className={styles.sunDisc}
+          style={{ top: 250 - sun * 150, opacity: 0.35 + sun * 0.65 }}
+        />
         <div className={styles.skyWash} />
       </div>
 
       {/* sea */}
       <div className={styles.sea} onPointerDown={onSea} style={{ cursor: "pointer" }}>
-        {sea && <img className={styles.seaPhoto} src={sea.src} alt="" />}
+        {/* Drawn: the harvested `tiki_ocean` is dark jungle foliage, not water. */}
+        <div className={styles.seaDrawn} />
+        <div className={styles.seaGlitter} style={{ opacity: 0.25 + sun * 0.6 }} />
         <div className={styles.seaWash} />
       </div>
 
@@ -249,8 +253,6 @@ export default function Tiki() {
 
       {/* lanterns strung across the top */}
       {LANTERNS.map((l, i) => {
-        const img = cut(A, "tiki_lantern", i);
-        if (!img) return null;
         return (
           <div
             key={i}
@@ -264,14 +266,10 @@ export default function Tiki() {
             <div style={{ height: l.drop, width: 2, background: "rgba(255,220,180,.3)", margin: "0 auto" }} />
             <div style={{ position: "relative" }}>
               <div className={styles.lanternGlow} style={{ opacity: 0.4 + sun * 0.3 }} />
-              <img
-                src={img.src}
-                alt=""
-                style={{
-                  display: "block",
-                  height: 130 * l.scale,
-                  filter: `brightness(${0.6 + litFactor * 0.5}) drop-shadow(0 0 18px rgba(255,170,80,.5))`,
-                }}
+              <PaperLantern
+                height={130 * l.scale}
+                hue={[38, 12, 348, 26][i % 4]}
+                bright={0.6 + litFactor * 0.5}
               />
             </div>
           </div>
@@ -339,8 +337,6 @@ export default function Tiki() {
 
       {/* torches */}
       {TORCHES.map((t, i) => {
-        const img = cut(A, "tiki_torch", i);
-        if (!img) return null;
         return (
           <button
             key={i}
@@ -352,7 +348,7 @@ export default function Tiki() {
             onClick={() => toggleTorch(i)}
           >
             {lit[i] && <span className={styles.flame} style={{ animationDelay: `${i * 0.31}s` }} />}
-            <img className={styles.torchImg} src={img.src} alt="" />
+            <BambooTorch lit={lit[i]} />
           </button>
         );
       })}
@@ -400,5 +396,117 @@ export default function Tiki() {
         put every torch out
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------- drawn props */
+
+/**
+ * A bamboo tiki torch.
+ *
+ * Bamboo is the whole read and bamboo is two things: a hard vertical highlight down
+ * one side of a cylinder, and NODES — the raised rings every so often. A plain tapered
+ * pole is a stick; add three rings and it is unmistakably bamboo.
+ */
+function BambooTorch({ lit }: { lit: boolean }) {
+  return (
+    <svg className={styles.torchDrawn} viewBox="0 0 120 420" aria-hidden>
+      {/* pole */}
+      <rect x="46" y="86" width="28" height="334" rx="4" fill="#8a6234" />
+      <rect x="50" y="86" width="8" height="334" fill="#b98a4d" opacity="0.75" />
+      <rect x="68" y="86" width="5" height="334" fill="#5d3f1e" opacity="0.7" />
+      {[150, 236, 322].map((y) => (
+        <g key={y}>
+          <rect x="42" y={y} width="36" height="11" rx="4" fill="#9c703c" />
+          <rect x="42" y={y} width="36" height="3" fill="#c79a58" />
+        </g>
+      ))}
+      {/* the bowl */}
+      <path d="M28 86h64l-9 34a26 26 0 0 1-46 0z" fill="#4a3520" stroke="#2b1d10" strokeWidth="3" />
+      <ellipse cx="60" cy="86" rx="32" ry="9" fill="#6b4c2c" stroke="#2b1d10" strokeWidth="3" />
+      {lit && (
+        <>
+          <ellipse cx="60" cy="84" rx="22" ry="6" fill="#ff9a3c" opacity="0.9" />
+          {/*
+            The flame is drawn INSIDE the torch's own viewBox so it is anchored to the
+            bowl. The CSS glow that used to stand in for it was positioned against the
+            old photograph's dimensions and no longer lined up with anything.
+          */}
+          <path
+            d="M60 6c16 26 30 38 30 56a30 30 0 0 1-60 0c0-14 10-22 16-34 4 10 10 12 10 4 0-10 4-18 4-26z"
+            fill="url(#tkFlame)"
+          />
+          <path
+            d="M60 34c7 14 14 20 14 30a14 14 0 0 1-28 0c0-9 8-14 14-30z"
+            fill="#fff3c4"
+            opacity="0.92"
+          />
+          <defs>
+            <linearGradient id="tkFlame" x1="0" y1="6" x2="0" y2="92" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ffd66b" />
+              <stop offset="46%" stopColor="#ff8a2e" />
+              <stop offset="100%" stopColor="#e8431c" />
+            </linearGradient>
+          </defs>
+        </>
+      )}
+      {/* binding */}
+      <rect x="40" y="126" width="40" height="9" rx="3" fill="#3d2a16" />
+    </svg>
+  );
+}
+
+/**
+ * A paper lantern.
+ *
+ * Lit from INSIDE, so the brightest point is the centre of the belly and the ribs
+ * read as darker lines over it — not as highlights. Getting that inversion wrong is
+ * what makes a drawn lantern look like a beach ball.
+ */
+function PaperLantern({
+  height,
+  hue,
+  bright,
+}: {
+  height: number;
+  hue: number;
+  bright: number;
+}) {
+  const w = height * 0.92;
+  return (
+    <svg
+      className={styles.lanternDrawn}
+      style={{ height, width: w, filter: `brightness(${bright})` }}
+      viewBox="0 0 120 130"
+      aria-hidden
+    >
+      <rect x="50" y="2" width="20" height="10" rx="2" fill="#6b4c2c" />
+      <ellipse
+        cx="60"
+        cy="66"
+        rx="56"
+        ry="54"
+        fill={`hsl(${hue} 88% 62%)`}
+      />
+      {/* the inside light */}
+      <ellipse cx="60" cy="66" rx="40" ry="40" fill={`hsl(${hue} 95% 78%)`} opacity="0.85" />
+      <ellipse cx="60" cy="66" rx="20" ry="22" fill={`hsl(${hue} 100% 90%)`} opacity="0.8" />
+      {/* ribs, darker over the glow */}
+      {[-40, -26, -12, 2, 16, 30, 44].map((dx) => (
+        <ellipse
+          key={dx}
+          cx={60 + dx * 0.06}
+          cy="66"
+          rx={Math.max(3, 56 - Math.abs(dx) * 1.16)}
+          ry="54"
+          fill="none"
+          stroke={`hsl(${hue} 70% 40%)`}
+          strokeWidth="1.4"
+          opacity="0.4"
+        />
+      ))}
+      <rect x="52" y="116" width="16" height="9" rx="2" fill="#6b4c2c" />
+      <path d="M60 125v6" stroke="#6b4c2c" strokeWidth="3" />
+    </svg>
   );
 }

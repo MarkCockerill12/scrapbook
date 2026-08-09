@@ -19,8 +19,7 @@ const PAGES: Record<string, ComponentType> = {
   bbs: dynamic(() => import("./bbs")),
   "deep-sea": dynamic(() => import("./deep-sea")),
   neon: dynamic(() => import("./neon")),
-  // tiki: built, but held back pending curated photography — see its README.
-  // tiki: dynamic(() => import("./tiki")),
+  tiki: dynamic(() => import("./tiki")),
   win98: dynamic(() => import("./win98")),
   wii: dynamic(() => import("./wii")),
   "xbox-360": dynamic(() => import("./xbox-360")),

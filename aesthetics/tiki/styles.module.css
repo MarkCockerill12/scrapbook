@@ -423,3 +423,98 @@
     animation: none;
   }
 }
+
+
+/* ---------- drawn sky, torches and lanterns (added 2026-08-09) ---------- */
+
+/*
+ * The harvested `tiki_sunset` is an airport and `tiki_torch` is a burning match on a
+ * white background — the "categories not scenes" failure in its purest form. Both are
+ * drawn instead, on the principle this project has now applied on four other channels:
+ * a drawn thing beats a photograph of the wrong thing. The mugs, carvings and palms
+ * are genuine and stay.
+ */
+
+.skyDrawn {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #150c2e 0%,
+    #3a1546 22%,
+    #7d2748 42%,
+    #c04a3c 60%,
+    #e8783a 76%,
+    #ffb765 90%,
+    #ffe0ab 100%
+  );
+}
+
+/* Low sun. It sits ON the horizon and bleeds upward, which is what dusk does. */
+.sunDisc {
+  position: absolute;
+  left: 50%;
+  width: 210px;
+  height: 210px;
+  margin-left: -105px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff6d2 0%,
+    #ffd489 34%,
+    #ff9a4a 58%,
+    rgba(255, 130, 60, 0) 72%
+  );
+  transition: top 500ms linear, opacity 500ms linear;
+  pointer-events: none;
+}
+
+.torchDrawn {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 16px rgba(20, 6, 0, 0.7));
+}
+
+.lanternDrawn {
+  display: block;
+  filter: drop-shadow(0 0 22px rgba(255, 170, 80, 0.55));
+}
+
+/*
+ * Drawn sea. `tiki_ocean` returned dark jungle foliage.
+ *
+ * The reflection column is the thing that sells water at dusk: a vertical smear of
+ * the sun's colour directly beneath it, broken into horizontal bands. Without the
+ * break it reads as a spotlight; with it, it reads as chop.
+ */
+.seaDrawn {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, #2a1836 0%, #1a1030 34%, #0d0820 100%);
+}
+
+.seaGlitter {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 16% 88% at 50% 0%,
+      rgba(255, 176, 92, 0.55),
+      rgba(255, 130, 60, 0.12) 46%,
+      transparent 74%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 190, 120, 0.14) 0 2px,
+      transparent 2px 9px
+    );
+  mask-image: repeating-linear-gradient(
+    180deg,
+    #000 0 3px,
+    transparent 3px 8px
+  );
+  transition: opacity 420ms linear;
+}
