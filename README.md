@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ScrapBook
 
-## Getting Started
+A collage of aesthetics: 26 single-screen "channels", each its own world, on one dial.
+Next.js 16, React 19, Bun.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun run dev        # http://localhost:3000
+bun run check      # typecheck + lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Images
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Pages ask for an image by slot, never by filename (`lib/assets.ts`, `lib/asset-manifest.json`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `raw/` — originals. Local only, gitignored.
+- `public/dev-assets/` — processed WebP. Local only, gitignored. This is what `bun run dev` shows.
+- Cloudflare R2, bucket `markc-assets`, prefix `scrapbook/` — what production shows, through same-origin `/media/...` paths.
 
-## Learn More
+After adding or changing images:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+node scripts/images/process.mjs <channel>   # raw -> WebP + manifest
+node scripts/r2/upload.mjs --confirm        # WebP -> bucket (needs .env.local keys)
+node scripts/r2/verify.mjs                  # bucket has everything the manifest lists
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Upload before pushing, or production will ask for files the bucket does not have.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy
 
-## Deploy on Vercel
+Import the repo in Vercel. Nothing to configure: `vercel.json` sets the install and build
+commands, and `.env.production` (public values only) points production at the bucket.
+The R2 keys in `.env.local` are for the upload scripts and are never needed by the site.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To check a production build locally:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+bun run build && bunx next start -p 3001
+node scripts/prodcheck.mjs 3001
+```
