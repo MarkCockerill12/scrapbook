@@ -22,6 +22,13 @@ export type TransitionPhase = "idle" | "out" | "in";
 interface ShellState {
   hydrated: boolean;
   consent: ConsentState;
+  /** The visitor's own choice, off the speaker button. Sound is on unless they say so. */
+  soundOff: boolean;
+  /** The browser has let the audio context run, which takes a click or a key first. */
+  audioReady: boolean;
+  /** What pages read: silent by choice, or silent because the browser isn't ready yet.
+   *  It flips to false the moment sound can actually start, so every page effect keyed
+   *  on it starts its loops then, and not into a context that would swallow them. */
   muted: boolean;
   /** Slugs the visitor has landed on. Drives map "seen" markers and unlock eggs. */
   visited: string[];
@@ -36,6 +43,7 @@ interface ShellState {
   setBooted: (booted: boolean) => void;
   decideConsent: (granted: boolean) => void;
   setMuted: (muted: boolean) => void;
+  setAudioReady: () => void;
   toggleMute: () => void;
   markVisited: (slug: string) => void;
   setMapOpen: (open: boolean) => void;
@@ -46,7 +54,9 @@ interface ShellState {
 export const useShell = create<ShellState>((set, get) => ({
   hydrated: false,
   consent: "undecided",
-  muted: true, // always muted until the visitor asks otherwise
+  soundOff: false,
+  audioReady: false,
+  muted: true, // until the first click or key; see `audioReady`
   visited: [],
   mapOpen: false,
   booted: false,
@@ -61,7 +71,7 @@ export const useShell = create<ShellState>((set, get) => ({
     set({
       hydrated: true,
       consent,
-      muted: sbGet<boolean>(null, "muted", true),
+      soundOff: sbGet<boolean>(null, "sound-off", false),
       visited: sbGet<string[]>(null, "visited", []),
     });
   },
@@ -72,17 +82,22 @@ export const useShell = create<ShellState>((set, get) => ({
     set({ consent });
     // Re-commit anything gathered before the decision so a "yes" doesn't lose it.
     if (granted) {
-      sbSet(null, "muted", get().muted);
+      sbSet(null, "sound-off", get().soundOff);
       sbSet(null, "visited", get().visited);
     }
   },
 
-  setMuted: (muted) => {
-    sbSet(null, "muted", muted);
-    set({ muted });
+  setMuted: (soundOff) => {
+    sbSet(null, "sound-off", soundOff);
+    set({ soundOff, muted: soundOff || !get().audioReady });
   },
 
-  toggleMute: () => get().setMuted(!get().muted),
+  setAudioReady: () => {
+    if (get().audioReady) return;
+    set({ audioReady: true, muted: get().soundOff });
+  },
+
+  toggleMute: () => get().setMuted(!get().soundOff),
 
   markVisited: (slug) => {
     const { visited } = get();

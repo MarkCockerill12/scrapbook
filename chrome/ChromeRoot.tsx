@@ -7,6 +7,7 @@ import { ConsentModal } from "@/chrome/ConsentModal";
 import { Dial } from "@/chrome/Dial";
 import { Transition } from "@/chrome/Transition";
 import { WorldMap } from "@/chrome/WorldMap";
+import { unlock } from "@/lib/audio";
 import { AESTHETICS, getAesthetic } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 
@@ -25,10 +26,21 @@ export function ChromeRoot() {
   const setMapOpen = useShell((s) => s.setMapOpen);
   const booted = useShell((s) => s.booted);
   const setBooted = useShell((s) => s.setBooted);
+  const audioReady = useShell((s) => s.audioReady);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  // Sound is on by default, but a browser won't start it without a click or a key.
+  // The first one anywhere does it, and the listeners go once it has worked.
+  useEffect(() => {
+    if (audioReady) return;
+    const wake = () => unlock();
+    const kinds = ["pointerdown", "pointerup", "click", "keydown", "touchend"] as const;
+    kinds.forEach((k) => window.addEventListener(k, wake, true));
+    return () => kinds.forEach((k) => window.removeEventListener(k, wake, true));
+  }, [audioReady]);
 
   const slug = pathname?.split("/").filter(Boolean)[0] ?? "";
   const current = getAesthetic(slug);

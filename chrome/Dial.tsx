@@ -19,7 +19,7 @@ export function Dial({ current }: { current: Aesthetic }) {
   const phase = useShell((s) => s.phase);
   const setMapOpen = useShell((s) => s.setMapOpen);
   const mapOpen = useShell((s) => s.mapOpen);
-  const muted = useShell((s) => s.muted);
+  const muted = useShell((s) => s.soundOff);
   const toggleMute = useShell((s) => s.toggleMute);
 
   const busy = phase !== "idle";

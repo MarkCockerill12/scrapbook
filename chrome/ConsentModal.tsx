@@ -81,8 +81,8 @@ export function ConsentModal() {
           </p>
           <p>By continuing, you accept that.</p>
           <p className="text-white/45">
-            There&apos;s sound on most pages. It starts muted — the speaker button in
-            the corner turns it on.
+            There&apos;s sound on most pages, and it&apos;s on. The speaker button in
+            the corner turns it off.
           </p>
         </div>
 

@@ -13,8 +13,8 @@ import { useShell } from "@/lib/store";
  *
  * Two rules the browser enforces and we cooperate with:
  *   - No AudioContext until a real user gesture, or it starts suspended and stays
- *     that way. `unlock()` is called from the consent modal and the boot screen.
- *   - Muted is the default and it's honoured here, centrally, so no page has to
+ *     that way. `unlock()` is called from the shell on the first click or key.
+ *   - Sound is on by default. Mute is honoured here, centrally, so no page has to
  *     remember to check.
  */
 
@@ -135,7 +135,10 @@ export function channelChange(): void {
 /** Call from a real user gesture. Safe to call repeatedly. */
 export function unlock(): void {
   const c = ensure();
-  if (c && c.state === "suspended") void c.resume();
+  if (!c) return;
+  const ready = () => c.state === "running" && useShell.getState().setAudioReady();
+  if (c.state === "suspended") void c.resume().then(ready, () => {});
+  else ready();
 }
 
 function audible(): boolean {
