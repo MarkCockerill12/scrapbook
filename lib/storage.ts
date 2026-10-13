@@ -5,11 +5,9 @@
  * high scores, coins collected. All of it routes through here so a single decision
  * governs the lot.
  *
- * If the visitor declines, the consent modal keeps the site shut until they say yes.
- * The refusal itself is kept in sessionStorage, so a reload lands on the same shut
- * door but nothing is left behind afterwards. The in-memory fallback is for browsers
- * with storage switched off: a yes there still opens the site, it just can't keep
- * anything.
+ * The consent modal has no "no": it keeps the site shut until the visitor continues,
+ * and continuing is the acceptance. The in-memory fallback is for browsers with
+ * storage switched off: the site still opens there, it just can't keep anything.
  */
 
 export type ConsentState = "granted" | "denied" | "undecided";
