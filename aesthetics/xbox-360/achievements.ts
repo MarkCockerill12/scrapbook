@@ -29,7 +29,7 @@ const KEY = "achievements";
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: "boot", name: "Welcome to the Dashboard", how: "Open the console", gs: 5 },
-  { id: "blades", name: "Blade Runner", how: "View all five blades", gs: 10 },
+  { id: "blades", name: "Hub Hopper", how: "View all six hubs", gs: 10 },
   { id: "hits", name: "Hitmarker", how: "Land 25 hitmarkers", gs: 10 },
   { id: "montage", name: "Montage Parodius", how: "Switch on montage mode", gs: 15 },
   { id: "trickshot", name: "Trickshot", how: "Hit a target inside 300ms", gs: 30 },

@@ -19,7 +19,13 @@ import { useShell } from "@/lib/store";
  */
 
 let ctx: AudioContext | null = null;
+/** The one output. Only the shell's own sounds are wired straight to it. */
+let out: GainNode | null = null;
+/** The channel that is on screen. Every page sound goes through this, so leaving a
+ *  page takes all of it away at once: late notes, long tails, reverb, forgotten loops. */
 let master: GainNode | null = null;
+
+const LEVEL = 0.5;
 
 function ensure(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -30,10 +36,100 @@ function ensure(): AudioContext | null {
       .webkitAudioContext;
   if (!Ctor) return null;
   ctx = new Ctor();
+  out = ctx.createGain();
+  out.gain.value = useShell.getState().muted ? 0 : LEVEL;
+  out.connect(ctx.destination);
   master = ctx.createGain();
-  master.gain.value = 0.5;
-  master.connect(ctx.destination);
+  master.connect(out);
+  // Mute is a hand on the output as well as a guard on each call, so a loop that was
+  // already running when the visitor muted goes quiet with everything else.
+  useShell.subscribe((st, prev) => {
+    if (st.muted === prev.muted || !ctx || !out) return;
+    out.gain.cancelScheduledValues(ctx.currentTime);
+    out.gain.setTargetAtTime(st.muted ? 0 : LEVEL, ctx.currentTime, 0.05);
+  });
   return ctx;
+}
+
+/** Turn the current channel down. Called as the static comes up over it. */
+export function duckScene(seconds = 0.26): void {
+  if (!ctx || !master) return;
+  const t = ctx.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(master.gain.value, t);
+  master.gain.linearRampToValueAtTime(0, t + seconds);
+}
+
+/**
+ * A new channel: the old one's bus is faded, then cut loose with whatever was still
+ * sounding on it, and the next page gets a clean one that fades up. Called from a
+ * layout effect, so it has happened before any page effect starts a sound.
+ */
+export function newScene(): void {
+  // nothing has made a sound yet: there is no bus to swap, and no context to wake
+  const c = ctx;
+  if (!c || !out) return;
+  const t = c.currentTime;
+  const old = master;
+  if (old) {
+    old.gain.cancelScheduledValues(t);
+    old.gain.setValueAtTime(old.gain.value, t);
+    old.gain.linearRampToValueAtTime(0, t + 0.12);
+    window.setTimeout(() => old.disconnect(), 400);
+  }
+  master = c.createGain();
+  master.gain.setValueAtTime(0, t);
+  master.gain.linearRampToValueAtTime(1, t + 0.9);
+  master.connect(out);
+}
+
+/**
+ * The channel change, heard: the tuner sliding off one station and settling on the
+ * next. One soft sweep of band-passed static with a slow start and a slow end, and a
+ * low settling note under it. It belongs to the shell, so it does not go through a page.
+ */
+export function channelChange(): void {
+  if (!audible()) return;
+  const c = ensure();
+  if (!c || c.state !== "running" || !out) return;
+  const t = c.currentTime;
+  const dur = 0.62;
+
+  const frames = Math.floor(c.sampleRate * (dur + 0.1));
+  const buffer = c.createBuffer(1, frames, c.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource();
+  src.buffer = buffer;
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 1.1;
+  bp.frequency.setValueAtTime(420, t);
+  bp.frequency.exponentialRampToValueAtTime(2600, t + dur * 0.55);
+  bp.frequency.exponentialRampToValueAtTime(900, t + dur);
+  const env = c.createGain();
+  env.gain.setValueAtTime(0, t);
+  env.gain.linearRampToValueAtTime(0.11, t + 0.16);
+  env.gain.linearRampToValueAtTime(0.07, t + dur * 0.6);
+  env.gain.linearRampToValueAtTime(0, t + dur);
+  src.connect(bp);
+  bp.connect(env);
+  env.connect(out);
+  src.start(t);
+  src.stop(t + dur + 0.05);
+
+  const osc = c.createOscillator();
+  const og = c.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(196, t + dur * 0.5);
+  osc.frequency.exponentialRampToValueAtTime(294, t + dur);
+  og.gain.setValueAtTime(0, t + dur * 0.5);
+  og.gain.linearRampToValueAtTime(0.05, t + dur * 0.8);
+  og.gain.linearRampToValueAtTime(0, t + dur + 0.5);
+  osc.connect(og);
+  og.connect(out);
+  osc.start(t + dur * 0.5);
+  osc.stop(t + dur + 0.55);
 }
 
 /** Call from a real user gesture. Safe to call repeatedly. */
@@ -158,6 +254,10 @@ export function noiseLoop({
   lp.frequency.value = lowpass;
 
   const env = c.createGain();
+  // The resting value has to be silence too: stopping in the same instant as starting
+  // cancels the ramp below, and a gain node with nothing scheduled sits at 1 — which
+  // was a burst of full-volume noise every time a page mounted twice.
+  env.gain.value = 0.0001;
   env.gain.setValueAtTime(0.0001, c.currentTime);
   env.gain.exponentialRampToValueAtTime(gain, c.currentTime + attack);
 
@@ -176,11 +276,23 @@ export function noiseLoop({
 
   return () => {
     try {
-      env.gain.cancelScheduledValues(c.currentTime);
+      if (env.gain.cancelAndHoldAtTime) env.gain.cancelAndHoldAtTime(c.currentTime);
+      else env.gain.cancelScheduledValues(c.currentTime);
       env.gain.setTargetAtTime(0.0001, c.currentTime, 0.08);
       src.stop(c.currentTime + 0.4);
     } catch {
       /* already stopped */
     }
   };
+}
+
+/**
+ * Raw access for lib/music.ts — the running context and master bus, or null when
+ * muted / locked. Everything scheduled against it must re-check on each tick.
+ */
+export function audioBus(): { ctx: AudioContext; master: GainNode } | null {
+  if (!audible()) return null;
+  const c = ensure();
+  if (!c || c.state !== "running" || !master) return null;
+  return { ctx: c, master };
 }

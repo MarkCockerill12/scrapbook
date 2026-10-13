@@ -1,317 +1,330 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { one } from "@/lib/assets";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCanvas } from "@/components/CanvasStage";
+import { cutN, img, src } from "@/lib/assets";
+import { noiseLoop } from "@/lib/audio";
+import { useMusic } from "@/lib/music";
 import { AESTHETICS } from "@/lib/registry";
+import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
-import { DrawScreen } from "./DrawScreen";
-import { button, greet, lid } from "./sound";
-import styles from "./styles.module.css";
+import { homeScore, launch, shopScore, shutter, streetpass } from "./music";
+import {
+  APPS,
+  ActivityTop,
+  CameraBottom,
+  CameraTop,
+  HomeBottom,
+  HomeTop,
+  LENS_FILTER,
+  ShopBottom,
+  ShopTop,
+  StreetPassBottom,
+  StreetPassTop,
+  SwapnoteBottom,
+  SwapnoteTop,
+  type App,
+  type Lens,
+} from "./Screens";
+import { button as buttonSound, greet, lid } from "./sound";
+import p from "./page.module.css";
 
 /**
- * Channel 12 — Japanese 3DS.
+ * Channel 12 — Japanese 3DS. 23:14, outside Yodobashi Camera.
  *
- * Fiction: *A borrowed 3DS, left on the drawing app.*
+ * Redesigned 2026-09-28 (Mark: "the 3DS should look better, and there should be other
+ * stuff going on — the 3DS only a part of it"). The console is now a REAL photograph
+ * of an Aqua Blue 3DS (Wikipedia), held up against a wall of real Tokyo night photos,
+ * with a real gachapon machine to one side. Its screens are live: the HOME menu,
+ * Swapnote, a camera that actually looks at the street and prints its photos onto the
+ * wall, StreetPass (every channel you've visited is a Mii you passed), the Activity
+ * Log pedometer and the eShop, with its music.
  *
- * The demo argument: drawing hardware in CSS is a **materials** problem, not a shape
- * problem. Plastic needs a hard specular line where the surface turns, screens are
- * holes rather than panels, and the object needs seams. The background is thrown out
- * of focus because a device photographed at arm's length has a shallow depth of
- * field, and a sharp background is what makes a mockup read as a render.
- *
- * Assets: `raw/nintendo-3ds/` — a night street, blurred to bokeh behind the console.
+ * Kept from the old page: HOME → the Wii Menu (Mark called that cross-link out).
  */
 
-const SLUG = "nintendo-3ds";
+const A = "nintendo-3ds";
 
-const SKIN = ["#f5cfa8", "#e0b183", "#c08152", "#8d5a35"];
-const HAIR = ["#2c1f18", "#111111", "#8a5a2b", "#d8b25c", "#6d6d75"];
-const SHIRT = ["#e0574f", "#3f8fd6", "#5cb85c", "#f0b429", "#8b6fd0"];
+/* Console placement and the photo's screen rects (fractions of the 800×831 photo). */
+const CW = 700;
+const CH = Math.round((CW * 831) / 800);
+const CX = 450;
+const CY = 16;
+const TOP = { l: 0.2225, t: 0.12, w: 0.561, h: 0.327 };
+const BOT = { l: 0.2775, t: 0.561, w: 0.451, h: 0.32 };
+const rect = (r: typeof TOP, nw: number, nh: number): CSSProperties => ({
+  left: r.l * CW,
+  top: r.t * CH,
+  width: nw,
+  height: nh,
+  transform: `scale(${(r.w * CW) / nw}, ${(r.h * CH) / nh})`,
+  transformOrigin: "0 0",
+});
+const hot = (x: number, y: number, d: number): CSSProperties => ({ left: x * CW - d / 2, top: y * CH - d / 2, width: d, height: d });
 
-interface Walker {
-  id: number;
+/* Three prints either side of the console, fanned toward it. Same frame, same tape. */
+const WALL = [
+  { slot: "n3ds_konbini", n: 1, x: 56, y: 44, w: 270, r: -5, cap: "コンビニ · the konbini that never closes" },
+  { slot: "n3ds_vending", n: 5, x: 150, y: 300, w: 270, r: 3, cap: "自販機 · warm cans, ¥130" },
+  { slot: "n3ds_street", n: 2, x: 44, y: 560, w: 270, r: -3, cap: "裏通り · the back way home" },
+  { slot: "n3ds_wires", n: 1, x: 1274, y: 44, w: 270, r: 5, cap: "電線 · every wire in the city" },
+  { slot: "n3ds_konbini", n: 2, x: 1180, y: 300, w: 270, r: -3, cap: "夜食 · midnight shelves" },
+  { slot: "n3ds_gachapon", n: 2, x: 1286, y: 540, w: 250, r: 4, cap: "ガチャ ¥100 · twist for a capsule", gacha: true },
+];
+
+interface Print {
+  view: number;
+  lens: Lens;
   x: number;
-  speed: number;
-  skin: string;
-  hair: string;
-  shirt: string;
-  name: string;
+  y: number;
+  r: number;
 }
 
-const NAMES = ["AKI", "REN", "YUU", "MOMO", "KOU", "HANA", "SORA", "RIKU", "NAO"];
-
 export default function Nintendo3DS() {
+  const { toCanvasDelta, toCanvasSpace } = useCanvas();
   const begin = useShell((s) => s.beginTransition);
   const visited = useShell((s) => s.visited);
+  const muted = useShell((s) => s.muted);
 
-  const [depth, setDepth] = useState(0.45);
-  const [asleep, setAsleep] = useState(false);
-  const [ink, setInk] = useState(0);
-  const [pressed, setPressed] = useState<string | null>(null);
-  const [walkers, setWalkers] = useState<Walker[]>([]);
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const seq = useRef(0);
-
-  const street = one(SLUG, "n3ds_street", 1);
-
-  /* StreetPass: one Mii per channel you've actually been to. */
-  useEffect(() => {
-    const make = (i: number): Walker => ({
-      id: ++seq.current,
-      x: -60 - i * 130,
-      speed: 0.3 + Math.random() * 0.5,
-      skin: SKIN[i % SKIN.length],
-      hair: HAIR[i % HAIR.length],
-      shirt: SHIRT[i % SHIRT.length],
-      name: NAMES[i % NAMES.length],
-    });
-    // `(_, i) => make(i)`, not `make`: Array.from's map function is called with
-    // (element, index), and the element of a {length} object is undefined — so
-    // passing `make` directly hands it `undefined` as the index and every position
-    // computes to NaN.
-    setWalkers(
-      Array.from({ length: Math.max(3, Math.min(9, visited.length)) }, (_, i) => make(i)),
-    );
-  }, [visited.length]);
+  const [app, setApp] = useState<App>("home");
+  const [sel, setSel] = useState(0);
+  const [depth, setDepth] = useState(0.4);
+  const [closed, setClosed] = useState(false);
+  const [notes, setNotes] = useState<number[][]>([]);
+  const [lens, setLens] = useState<Lens>("normal");
+  const [view, setView] = useState(1);
+  const [flash, setFlash] = useState(0);
+  const [prints, setPrints] = useState<Print[]>([]);
+  const [steps, setSteps] = useState(0);
+  const [coins, setCoins] = useState(0);
+  const [capsule, setCapsule] = useState<{ slug: string; k: number } | null>(null);
+  const [spLed, setSpLed] = useState(false);
+  const walked = useRef(0);
+  const [zoom, setZoom] = useState<number | null>(null);
+  const consoleEl = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (asleep) return;
-    let raf = 0;
-    const step = () => {
-      setWalkers((ws) =>
-        ws.map((w) => {
-          const x = w.x + w.speed;
-          if (x > 660) {
-            greet();
-            return { ...w, x: -60 };
+    setPrints(sbGet(A, "prints", []));
+    setSteps(sbGet(A, "steps", 0));
+    setCoins(sbGet(A, "coins", 0));
+    setNotes(sbGet(A, "note", []));
+  }, []);
+
+  useMusic(closed ? null : app === "eshop" ? shopScore : homeScore, app === "eshop" ? 128 : 76, !closed);
+
+  // A Tokyo street at night: traffic hush and a distant crossing chirp.
+  useEffect(() => {
+    if (muted) return;
+    const stop = noiseLoop({ gain: 0.03, lowpass: 700, attack: 2 });
+    return stop;
+  }, [muted]);
+
+  // StreetPass: the green LED lights now and then.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSpLed(true);
+      streetpass();
+      window.setTimeout(() => setSpLed(false), 4000);
+    }, 31000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Pedometer: stylus movement is walking.
+  const onMove = useCallback(
+    (e: React.PointerEvent) => {
+      // Head tracking for the 3D slider: the top screen's layers part as you move.
+      const c = toCanvasSpace(e.clientX, e.clientY);
+      consoleEl.current?.style.setProperty("--mx", String(Math.max(-1, Math.min(1, (c.x - 800) / 800))));
+      consoleEl.current?.style.setProperty("--my", String(Math.max(-1, Math.min(1, (c.y - 450) / 450))));
+      walked.current += Math.abs(toCanvasDelta(e.movementX)) + Math.abs(toCanvasDelta(e.movementY));
+      if (walked.current > 60) {
+        const n = Math.floor(walked.current / 60);
+        walked.current -= n * 60;
+        setSteps((st) => {
+          const next = st + n;
+          if (Math.floor(next / 100) > Math.floor(st / 100)) {
+            setCoins((c) => {
+              const cc = Math.min(300, c + 1);
+              sbSet(A, "coins", cc);
+              return cc;
+            });
           }
-          return { ...w, x };
-        }),
-      );
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [asleep]);
-
-  const skyline = useMemo(
-    () =>
-      Array.from({ length: 26 }, (_, i) => ({
-        x: i * 28 - 20,
-        w: 18 + ((i * 37) % 26),
-        h: 60 + ((i * 53) % 150),
-        wins: Array.from({ length: 6 }, (_, k) => ((i * 7 + k * 11) % 5) < 3),
-      })),
-    [],
+          if (next % 50 < n) sbSet(A, "steps", next);
+          return next;
+        });
+      }
+    },
+    [toCanvasDelta, toCanvasSpace],
   );
 
-  const onSlider = (e: React.PointerEvent) => {
-    if (e.buttons !== 1) return;
-    const rect = sliderRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const t = 1 - (e.clientY - rect.top) / rect.height;
-    setDepth(Math.max(0, Math.min(1, t)));
+  const open = (a: App) => {
+    setApp(a);
+    launch();
   };
 
-  const tap = (id: string, action?: () => void) => {
-    setPressed(id);
-    button();
-    window.setTimeout(() => setPressed(null), 120);
-    action?.();
+  const shoot = () => {
+    shutter();
+    setFlash((f) => f + 1);
+    const next = [...prints, { view, lens, x: 0, y: 0, r: ((prints.length * 37) % 14) - 7 }].slice(-5);
+    setPrints(next);
+    sbSet(A, "prints", next);
   };
 
-  const par = (k: number) => ({ transform: `translateX(${depth * k}px)` });
+  const gacha = () => {
+    const live = AESTHETICS.filter((a) => a.status === "live" && a.slug !== A);
+    const pick = live[Math.floor(Math.random() * live.length)];
+    setCapsule({ slug: pick.slug, k: Date.now() });
+    buttonSound();
+    window.setTimeout(() => greet(), 700);
+  };
+
+  const face = (b: "A" | "B" | "X" | "Y") => {
+    buttonSound();
+    if (b === "B") setApp("home");
+    if (b === "A" && app === "home") open(APPS[sel].id);
+    else if (b === "A" && app === "camera") shoot();
+    if (b === "X") setSel((i) => (i + 1) % APPS.length);
+    if (b === "Y") setSel((i) => (i + APPS.length - 1) % APPS.length);
+  };
+
+  const top = () => {
+    switch (app) {
+      case "home":
+        return <HomeTop sel={sel} depth={depth} />;
+      case "swapnote":
+        return <SwapnoteTop strokes={notes} />;
+      case "camera":
+        return <CameraTop view={view} lens={lens} depth={depth} flash={flash > 0} key={flash} />;
+      case "streetpass":
+        return <StreetPassTop visited={visited} />;
+      case "activity":
+        return <ActivityTop steps={steps} coins={coins} />;
+      case "eshop":
+        return <ShopTop />;
+    }
+  };
+  const bottom = () => {
+    switch (app) {
+      case "home":
+        return <HomeBottom sel={sel} onSel={setSel} onOpen={open} coins={coins} />;
+      case "swapnote":
+        return (
+          <SwapnoteBottom
+            onStrokes={(d) => {
+              setNotes(d);
+              sbSet(A, "note", d);
+            }}
+          />
+        );
+      case "camera":
+        return <CameraBottom lens={lens} onLens={setLens} onShoot={shoot} onView={() => setView((v) => (v % 8) + 1)} />;
+      case "streetpass":
+        return <StreetPassBottom visited={visited} onGo={begin} />;
+      case "activity":
+        return <HomeBottom sel={3} onSel={setSel} onOpen={open} coins={coins} />;
+      case "eshop":
+        return <ShopBottom onGo={begin} />;
+    }
+  };
 
   return (
-    <div className={styles.root}>
-      {street && (
-        <Image
-          src={street.src}
-          alt=""
-          width={1600}
-          height={900}
-          priority
-          className={styles.street}
-        />
+    <div className={p.root} onPointerMove={onMove}>
+      <img className={p.street} src={src(A, "n3ds_street", 1)} alt="" />
+      <div className={p.streetShade} />
+
+      {/* the wall of photos */}
+      {WALL.map((w, i) => (
+        <button
+          key={i}
+          type="button"
+          className={p.photo}
+          title={w.cap}
+          style={{ left: w.x, top: w.y, width: w.w, rotate: `${w.r}deg` }}
+          onClick={() => {
+            if (w.gacha) return gacha();
+            shutter();
+            setZoom(i);
+          }}
+        >
+          <img src={src(A, w.slot, w.n)} alt={w.cap} />
+          <span className={p.tape} />
+          {w.gacha && <em>ガチャ ¥100 — twist!</em>}
+        </button>
+      ))}
+
+      {/* camera prints you've taken, stuck on with washi tape */}
+      {prints.map((pr, i) => (
+        <figure key={i} className={p.print} style={{ left: 480 + i * 126, top: 764, rotate: `${pr.r}deg` }}>
+          <span className={p.printImg} style={{ backgroundImage: `url(${src(A, "n3ds_street", pr.view)})`, filter: LENS_FILTER[pr.lens] }} />
+          <figcaption>3DS · {pr.lens}</figcaption>
+        </figure>
+      ))}
+
+      {capsule && (
+        <button key={capsule.k} type="button" className={p.capsule} onClick={() => begin(capsule.slug)}>
+          <img src={cutN(A, "n3ds_gachapon", 1)?.src ?? ""} alt="" />
+          <b>
+            you got: {AESTHETICS.find((a) => a.slug === capsule.slug)?.name}
+            <small>tap to go</small>
+          </b>
+        </button>
       )}
-      <div className={styles.streetTint} />
 
-      <svg className={styles.wires} viewBox="0 0 1600 300" aria-hidden>
-        {[40, 76, 118, 150, 196].map((y, i) => (
-          <path
-            key={y}
-            d={`M-20 ${y} Q 400 ${y + 40 + i * 8} 820 ${y + 6} T 1620 ${y + 26}`}
-            stroke="rgba(6,8,14,0.85)"
-            strokeWidth={i % 2 ? 2 : 3}
-            fill="none"
-          />
-        ))}
-        <path d="M186 0v300M1386 0v300" stroke="rgba(6,8,14,0.9)" strokeWidth="9" />
-      </svg>
-
-      <div className={styles.console}>
-        {/* ---------------------------------------------- upper shell */}
-        <div className={`${styles.half} ${styles.top} ${asleep ? styles.closed : ""}`}>
-          <span className={styles.camera} />
-          <span className={styles.grille} style={{ left: 150 }} />
-          <span className={styles.grille} style={{ right: 150 }} />
-
-          <div className={`${styles.screenWell} ${styles.topScreen}`}>
-            <div className={`${styles.layer} ${styles.sky} ${asleep ? styles.sleeping : ""}`}>
-              <span className={styles.moon} style={par(-10)} />
-
-              <div className={styles.skylineFar} style={par(-22)}>
-                {skyline.map((b, i) => (
-                  <span
-                    key={i}
-                    className={styles.building}
-                    style={{ left: b.x, width: b.w, height: b.h }}
-                  >
-                    {b.wins.map((on, k) =>
-                      on ? (
-                        <span
-                          key={k}
-                          className={styles.win}
-                          style={{ left: 4 + (k % 2) * 8, bottom: 8 + Math.floor(k / 2) * 12 }}
-                        />
-                      ) : null,
-                    )}
-                  </span>
-                ))}
-              </div>
-
-              <div className={styles.skylineNear} style={par(-52)}>
-                {skyline.slice(0, 14).map((b, i) => (
-                  <span
-                    key={i}
-                    className={`${styles.building} ${styles.buildingNear}`}
-                    style={{ left: b.x * 2 - 40, width: b.w * 1.6, height: b.h * 0.62 }}
-                  />
-                ))}
-              </div>
-
-              <div className={styles.appBar}>
-                <span>Flipnote Studio</span>
-                <span className={styles.appBadge}>
-                  {ink > 0 ? `${Math.round(ink)} points` : "no note yet"}
-                </span>
-              </div>
-
-              <div className={styles.parade} style={par(-70)}>
-                {walkers.map((w) => (
-                  <span key={w.id} className={styles.walker} style={{ left: w.x }}>
-                    <span
-                      className={styles.walkerHead}
-                      style={{ background: w.skin, borderTop: `7px solid ${w.hair}` }}
-                    />
-                    {w.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className={styles.glass} />
-          </div>
-
-          <div
-            ref={sliderRef}
-            className={styles.slider3d}
-            onPointerDown={onSlider}
-            onPointerMove={onSlider}
-          >
-            <span
-              className={styles.slider3dKnob}
-              style={{ top: (1 - depth) * 156 }}
-            />
-          </div>
-          <span className={styles.slider3dLabel}>3D</span>
+      {/* the console */}
+      <div ref={consoleEl} className={`${p.console} ${closed ? p.closed : ""}`} style={{ left: CX, top: CY, width: CW, height: CH, "--depth": depth } as CSSProperties}>
+        <img className={p.shell} src={img(A, "n3ds_hw", 7)?.src ?? ""} alt="Aqua Blue Nintendo 3DS" />
+        <div className={p.screen} style={rect(TOP, 400, 240)}>
+          <div className={p.stereoBack} />
+          <div className={p.stereo}>{top()}</div>
+          <div className={p.glass} />
         </div>
-
-        <span className={styles.hinge} />
-
-        {/* ---------------------------------------------- lower shell */}
-        <div className={styles.half + " " + styles.bottom}>
-          <div className={`${styles.screenWell} ${styles.bottomScreen}`}>
-            {!asleep && <DrawScreen onInk={setInk} />}
-            <div className={styles.glass} />
-          </div>
-
-          <span className={`${styles.led} ${asleep ? styles.ledOn : ""}`} />
-
-          <div className={styles.pad} />
-          <div className={styles.dpad}>
-            <span style={{ left: 34, top: 0, width: 28, height: 96 }} />
-            <span style={{ left: 0, top: 34, width: 96, height: 28 }} />
-          </div>
-
-          <div className={styles.face}>
-            {[
-              { id: "X", x: 43, y: 0 },
-              { id: "Y", x: 0, y: 43 },
-              { id: "A", x: 86, y: 43 },
-              { id: "B", x: 43, y: 86 },
-            ].map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                aria-label={`Button ${b.id}`}
-                className={`${styles.faceBtn} ${pressed === b.id ? styles.btnDown : ""}`}
-                style={{ left: b.x, top: b.y }}
-                onClick={() =>
-                  tap(b.id, b.id === "A" ? () => begin("wii") : undefined)
-                }
-              >
-                {b.id}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className={styles.smallBtn}
-            style={{ left: 330 }}
-            onClick={() => tap("select")}
-          >
-            SELECT
-          </button>
-          <button
-            type="button"
-            className={styles.smallBtn}
-            style={{ right: 330 }}
-            onClick={() => tap("start")}
-          >
-            START
-          </button>
-          <button
-            type="button"
-            className={styles.home}
-            onClick={() =>
-              tap("home", () => begin(AESTHETICS.find((a) => a.slug === "wii")!.slug))
-            }
-          >
-            HOME
-          </button>
+        <div className={p.screen} style={rect(BOT, 320, 240)}>
+          {bottom()}
+          <div className={p.glass} />
         </div>
+        <button type="button" className={p.hot} style={hot(0.86, 0.611, 40)} aria-label="X" onClick={() => face("X")} />
+        <button type="button" className={p.hot} style={hot(0.8125, 0.663, 40)} aria-label="Y" onClick={() => face("Y")} />
+        <button type="button" className={p.hot} style={hot(0.916, 0.663, 40)} aria-label="A" onClick={() => face("A")} />
+        <button type="button" className={p.hot} style={hot(0.8625, 0.717, 40)} aria-label="B" onClick={() => face("B")} />
+        <button type="button" className={`${p.hot} ${p.pill}`} style={{ left: 0.45 * CW, top: 0.915 * CH, width: 80, height: 26 }} aria-label="HOME" onClick={() => (app === "home" ? begin("wii") : setApp("home"))} />
+        <button
+          type="button"
+          className={`${p.hot} ${p.pill}`}
+          style={{ left: 0.78 * CW, top: 0.88 * CH, width: 110, height: 30 }}
+          aria-label="POWER"
+          onClick={() => {
+            setClosed((c) => !c);
+            lid(!closed);
+          }}
+        />
+        {/* the 3D depth slider, on the right edge of the top shell */}
+        <input
+          className={p.slider}
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={depth}
+          onChange={(e) => setDepth(Number(e.target.value))}
+          style={{ left: 0.905 * CW, top: 0.17 * CH }}
+          aria-label="3D depth"
+          title="3D depth slider"
+        />
+        <span className={p.depthTag} style={{ left: 0.9 * CW, top: 0.4 * CH }} data-on={depth > 0.05 || undefined}>
+          3D
+        </span>
+        <i className={`${p.led} ${spLed ? p.ledOn : ""}`} style={{ left: 0.94 * CW, top: 0.485 * CH }} />
       </div>
 
-      <div className={styles.hint}>
-        draw on the bottom screen · it keeps what you drew
-        <br />
-        press play to watch it draw itself back
-      </div>
+      {zoom !== null && (
+        <button type="button" className={p.lightbox} onClick={() => setZoom(null)}>
+          <figure>
+            <img src={src(A, WALL[zoom].slot, WALL[zoom].n)} alt="" />
+            <figcaption>{WALL[zoom].cap}</figcaption>
+          </figure>
+        </button>
+      )}
 
-      <button
-        type="button"
-        className={styles.lid}
-        onClick={() => {
-          setAsleep((s) => {
-            lid(!s);
-            return !s;
-          });
-        }}
-      >
-        {asleep ? "open the lid" : "close the lid"}
-      </button>
     </div>
   );
 }

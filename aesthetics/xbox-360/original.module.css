@@ -1,0 +1,345 @@
+/* Xbox Originals — the 2001 dashboard. px against 1600x900. */
+
+@font-face { font-family: "Orbitron"; font-weight: 500; src: url("/fonts/xbox-360/orbitron-500.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Orbitron"; font-weight: 700; src: url("/fonts/xbox-360/orbitron-700.woff2") format("woff2"); font-display: block; }
+
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: 9000;
+  overflow: hidden;
+  background: #000;
+  color: #b6ff3a;
+  font-family: "Orbitron", "Segoe UI", sans-serif;
+  font-weight: 500;
+  letter-spacing: 3px;
+  animation: on 0.7s ease both;
+}
+
+@keyframes on {
+  from {
+    opacity: 0;
+    filter: brightness(3);
+  }
+}
+
+.root button {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* the green room: light with no source, and a grid going off into it */
+.field {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 60% at 66% 50%, rgba(120, 220, 20, 0.5), rgba(40, 110, 0, 0.3) 45%, transparent 75%),
+    radial-gradient(ellipse 120% 60% at 50% 110%, rgba(60, 150, 0, 0.5), transparent 70%),
+    #020500;
+}
+
+.field::after {
+  content: "";
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: 0;
+  height: 52%;
+  background:
+    repeating-linear-gradient(90deg, rgba(160, 255, 40, 0.3) 0 1.5px, transparent 1.5px 90px),
+    repeating-linear-gradient(0deg, rgba(160, 255, 40, 0.3) 0 1.5px, transparent 1.5px 90px);
+  transform: perspective(520px) rotateX(64deg);
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(0deg, #000, transparent 90%);
+  animation: run 4s linear infinite;
+}
+
+@keyframes run {
+  to {
+    background-position: 0 90px, 0 90px;
+  }
+}
+
+.orb {
+  position: absolute;
+  left: 830px;
+  top: 190px;
+  width: 520px;
+  height: 520px;
+  transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.7s;
+}
+
+.orb[data-open] {
+  transform: translate(260px, -40px) scale(0.62);
+  opacity: 0.7;
+}
+
+.orb b {
+  position: absolute;
+  inset: 90px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 30%, #f6ffd0 0 4%, #c8ff4a 14%, #6fd400 40%, #1f5a00 72%, #071800 100%);
+  box-shadow:
+    0 0 60px 10px rgba(140, 255, 20, 0.6),
+    0 0 180px 60px rgba(100, 220, 0, 0.35),
+    inset -30px -40px 60px rgba(0, 20, 0, 0.7);
+  animation: breathe 5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    transform: scale(1.04);
+    filter: brightness(1.15);
+  }
+}
+
+.orb i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(182, 255, 58, 0.75);
+  box-shadow: 0 0 18px rgba(140, 255, 20, 0.6), inset 0 0 18px rgba(140, 255, 20, 0.4);
+  animation: ring 9s linear infinite;
+}
+
+.orb i:nth-child(1) {
+  transform: rotateX(72deg);
+}
+
+.orb i:nth-child(2) {
+  inset: 30px;
+  animation-duration: 13s;
+  animation-direction: reverse;
+}
+
+.orb i:nth-child(3) {
+  inset: -40px;
+  border-width: 1.5px;
+  animation-duration: 21s;
+}
+
+@keyframes ring {
+  from {
+    transform: rotateX(70deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(70deg) rotateZ(360deg);
+  }
+}
+
+.orb i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #eaffb0;
+  box-shadow: 0 0 16px 4px #9dff1a;
+}
+
+.brand {
+  position: absolute;
+  left: 110px;
+  top: 70px;
+  display: flex;
+  align-items: baseline;
+  gap: 30px;
+}
+
+.brand b {
+  font-size: 54px;
+  font-weight: 700;
+  letter-spacing: 14px;
+  color: #d4ff7a;
+  text-shadow: 0 0 22px #7dff00;
+}
+
+.brand span {
+  font-size: 20px;
+  color: rgba(182, 255, 58, 0.7);
+}
+
+.menu {
+  position: absolute;
+  left: 110px;
+  top: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.menu button {
+  position: relative;
+  width: 520px;
+  padding: 18px 30px;
+  text-align: left;
+  font-size: 34px;
+  color: rgba(182, 255, 58, 0.55);
+  /* the old dashboard's slanted plates */
+  clip-path: polygon(0 0, 94% 0, 100% 50%, 94% 100%, 0 100%);
+  background: linear-gradient(90deg, rgba(120, 220, 20, 0.14), transparent);
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.menu button[data-on] {
+  color: #041000;
+  background: linear-gradient(90deg, #d4ff5a, #7fe000);
+  transform: translateX(26px);
+  text-shadow: none;
+}
+
+.pane {
+  position: absolute;
+  left: 110px;
+  top: 220px;
+  width: 760px;
+  animation: pane 0.45s ease both;
+}
+
+@keyframes pane {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+}
+
+.pane h2 {
+  margin: 0 0 20px;
+  font-size: 44px;
+  font-weight: 700;
+  color: #d4ff7a;
+  text-shadow: 0 0 20px #7dff00;
+}
+
+.pane p {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(182, 255, 58, 0.8);
+}
+
+.notice {
+  font-size: 19px !important;
+  padding: 26px;
+  border: 2px solid rgba(182, 255, 58, 0.6);
+  background: rgba(40, 90, 0, 0.3);
+}
+
+.saves {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.saves li {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 18px;
+  font-size: 17px;
+  background: linear-gradient(90deg, rgba(120, 220, 20, 0.2), rgba(120, 220, 20, 0.04));
+  border-left: 4px solid #9dff1a;
+}
+
+.saves li i {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #d4ff5a, #3f8f00);
+  box-shadow: 0 0 10px rgba(140, 255, 20, 0.6);
+}
+
+.saves li button {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #9dff1a;
+  border-radius: 50%;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.saves li button:hover {
+  background: #9dff1a;
+  color: #041000;
+}
+
+.saves li b {
+  flex: 1;
+  font-weight: 500;
+}
+
+.saves li span {
+  color: rgba(182, 255, 58, 0.65);
+  font-size: 14px;
+}
+
+.settings {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 12px 20px;
+  font-size: 17px;
+}
+
+.settings dt {
+  color: rgba(182, 255, 58, 0.6);
+}
+
+.settings dd {
+  margin: 0;
+  color: #e0ff9a;
+}
+
+.keys {
+  position: absolute;
+  left: 110px;
+  bottom: 70px;
+  display: flex;
+  gap: 40px;
+  font-size: 15px;
+}
+
+.keys i {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+  border-radius: 50%;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+}
+
+.keys i[data-k="a"] {
+  background: #7fe000;
+}
+
+.keys i[data-k="b"] {
+  background: #ff4a3a;
+}
+
+.keys i[data-k="x"] {
+  background: #d8dde0;
+}
+
+.keys button:hover {
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb i,
+  .orb b,
+  .field::after {
+    animation: none;
+  }
+}

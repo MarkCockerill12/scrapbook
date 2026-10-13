@@ -1,0 +1,594 @@
+/* Aztec / Lost Izalith. Own reset, tokens and fonts (rule R2). */
+
+@font-face { font-family: "Cinzel"; src: url("/fonts/aztec/cinzel-400.woff2") format("woff2"); font-weight: 400 900; font-display: block; }
+@font-face { font-family: "EB Garamond"; src: url("/fonts/aztec/eb-garamond-400i.woff2") format("woff2"); font-style: italic; font-display: block; }
+@font-face { font-family: "EB Garamond"; src: url("/fonts/aztec/eb-garamond-400.woff2") format("woff2"); font-style: normal; font-display: block; }
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0a0503;
+  font-family: "EB Garamond", Georgia, serif;
+  color: #e9dcc4;
+  cursor: none;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: none;
+}
+
+/* ---------- far layer ---------- */
+.far {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2400px;
+  height: 640px;
+}
+
+.far img {
+  position: absolute;
+  top: 0;
+  height: 640px;
+  width: 1000px;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(1.3) sepia(0.4) blur(1.5px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+}
+
+.smoke {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 40% at 30% 30%, rgba(60, 30, 15, 0.5), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(40, 20, 10, 0.55), transparent 70%),
+    linear-gradient(180deg, rgba(10, 4, 2, 0.6), transparent 40%);
+  animation: smoke 16s ease-in-out infinite alternate;
+}
+
+@keyframes smoke {
+  to {
+    transform: translateX(-60px);
+    opacity: 0.8;
+  }
+}
+
+/* ---------- ruins ---------- */
+.ruins {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2600px;
+  height: 900px;
+}
+
+.ruin {
+  position: absolute;
+}
+
+.ruin img {
+  width: 100%;
+  display: block;
+  /* relight: kill the daylight, pour lava light up from underneath */
+  filter: brightness(0.5) contrast(1.25) sepia(0.9) saturate(2.4) hue-rotate(-18deg);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), #000 60%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), #000 60%);
+}
+
+.ruin::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -20px;
+  height: 45%;
+  background: radial-gradient(ellipse 60% 70% at 50% 100%, rgba(255, 110, 20, 0.55), transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: flicker 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ---------- near ---------- */
+.near {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3000px;
+  height: 900px;
+}
+
+.relic {
+  position: absolute;
+  transition: transform 300ms ease, filter 300ms ease;
+  filter: brightness(0.75) sepia(0.5) saturate(1.3) drop-shadow(0 20px 20px rgba(0, 0, 0, 0.8)) drop-shadow(0 -6px 14px rgba(255, 120, 30, 0.35));
+}
+
+.relic img {
+  width: 100%;
+  display: block;
+}
+
+.relic:hover {
+  transform: translateY(-6px);
+  filter: brightness(1.05) sepia(0.4) saturate(1.3) drop-shadow(0 0 18px rgba(255, 200, 120, 0.8));
+}
+
+.bonfire {
+  position: absolute;
+  left: 150px;
+  top: 470px;
+  width: 200px;
+  height: 230px;
+}
+
+.embers {
+  position: absolute;
+  left: 20px;
+  bottom: 0;
+  width: 160px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  filter: brightness(0.95) saturate(1.3);
+  -webkit-mask-image: radial-gradient(ellipse, #000 45%, transparent 72%);
+  mask-image: radial-gradient(ellipse, #000 45%, transparent 72%);
+}
+
+.sword {
+  position: absolute;
+  left: 70px;
+  bottom: 22px;
+  width: 60px;
+  rotate: 8deg;
+  filter: brightness(1.1) sepia(0.4) drop-shadow(0 0 8px rgba(255,140,40,.6));
+}
+
+.flame {
+  position: absolute;
+  left: 50px;
+  bottom: 30px;
+  width: 100px;
+  height: 130px;
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  background: radial-gradient(ellipse at 50% 80%, #fff6c0 0%, #ffb23a 25%, rgba(255, 90, 20, 0.6) 55%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.15;
+  animation: fire 0.3s ease-in-out infinite alternate;
+  transition: opacity 800ms ease;
+}
+
+.bonfireLit .flame {
+  opacity: 1;
+}
+
+.bonfireLit .embers {
+  filter: brightness(1.3);
+}
+
+@keyframes fire {
+  to {
+    transform: scale(0.92, 1.06) translateY(-4px);
+  }
+}
+
+.prompt {
+  position: absolute;
+  left: 50%;
+  top: -20px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font: 17px "Cinzel", serif;
+  color: #e9dcc4;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  text-shadow: 0 0 6px #000;
+}
+
+.bonfire:hover .prompt {
+  opacity: 1;
+}
+
+.soap {
+  position: absolute;
+  top: 690px;
+  padding: 6px 14px;
+  transform: skewX(-12deg) scaleY(0.6);
+  font: italic 22px "EB Garamond", serif;
+  color: #ffb070;
+  text-shadow: 0 0 8px #ff6a1a, 0 0 18px #ff6a1a;
+  opacity: 0.85;
+  animation: glowSoap 3s ease-in-out infinite alternate;
+}
+
+@keyframes glowSoap {
+  to {
+    opacity: 0.55;
+  }
+}
+
+.crack {
+  position: absolute;
+  top: 650px;
+  width: 140px;
+  height: 40px;
+  background:
+    linear-gradient(170deg, transparent 45%, rgba(0, 0, 0, 0.9) 48%, rgba(255, 100, 20, 0.3) 50%, transparent 53%),
+    linear-gradient(10deg, transparent 45%, rgba(0, 0, 0, 0.9) 48%, transparent 52%);
+}
+
+.cracked {
+  filter: drop-shadow(0 0 8px #ff6a1a);
+  animation: shake 0.3s linear;
+}
+
+@keyframes shake {
+  25% { translate: -3px 1px; }
+  75% { translate: 3px -1px; }
+}
+
+/* ---------- lava ---------- */
+.lava {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120px;
+  background-size: 900px auto;
+  background-position-y: 60%;
+  filter: saturate(1.6) brightness(1.3);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%);
+  mask-image: linear-gradient(180deg, transparent, #000 40%);
+  animation: flow 30s linear infinite;
+}
+
+@keyframes flow {
+  to {
+    background-position-y: 70%;
+  }
+}
+
+.lavaGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(255, 90, 10, 0.5), rgba(255, 60, 0, 0.12) 30%, transparent 55%);
+  mix-blend-mode: screen;
+  z-index: 3;
+  animation: flicker 2.3s ease-in-out infinite alternate;
+}
+
+.dark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.torchGlow {
+  position: absolute;
+  z-index: 4;
+  width: 26px;
+  height: 36px;
+  margin: -30px 0 0 -13px;
+  pointer-events: none;
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  background: radial-gradient(ellipse at 50% 80%, #fff6c0, #ffb23a 35%, rgba(255, 90, 20, 0.5) 60%, transparent 72%);
+  filter: drop-shadow(0 0 16px #ff8a2a);
+  animation: fire 0.2s ease-in-out infinite alternate;
+}
+
+/* ---------- HUD ---------- */
+.hud {
+  position: absolute;
+  left: 40px;
+  top: 30px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bar {
+  width: 360px;
+  height: 10px;
+  background: rgba(20, 5, 0, 0.8);
+  border: 1px solid #6a4a2a;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(180deg, #d23a2a, #7a0f0a);
+  transition: width 300ms ease;
+}
+
+.souls {
+  font: 15px "Cinzel", serif;
+  letter-spacing: 0.14em;
+  color: #cbb994;
+}
+
+.hint {
+  position: absolute;
+  left: 80px;
+  bottom: 24px;
+  z-index: 10;
+  font-size: 17px;
+  font-style: italic;
+  color: #e9dcc4;
+  text-shadow: 0 1px 4px #000, 0 0 10px #000;
+}
+
+/* ---------- overlays ---------- */
+.msgCard,
+.item,
+.died,
+.fall {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  cursor: pointer;
+}
+
+.msgCard {
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.msgCard p {
+  font: italic 44px "EB Garamond", serif;
+  color: #ffb070;
+  text-shadow: 0 0 14px #ff6a1a;
+}
+
+.msgCard small {
+  font: 17px "Cinzel", serif;
+  color: #bca88a;
+}
+
+.item {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.itemCard {
+  display: flex;
+  gap: 34px;
+  width: 1100px;
+  padding: 34px 40px;
+  background: linear-gradient(180deg, rgba(20, 14, 8, 0.95), rgba(8, 5, 3, 0.95));
+  border: 1px solid #6a5a3a;
+  box-shadow: 0 0 0 4px rgba(20, 14, 8, 0.8), 0 30px 60px rgba(0, 0, 0, 0.8);
+}
+
+.itemCard img {
+  width: 300px;
+  object-fit: contain;
+  filter: sepia(0.3) drop-shadow(0 0 20px rgba(255, 160, 80, 0.4));
+}
+
+.itemCard h3 {
+  font: 400 34px "Cinzel", serif;
+  color: #efe3c8;
+}
+
+.itemCard em {
+  display: block;
+  margin: 6px 0 16px;
+  font: 16px "Cinzel", serif;
+  color: #a8966f;
+  font-style: normal;
+}
+
+.itemCard p {
+  font-size: 22px;
+  line-height: 1.5;
+  font-style: italic;
+  color: #d6c8aa;
+}
+
+.banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 380px;
+  z-index: 20;
+  padding: 26px 0;
+  text-align: center;
+  font: 64px "Cinzel", serif;
+  letter-spacing: 0.1em;
+  color: #f6d68a;
+  text-shadow: 0 0 20px rgba(255, 180, 80, 0.8);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.7) 70%, transparent);
+  pointer-events: none;
+  animation: bannerIn 3.2s ease forwards;
+}
+
+@keyframes bannerIn {
+  0% { opacity: 0; letter-spacing: 0.3em; }
+  20%, 75% { opacity: 1; letter-spacing: 0.12em; }
+  100% { opacity: 0; }
+}
+
+.died {
+  gap: 16px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.85) 25%, rgba(0, 0, 0, 0.85) 75%, transparent);
+  animation: fadeIn 1.6s ease;
+}
+
+.died b {
+  font: 110px "Cinzel", serif;
+  letter-spacing: 0.08em;
+  color: #9a1a12;
+  text-shadow: 0 0 30px rgba(160, 20, 10, 0.6);
+}
+
+.died small {
+  font: 18px "Cinzel", serif;
+  color: #8a7a5a;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.falling .ruins,
+.falling .near,
+.falling .far {
+  animation: drop 2.4s cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+
+@keyframes drop {
+  to {
+    transform: translateY(-900px);
+  }
+}
+
+.fall {
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.fall b {
+  font: 44px "Cinzel", serif;
+  color: #e9dcc4;
+}
+
+.fall small {
+  font-size: 20px;
+  font-style: italic;
+  color: #8ab;
+}
+
+.ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 600px;
+  height: 300px;
+  background-size: 360px auto;
+  transform: perspective(500px) rotateX(55deg);
+  transform-origin: 50% 0;
+  filter: brightness(0.5) sepia(0.8) saturate(2.2) hue-rotate(-15deg);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 25%);
+  mask-image: linear-gradient(180deg, transparent, #000 25%);
+}
+
+/* ==========================================================================
+ * 2026-10 — one place, not a pile. Every ruin stands on the same ground line
+ * under the same grade and sinks into the same ember haze; every relic is the
+ * same height on the same cut-stone plinth.
+ * ========================================================================== */
+.ruin img {
+  filter: brightness(0.4) contrast(1.18) grayscale(0.35) sepia(0.8) saturate(1.5) hue-rotate(-14deg);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), #000 45%, #000 80%, transparent 99%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), #000 45%, #000 80%, transparent 99%);
+}
+
+.ruin::after {
+  bottom: -10px;
+  height: 36%;
+  background: radial-gradient(ellipse 60% 70% at 50% 100%, rgba(255, 110, 20, 0.38), transparent 70%);
+}
+
+/* the haze every building stands in */
+.ruins::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 560px;
+  height: 150px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(120, 44, 10, 0.55) 55%, rgba(60, 20, 6, 0.9));
+  filter: blur(10px);
+}
+
+.relic {
+  top: 432px;
+  height: 200px;
+  filter: brightness(0.62) grayscale(0.3) sepia(0.6) saturate(1.3) drop-shadow(0 -6px 14px rgba(255, 120, 30, 0.3));
+}
+
+.relic img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  height: 100%;
+  translate: -50% 0;
+}
+
+/* the plinth: the same block under each of them */
+.relic::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 88%;
+  z-index: -1;
+  width: 250px;
+  height: 64px;
+  translate: -50% 0;
+  background:
+    linear-gradient(180deg, rgba(255, 190, 120, 0.35) 0 3px, transparent 3px 12px, rgba(0, 0, 0, 0.45) 12px 14px, transparent 14px),
+    repeating-linear-gradient(90deg, transparent 0 61px, rgba(0, 0, 0, 0.4) 61px 63px),
+    linear-gradient(180deg, #4a3020, #1f120a);
+  box-shadow: 0 14px 22px rgba(0, 0, 0, 0.8);
+}
+
+.relic:hover {
+  transform: none;
+  filter: brightness(1.05) sepia(0.4) saturate(1.3) drop-shadow(0 0 18px rgba(255, 200, 120, 0.8));
+}
+
+.place {
+  position: absolute;
+  right: 44px;
+  top: 30px;
+  text-align: right;
+  pointer-events: none;
+  z-index: 6;
+  font-family: "Cinzel", serif;
+  color: #e9dcc4;
+  text-shadow: 0 2px 12px #000;
+}
+
+.place b {
+  display: block;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: 8px;
+}
+
+.place span {
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: rgba(233, 220, 196, 0.6);
+}

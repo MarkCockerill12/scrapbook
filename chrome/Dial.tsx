@@ -44,9 +44,15 @@ export function Dial({ current }: { current: Aesthetic }) {
       }
       if (useShell.getState().phase !== "idle") return;
 
-      if (e.key === "ArrowRight") begin(neighbour(current.slug, 1).slug);
-      else if (e.key === "ArrowLeft") begin(neighbour(current.slug, -1).slug);
-      else if (e.key.toLowerCase() === "m") setMapOpen(!useShell.getState().mapOpen);
+      // Deferred one tick so a page that uses the arrow keys itself (the PS1 games'
+      // tank controls, walking the Dead Mall) can claim them with preventDefault —
+      // window listeners fire in registration order, which we don't control.
+      window.setTimeout(() => {
+        if (e.defaultPrevented) return;
+        if (e.key === "ArrowRight") begin(neighbour(current.slug, 1).slug);
+        else if (e.key === "ArrowLeft") begin(neighbour(current.slug, -1).slug);
+        else if (e.key.toLowerCase() === "m") setMapOpen(!useShell.getState().mapOpen);
+      }, 0);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -60,7 +66,7 @@ export function Dial({ current }: { current: Aesthetic }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[8000] select-none font-mono">
+    <div data-chrome="dial" className="fixed bottom-5 right-5 z-[8000] select-none font-mono">
       <div
         className="flex items-stretch gap-1 rounded-2xl border border-white/15 bg-black/65 p-1.5 shadow-2xl backdrop-blur-md"
         style={{ boxShadow: `0 0 28px -8px ${current.accent}` }}

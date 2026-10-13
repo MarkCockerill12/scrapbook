@@ -1,0 +1,364 @@
+/* Neon — the battlestation. Own reset + tokens (rule R2). px against 1600x900.
+ * --h, --lum and --mono are written every frame by the lighting engine. */
+
+@font-face { font-family: "Orbitron"; src: url("/fonts/neon/orbitron-400.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Orbitron"; src: url("/fonts/neon/orbitron-700.woff2") format("woff2"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Share Tech Mono"; src: url("/fonts/neon/share-tech-mono-400.woff2") format("woff2"); font-display: block; }
+
+.root {
+  --h: 0deg;
+  --lum: 1;
+  --mono: 0;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #020203;
+  color: #e8ecf4;
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- the room ---------- */
+.room {
+  position: absolute;
+  left: -170px;
+  top: 0;
+  width: 2005px;
+  height: 900px;
+  /* Spectrum mode turns the photograph's own colours round the wheel. The single-
+     colour modes first throw the colour away, then put exactly one back. */
+  filter: grayscale(var(--mono)) sepia(var(--mono)) saturate(calc(1.25 + var(--mono) * 7)) hue-rotate(calc(var(--h) - var(--mono) * 38deg)) brightness(calc(var(--lum) * (1 + var(--mono) * 0.25)))
+    contrast(1.06);
+}
+
+/* what the LEDs throw on the wall behind the monitor, and up the left-hand side */
+.spill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 620px 300px at 640px 600px, hsl(var(--h) 100% 55% / 0.3), transparent 70%),
+    radial-gradient(ellipse 360px 520px at 60px 700px, hsl(calc(var(--h) + 50deg) 100% 55% / 0.24), transparent 70%),
+    radial-gradient(ellipse 420px 420px at 1330px 220px, hsl(calc(var(--h) + 110deg) 100% 55% / 0.2), transparent 70%);
+  mix-blend-mode: screen;
+  opacity: var(--lum);
+}
+
+/* the keyboard's underglow, breathing a little on its own */
+.keys {
+  position: absolute;
+  left: 180px;
+  top: 742px;
+  width: 1160px;
+  height: 150px;
+  pointer-events: none;
+  background: linear-gradient(90deg, hsl(calc(var(--h) + 80deg) 100% 55% / 0.5), hsl(var(--h) 100% 55% / 0.55) 40%, hsl(calc(var(--h) - 70deg) 100% 60% / 0.55) 75%, transparent);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 60%, #000 0%, transparent 72%);
+  mix-blend-mode: screen;
+  opacity: calc(var(--lum) * 0.55);
+  filter: blur(14px);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 86% 86% at 46% 46%, transparent 55%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+/* ---------- the monitor ---------- */
+.screen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background: #07080c;
+  overflow: hidden;
+  /* an IPS panel in a dark room: it glows, and it is the brightest thing there */
+  box-shadow: 0 0 80px 10px hsl(var(--h) 80% 55% / 0.12);
+}
+
+.root[data-off] .screen {
+  filter: brightness(0.75);
+}
+
+.app {
+  position: absolute;
+  inset: 0;
+  padding: 26px 30px;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, hsl(var(--h) 90% 50% / 0.16), transparent 70%),
+    linear-gradient(180deg, #0c0e15, #06070a);
+}
+
+.app header {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app header b {
+  font: 700 30px/1 "Orbitron", sans-serif;
+  letter-spacing: 6px;
+  color: #fff;
+  text-shadow: 0 0 14px hsl(var(--h) 100% 60%), 0 0 40px hsl(var(--h) 100% 55%);
+}
+
+.app header span {
+  flex: 1;
+  font-size: 14px;
+  color: rgba(232, 236, 244, 0.5);
+}
+
+.app header button {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  border-radius: 50%;
+  color: rgba(232, 236, 244, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.app header button[data-on] {
+  color: #fff;
+  box-shadow: inset 0 0 0 1px hsl(var(--h) 100% 60%), 0 0 16px hsl(var(--h) 100% 55% / 0.7);
+}
+
+.app small {
+  display: block;
+  margin: 14px 0 8px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(232, 236, 244, 0.45);
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: 280px 230px 1fr;
+  gap: 26px;
+}
+
+.fx button {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px 10px 44px;
+  text-align: left;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: background 0.15s;
+}
+
+.fx button i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.fx button b {
+  display: block;
+  font: 700 16px/1.2 "Orbitron", sans-serif;
+  letter-spacing: 2px;
+}
+
+.fx button span {
+  font-size: 12.5px;
+  color: rgba(232, 236, 244, 0.5);
+}
+
+.fx button:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.fx button[data-on] {
+  background: hsl(var(--h) 90% 50% / 0.18);
+  box-shadow: inset 0 0 0 1px hsl(var(--h) 100% 60%), 0 0 22px hsl(var(--h) 100% 55% / 0.35);
+}
+
+.fx button[data-on] i {
+  background: hsl(var(--h) 100% 60%);
+  box-shadow: 0 0 12px hsl(var(--h) 100% 60%);
+}
+
+.tune input {
+  display: block;
+  width: 100%;
+  height: 16px;
+  appearance: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.tune input::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 24px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+
+.tune .hue {
+  background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+
+.swatches {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.swatches button {
+  flex: 1;
+  height: 24px;
+  border-radius: 4px;
+  opacity: 0.75;
+}
+
+.swatches button:hover,
+.swatches button[data-on] {
+  opacity: 1;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.devices {
+  margin-top: 20px;
+  font-size: 13px;
+  color: rgba(232, 236, 244, 0.6);
+}
+
+.devices span {
+  display: block;
+  padding: 5px 0 5px 18px;
+  position: relative;
+}
+
+.devices span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--h) 100% 60%);
+  box-shadow: 0 0 8px hsl(var(--h) 100% 60%);
+}
+
+.side canvas {
+  display: block;
+  width: 100%;
+  height: 150px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.chat {
+  height: 200px;
+  padding: 10px 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 15px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.chat b {
+  color: hsl(calc(var(--h) + 150deg) 100% 70%);
+  font-weight: 400;
+}
+
+.chat p[data-me] b {
+  color: hsl(var(--h) 100% 70%);
+}
+
+.draft {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.draft i {
+  display: inline-block;
+  width: 9px;
+  height: 16px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: #fff;
+  animation: caret 1s steps(2) infinite;
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------- words in the room ---------- */
+.title {
+  position: absolute;
+  right: 250px;
+  top: 600px;
+  text-align: right;
+  pointer-events: none;
+}
+
+.title h1 {
+  font: 700 54px/1 "Orbitron", sans-serif;
+  letter-spacing: 6px;
+  color: #fff;
+  text-shadow: 0 0 12px hsl(var(--h) 100% 60%), 0 0 44px hsl(var(--h) 100% 55%);
+  opacity: calc(0.35 + var(--lum) * 0.65);
+}
+
+.title p {
+  margin-top: 8px;
+  font-size: 15px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: rgba(232, 236, 244, 0.6);
+}
+
+.hint {
+  position: absolute;
+  left: 60px;
+  bottom: 30px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: rgba(232, 236, 244, 0.72);
+  text-shadow: 0 1px 6px #000;
+  pointer-events: none;
+}

@@ -1,0 +1,876 @@
+/* ------------------------------------------------ shared */
+.welcome, .media, .messenger, .gallery, .personalize, .computer {
+  position: absolute;
+  inset: 0;
+  font-size: 12px;
+}
+
+/* glossy "Aero button" used across the apps */
+.wTile, .msTools button, .msInput button, .gBar button, .msBack, .cNav button {
+  border: 1px solid #7f9db9;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fdfefe 0%, #eef4f9 45%, #d9e7f2 50%, #e9f2f9 100%);
+  color: #10212c;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.wTile:hover, .msTools button:hover, .msInput button:hover, .gBar button:hover, .msBack:hover, .cNav button:hover {
+  border-color: #3c7fb1;
+  background: linear-gradient(180deg, #eaf6fd 0%, #d9f0fc 45%, #bee6fd 50%, #a7d9f5 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 6px rgba(80, 180, 255, 0.6);
+}
+
+/* ------------------------------------------------ welcome */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 0, #fff 150px),
+    linear-gradient(120deg, #bdf28f 0%, #6fd3b1 40%, #6ebeea 100%);
+}
+
+.wHead {
+  display: flex;
+  gap: 18px;
+  padding: 16px 20px 8px;
+}
+
+.wHead h2 {
+  font-size: 22px;
+  font-weight: 400;
+  color: #0e4a2a;
+  margin-bottom: 6px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.wPic {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  padding: 5px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #fff, #d8f2c4);
+  border: 1px solid #7bb35a;
+  box-shadow: 0 3px 10px rgba(20, 90, 40, 0.35), inset 0 1px 0 #fff;
+}
+
+.wPic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 5px;
+  background: radial-gradient(circle at 50% 30%, #e8fff6, #7ed8f0);
+}
+
+.wSpecs {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  row-gap: 2px;
+  font-size: 12px;
+  color: #1f3b2c;
+}
+
+.wSpecs dt {
+  color: #4a6d59;
+}
+
+.wei {
+  display: inline-block;
+  padding: 0 6px;
+  margin-right: 5px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #7dd6ff, #1f7fd0);
+  color: #fff;
+  font-weight: 700;
+}
+
+.wGet {
+  padding: 4px 20px 6px;
+  font-size: 14px;
+  color: #1d6fa8;
+}
+
+.wTiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+  padding: 0 18px 14px;
+}
+
+.wTile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  text-align: left;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.wTile b {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: #0a4f8a;
+}
+
+.wTile small {
+  color: #587;
+  font-size: 11px;
+}
+
+/* ------------------------------------------------ media player */
+.media {
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(40, 200, 150, 0.35), transparent 60%),
+    linear-gradient(180deg, #0a1f2a 0%, #040b10 100%);
+}
+
+.mTop {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 110px 1fr 150px;
+  gap: 10px;
+  padding: 10px;
+  min-height: 0;
+}
+
+.mArt {
+  position: relative;
+  align-self: start;
+  width: 110px;
+  height: 110px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 8px 18px rgba(0, 0, 0, 0.6);
+  -webkit-box-reflect: below 4px linear-gradient(transparent 55%, rgba(255, 255, 255, 0.3));
+}
+
+.mArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mArtGloss {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0.05) 45%, transparent 46%);
+}
+
+.mVis {
+  position: relative;
+  min-width: 0;
+}
+
+.mVis canvas {
+  width: 100%;
+  height: 150px;
+  display: block;
+}
+
+.mNow {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mNow b {
+  font-size: 15px;
+  font-weight: 400;
+  color: #e6fff4;
+  text-shadow: 0 0 10px rgba(120, 255, 200, 0.8);
+}
+
+.mNow span {
+  font-size: 11px;
+  color: #8fd9c0;
+}
+
+.mList {
+  list-style: none;
+  overflow: hidden;
+}
+
+.mList button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px;
+  color: #bfe4f2;
+  border-radius: 3px;
+  font-size: 11px;
+  text-align: left;
+}
+
+.mList button:hover {
+  background: rgba(120, 220, 255, 0.12);
+}
+
+.mList em {
+  font-style: normal;
+  color: #6f9aad;
+}
+
+.mList .mOn {
+  background: linear-gradient(180deg, rgba(120, 230, 180, 0.35), rgba(40, 150, 110, 0.35));
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(160, 255, 210, 0.5);
+}
+
+.mSeek {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  font-size: 10px;
+  color: #8fb9c9;
+}
+
+.mBar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: #01060a;
+  box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.mBar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(180deg, #b6ffcf, #22b86a);
+  box-shadow: 0 0 8px #3f9;
+}
+
+.mControls {
+  flex: 0 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.25) 51%, rgba(255, 255, 255, 0.06));
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.mSmall {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 9px;
+  letter-spacing: -2px;
+  color: #fff;
+  background: radial-gradient(circle at 50% 30%, #6a8a9a, #1b2c35 70%);
+  border: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.mPlay {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 17px;
+  color: #fff;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 22%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(circle at 50% 75%, #6ff0ff, #1f8fd8 55%, #0b3f7a);
+  border: 1px solid #021a33;
+  box-shadow: 0 0 16px rgba(80, 200, 255, 0.7), inset 0 -2px 6px rgba(120, 255, 255, 0.6);
+  text-shadow: 0 0 4px #024;
+}
+
+.mPlay:hover {
+  box-shadow: 0 0 26px rgba(120, 230, 255, 1), inset 0 -2px 6px rgba(120, 255, 255, 0.6);
+}
+
+/* ------------------------------------------------ messenger */
+.messenger {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #d6f2ff 0%, #ffffff 90px, #ffffff 100%);
+}
+
+.msMe {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 60%, #fff),
+    linear-gradient(110deg, #9fe46e, #58c7e0);
+}
+
+.msMe b {
+  font-size: 13px;
+  color: #06324d;
+}
+
+.msMe p {
+  color: #1f4d5f;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.msAvail {
+  color: #2f8a2a;
+}
+
+.msPic {
+  flex: 0 0 auto;
+  width: 50px;
+  height: 50px;
+  padding: 3px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #b9f38c, #3bb13a);
+  box-shadow: 0 0 0 1px #2a7a22, 0 2px 6px rgba(0, 60, 0, 0.35);
+}
+
+.msPic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.msPic.busy {
+  background: linear-gradient(180deg, #ffb3a6, #d8392a);
+  box-shadow: 0 0 0 1px #8a1a10;
+}
+
+.msPic.away {
+  background: linear-gradient(180deg, #ffe39a, #e5a412);
+  box-shadow: 0 0 0 1px #8a6010;
+}
+
+.msPic.offline {
+  background: linear-gradient(180deg, #e6e6e6, #9a9a9a);
+  box-shadow: 0 0 0 1px #666;
+}
+
+.msSearch {
+  margin: 6px 8px;
+  padding: 4px 8px;
+  border: 1px solid #aac8da;
+  border-radius: 3px;
+  color: #8aa;
+  font-style: italic;
+  font-size: 11px;
+}
+
+.msList {
+  flex: 1;
+  overflow: hidden;
+  padding: 0 6px;
+}
+
+.msGroup {
+  padding: 4px 2px 2px;
+  color: #2a5f80;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.msContact {
+  display: grid;
+  grid-template-columns: 14px auto 1fr;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 3px 4px;
+  text-align: left;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.msContact:hover {
+  background: linear-gradient(180deg, #eaf6fd, #cfeafc);
+  box-shadow: inset 0 0 0 1px #9ccbe8;
+}
+
+.msContact b {
+  font-weight: 400;
+  color: #102;
+}
+
+.msContact em {
+  color: #6a8a9a;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d8ffb0, #3db52a 60%, #1c6a10);
+  box-shadow: 0 0 0 1px rgba(0, 60, 0, 0.5);
+}
+
+.msDot.busy {
+  background: radial-gradient(circle at 35% 30%, #ffd0c0, #e0402a 60%, #801808);
+}
+
+.msDot.away {
+  background: radial-gradient(circle at 35% 30%, #fff0b0, #f0b020 60%, #805008);
+}
+
+.msDot.offline {
+  background: radial-gradient(circle at 35% 30%, #fff, #bbb 60%, #777);
+}
+
+.msAd {
+  height: 64px;
+  margin: 4px 6px 6px;
+  border: 1px solid #b9d4e4;
+  overflow: hidden;
+}
+
+.msAd img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.msChatHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: linear-gradient(110deg, #c8f5a4, #9ee0f0);
+}
+
+.msBack {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+
+.msWho {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.msWho b {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msWho span {
+  font-size: 10px;
+  color: #3d6272;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msLog {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.msLog p b {
+  display: block;
+  font-weight: 400;
+  color: #7a8a92;
+  font-size: 11px;
+}
+
+.msMine {
+  color: #1a3a6a;
+}
+
+.msTheirs {
+  color: #0d2a10;
+  font-family: "Comic Sans MS", "Segoe Print", cursive;
+  font-size: 13px;
+}
+
+.msTyping {
+  font-style: italic;
+  color: #8aa;
+  font-size: 11px;
+}
+
+.msTools {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+  border-top: 1px solid #d6e6ef;
+  background: #f4f9fc;
+}
+
+.msTools button {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.msInput {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  background: #f4f9fc;
+}
+
+.msInput input {
+  flex: 1;
+  padding: 5px 7px;
+  border: 1px solid #9fc0d4;
+  border-radius: 3px;
+  font: inherit;
+  background: #fff;
+}
+
+.msInput button {
+  padding: 0 12px;
+}
+
+/* ------------------------------------------------ gallery */
+.gallery {
+  display: flex;
+  background: linear-gradient(180deg, #fbfdfe, #eaf2f7);
+}
+
+.gSide {
+  flex: 0 0 150px;
+  padding: 8px;
+  background: linear-gradient(180deg, #e8f5fb, #d6ecf7);
+  border-right: 1px solid #bcd7e6;
+  color: #1a4a66;
+  font-size: 11.5px;
+  line-height: 1.8;
+}
+
+.gOn {
+  background: linear-gradient(180deg, #d9f0fc, #b6e0f7);
+  border: 1px solid #83bde0;
+  border-radius: 3px;
+}
+
+.gMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gView {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  min-height: 0;
+  background: radial-gradient(ellipse at 50% 40%, #ffffff, #dde9f0);
+}
+
+.gView img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 6px 18px rgba(0, 40, 70, 0.35);
+  transition: transform 300ms ease;
+}
+
+.gStrip {
+  flex: 0 0 58px;
+  display: flex;
+  gap: 4px;
+  padding: 4px 6px;
+  overflow-x: auto;
+  background: #f0f6fa;
+  border-top: 1px solid #cfe0ea;
+}
+
+.gThumb, .gThumbOn {
+  flex: 0 0 64px;
+  height: 48px;
+  padding: 2px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+
+.gThumbOn {
+  border-color: #3c8fd1;
+  background: #cde8fb;
+}
+
+.gThumb img, .gThumbOn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gBar {
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #2c4d62, #10222e);
+}
+
+.gBar button {
+  min-width: 30px;
+  height: 26px;
+  border-radius: 13px;
+  padding: 0 8px;
+}
+
+.gBar .gShow {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 22%, rgba(255, 255, 255, 0.8), transparent 70%),
+    linear-gradient(180deg, #6fe0ff, #1f8fd8);
+  color: #fff;
+  border-color: #0a4f8a;
+  text-shadow: 0 0 3px #024;
+}
+
+/* ------------------------------------------------ personalize */
+.personalize {
+  padding: 12px 18px;
+  background: linear-gradient(180deg, #ffffff, #f0f7fb);
+  overflow: hidden;
+}
+
+.personalize h3 {
+  font-size: 17px;
+  font-weight: 400;
+  color: #1d5a8a;
+}
+
+.personalize h4 {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #1d5a8a;
+}
+
+.pSub {
+  color: #567;
+  margin-bottom: 8px;
+}
+
+.pWalls {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.pWall, .pWallOn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  color: #234;
+}
+
+.pWall:hover {
+  background: #eaf6fd;
+  border-color: #b6dcf3;
+}
+
+.pWallOn {
+  background: #cde8fb;
+  border-color: #5aa6dc;
+}
+
+.pWall img, .pWallOn img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.pTints {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+
+.pTint, .pTintOn {
+  width: 38px;
+  height: 38px;
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.05) 51%, rgba(255, 255, 255, 0.25)),
+    rgb(var(--sw));
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.pTintOn {
+  outline: 2px solid #3c8fd1;
+  outline-offset: 2px;
+}
+
+.pRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #234;
+}
+
+.pSlider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pSlider input {
+  width: 160px;
+  accent-color: #3cae5a;
+}
+
+/* ------------------------------------------------ AquaTank */
+.tank {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.tankBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tankCaustic {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(100deg, rgba(255, 255, 255, 0.07) 0 12px, transparent 12px 40px),
+    repeating-linear-gradient(70deg, rgba(255, 255, 255, 0.05) 0 8px, transparent 8px 33px);
+  mix-blend-mode: overlay;
+  animation: caustic 9s linear infinite;
+}
+
+@keyframes caustic {
+  to {
+    background-position: 200px 0, -150px 0;
+  }
+}
+
+.tankFish {
+  position: absolute;
+  filter: drop-shadow(0 6px 6px rgba(0, 30, 60, 0.4)) saturate(1.2);
+  pointer-events: none;
+}
+
+.tankBubble {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.9) 0 15%, rgba(255, 255, 255, 0.05) 40%);
+  animation: rise linear infinite;
+}
+
+@keyframes rise {
+  to {
+    transform: translateY(-420px) translateX(10px);
+    opacity: 0.2;
+  }
+}
+
+.flake {
+  position: absolute;
+  width: 5px;
+  height: 4px;
+  border-radius: 1px;
+  background: #d98a3a;
+  box-shadow: 0 0 2px #fff;
+}
+
+.tankHint {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  text-shadow: 0 1px 3px #002;
+}
+
+/* ------------------------------------------------ computer */
+.computer {
+  display: flex;
+  background: #fff;
+}
+
+.cNav {
+  flex: 0 0 150px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: linear-gradient(180deg, #eef7fc, #dcedf7);
+  border-right: 1px solid #c5dbe8;
+}
+
+.cNav button {
+  text-align: left;
+  padding: 4px 6px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cHead {
+  margin: 6px 0 4px;
+  color: #1d5a8a;
+  font-size: 12.5px;
+  border-bottom: 1px solid #cfe2ee;
+}
+
+.cMain {
+  flex: 1;
+  padding: 6px 14px;
+}
+
+.cDrive {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+}
+
+.cDrive b {
+  display: block;
+  font-weight: 400;
+  font-size: 12.5px;
+}
+
+.cDrive small {
+  color: #778;
+}
+
+.cBar {
+  width: 190px;
+  height: 13px;
+  margin: 2px 0;
+  border: 1px solid #99a8b4;
+  background: linear-gradient(180deg, #e6e6e6, #fafafa);
+}
+
+.cBar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(180deg, #6fe0a0 0%, #26b46a 50%, #0f9a52 51%, #4cd48a 100%);
+}

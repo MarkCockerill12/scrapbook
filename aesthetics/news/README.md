@@ -3,7 +3,7 @@
 **Fiction:** *CHANNEL 7 ACTION NEWS at 6 — with your weather.* You are in the
 gallery; the 4:3 signal is on the wall and the strips either side are your mixer.
 
-**Canvas:** 1600×900, `fit`. Letterbox `#0c0d10`. **No assets.**
+**Canvas:** 1600×900, `fit`. Letterbox `#0c0d10`. **Assets:** real feeds — `nw_anchor` (empty set), `nw_chopper`, `nw_traffic`, `nw_sat`, `news_camera` (control room).
 
 ## The argument this page makes
 
@@ -57,3 +57,19 @@ strips either side aren't padding, they're the gallery you're watching from.
   proportions against real 1998 station packages.
 - A weather *forecast* strip — five days of icons under the map.
 - The commercial should cut back on its own after 20 seconds, like a real break.
+
+## Fleshed out 2026-09-28
+
+Mark: "cool but could be fleshed out more". New sources on the left strip, all keyed
+under the same CG (lower third, bug, ticker):
+
+| Source | Feed |
+|---|---|
+| Studio cam | a real (empty) news set — the drawn anchor is gone; "ANCHOR STEPPED AWAY · BACK IN 2" |
+| Satellite | a real satellite image of a hurricane, slowly rotating, with the forecast cone and timed track points |
+| 5-day forecast | the classic bevelled board |
+| SKY 7 chopper | a real aerial of downtown at dusk with hand-held helicopter shake |
+| Traffic cams | three real night traffic cams; click again to cycle |
+| Sports desk | the scoreboard |
+
+The gallery strips are now translucent over a real, blurred control-room photo.

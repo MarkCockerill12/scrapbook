@@ -1,0 +1,1035 @@
+/* Xbox 360 — the 2011 dashboard. Own reset + tokens. px against 1600x900. */
+
+.root {
+  --live: #8fd400;
+  --green: #107c10;
+  --ink: #1d1f21;
+  --ink-dim: #6d7377;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* the pale room every 360 lived in for its last five years */
+  background:
+    radial-gradient(ellipse 80% 70% at 30% 20%, #ffffff 0%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(160deg, #f4f6f7 0%, #dfe4e7 46%, #b8c1c7 100%);
+  color: var(--ink);
+  font-family: "Segoe UI", "Segoe WP", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 300;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.themeBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  filter: blur(40px) saturate(1.2) brightness(1.5);
+  opacity: 0.4;
+  transform: scale(1.2);
+  pointer-events: none;
+}
+
+/* the two long soft ribbons of light the dashboard had instead of a wallpaper */
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.75) 47%, transparent 56%),
+    linear-gradient(100deg, transparent 62%, rgba(255, 255, 255, 0.55) 70%, transparent 80%);
+  animation: drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  to {
+    transform: translateX(-90px);
+  }
+}
+
+/* ---------- hubs ---------- */
+.hubs {
+  position: absolute;
+  left: 150px;
+  top: 74px;
+  display: flex;
+  align-items: baseline;
+  gap: 34px;
+  z-index: 5;
+}
+
+.hubs button {
+  font-size: 28px;
+  color: #9aa2a8;
+  transition: color 0.25s, font-size 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.hubs button:hover {
+  color: #55595c;
+}
+
+.hubs button[data-on] {
+  font-size: 54px;
+  color: var(--ink);
+}
+
+.gamer {
+  position: absolute;
+  right: 60px;
+  top: 56px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 5;
+  text-align: right;
+}
+
+.gamer b {
+  display: block;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.gamer span {
+  font-size: 15px;
+  color: var(--ink-dim);
+}
+
+.gamer span i {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 3px;
+  border-radius: 50%;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--ink);
+}
+
+.gamer em {
+  font-style: normal;
+  opacity: 0.6;
+}
+
+/* ---------- the grid ---------- */
+.grid {
+  position: absolute;
+  left: 150px;
+  top: 186px;
+  display: grid;
+  grid-template-columns: repeat(5, 252px);
+  grid-template-rows: repeat(3, 172px);
+  gap: 8px;
+}
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: var(--green);
+  outline: 0 solid #fff;
+  transition: transform 0.16s ease, outline-width 0.12s, box-shadow 0.16s;
+  animation: tileIn 0.42s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.grid[data-dir="1"] .tile {
+  --from: 140px;
+}
+
+.grid[data-dir="-1"] .tile {
+  --from: -140px;
+}
+
+@keyframes tileIn {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 140px));
+  }
+}
+
+.tile[data-tone="dark"] {
+  background: #23272a;
+}
+
+.tile[data-tone="grey"] {
+  background: #7b858b;
+}
+
+.tile[data-tone="lime"] {
+  background: #7ab800;
+}
+
+.tile[data-tone="white"] {
+  background: #050805;
+}
+
+/* the selection: the tile lifts, and gets its white-then-green frame */
+.tile:hover,
+.tile:focus-visible {
+  z-index: 3;
+  transform: scale(1.045);
+  outline: 4px solid #fff;
+  box-shadow: 0 0 0 8px var(--green), 0 18px 34px rgba(0, 0, 0, 0.4);
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+.tile[data-tone="dark"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.78));
+}
+
+.label {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 9px;
+  z-index: 2;
+}
+
+.label b {
+  display: block;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.label small {
+  display: block;
+  font-size: 13px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.big {
+  position: absolute;
+  left: 14px;
+  top: 4px;
+  font-size: 150px;
+  font-weight: 200;
+  line-height: 1;
+}
+
+.pic {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 2;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.play {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 2;
+  width: 110px;
+  height: 110px;
+  margin: -55px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+}
+
+.play::after {
+  content: "";
+  position: absolute;
+  left: 40px;
+  top: 27px;
+  border-left: 36px solid #fff;
+  border-top: 23px solid transparent;
+  border-bottom: 23px solid transparent;
+}
+
+/* the disc that comes out when you open the tray */
+.disc {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 96px;
+  height: 96px;
+  margin: -48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 0 9px, #dfe4e7 10px 14px, transparent 15px),
+    conic-gradient(#f4f6f7, #b9c8d3, #f6e9ff, #cfe9d6, #f4f6f7, #b9c8d3, #f4f6f7);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1);
+  transform: translateX(-190px);
+}
+
+.disc[data-out] {
+  transform: translateX(0) rotate(200deg);
+}
+
+/* the first console, glowing inside the second */
+.orb {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 92px;
+  height: 92px;
+  margin: -46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #f6ffd0 0 5%, #c8ff4a 16%, #6fd400 42%, #1f5a00 74%, #071800 100%);
+  box-shadow: 0 0 30px 6px rgba(140, 255, 20, 0.7), 0 0 90px 30px rgba(100, 220, 0, 0.3);
+  animation: orb 4s ease-in-out infinite;
+}
+
+@keyframes orb {
+  50% {
+    transform: scale(1.08);
+    filter: brightness(1.2);
+  }
+}
+
+.tile[data-tone="white"] .label b {
+  color: #b6ff3a;
+}
+
+/* ---------- a sheet over the grid ---------- */
+.sheet {
+  position: absolute;
+  left: 150px;
+  top: 178px;
+  width: 1300px;
+  height: 596px;
+  z-index: 6;
+  color: #f1f3f4;
+  background: #1b1e20;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  animation: sheetIn 0.38s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+
+.sheet header {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 16px 26px;
+  background: var(--green);
+}
+
+.sheet header button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #fff;
+}
+
+.sheet header h2 {
+  font-size: 30px;
+  font-weight: 300;
+  color: #fff;
+}
+
+.sheet i,
+.legend i {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 13px;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: #d8362a;
+}
+
+.sheetBody {
+  flex: 1;
+  min-height: 0;
+  padding: 22px 26px;
+  overflow: hidden;
+}
+
+.cinema {
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+}
+
+.cta {
+  padding: 14px 24px;
+  font-size: 18px;
+  color: #fff;
+  background: #4a5157;
+  white-space: nowrap;
+}
+
+.cta[data-on] {
+  background: #7ab800;
+}
+
+.achs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.achs > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: #2a2f33;
+  opacity: 0.55;
+}
+
+.achs > div[data-on] {
+  opacity: 1;
+  background: #107c10;
+}
+
+.achs > div > i {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 0;
+  font-size: 26px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.achs > div > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.achs b {
+  display: block;
+  font-size: 17px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achs span {
+  display: block;
+  font-size: 13px;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achs em {
+  flex: none;
+  font-style: normal;
+  font-size: 18px;
+}
+
+.pickGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pickGrid button {
+  position: relative;
+  height: 232px;
+  overflow: hidden;
+  color: #fff;
+  background: #2a2f33;
+}
+
+.pickGrid img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 25%;
+  filter: brightness(0.7);
+}
+
+.pickGrid span {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  font-size: 19px;
+}
+
+.pickGrid button[data-on] {
+  outline: 4px solid #fff;
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 8px var(--green);
+}
+
+.info {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 14px 20px;
+  font-size: 21px;
+}
+
+.info dt {
+  color: #9aa2a8;
+}
+
+/* ---------- legend + toast ---------- */
+.legend {
+  position: absolute;
+  left: 290px;
+  bottom: 44px;
+  display: flex;
+  gap: 34px;
+  font-size: 16px;
+  color: #55595c;
+  z-index: 5;
+}
+
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend i[data-k="a"] {
+  background: #5fa500;
+}
+
+.legend i[data-k="lb"] {
+  background: #8a9298;
+}
+
+.legend i[data-k="g"] {
+  background: #23272a;
+}
+
+/* the 2011 notification: a white pill that grows out of a green circle */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 74px;
+  padding: 0 34px 0 10px;
+  border-radius: 37px;
+  color: #1d1f21;
+  background: linear-gradient(180deg, #ffffff, #dfe4e7);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  animation: toast 4.6s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  white-space: nowrap;
+}
+
+@keyframes toast {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 calc(100% - 74px) 0 0 round 37px);
+  }
+  10% {
+    opacity: 1;
+    clip-path: inset(0 calc(100% - 74px) 0 0 round 37px);
+  }
+  22%,
+  88% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 37px);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0 round 37px);
+  }
+}
+
+.toast > i {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #f4ffd9, #8fd400 45%, #33540a 100%);
+  box-shadow: 0 0 14px rgba(143, 212, 0, 0.8);
+}
+
+.toast small {
+  display: block;
+  font-size: 14px;
+  color: #6d7377;
+}
+
+.toast b {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .glow,
+  .orb {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+ * 2026-10 (later) — the 2001 console's skin on the 2011 console's bones.
+ * Mark: "needs a better theme, incorporate more ideas from the original xbox
+ * and its layout". The pale room is gone. This is the first dashboard's room —
+ * black, acid green, the orb with its rings, a grid going off into the dark —
+ * and its layout: the menu is a stack of slanted plates down the left with the
+ * orb behind it, and whatever you pick opens to the right as cut-cornered glass.
+ * ========================================================================== */
+@font-face { font-family: "Orbitron"; font-weight: 500; src: url("/fonts/xbox-360/orbitron-500.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Orbitron"; font-weight: 700; src: url("/fonts/xbox-360/orbitron-700.woff2") format("woff2"); font-display: block; }
+
+.root {
+  --live: #9dff1a;
+  --green: #5fc400;
+  --ink: #d8ffa0;
+  --ink-dim: rgba(182, 255, 58, 0.6);
+  background:
+    radial-gradient(ellipse 46% 60% at 22% 56%, rgba(120, 220, 20, 0.42), rgba(40, 110, 0, 0.22) 45%, transparent 75%),
+    radial-gradient(ellipse 120% 60% at 50% 112%, rgba(60, 150, 0, 0.5), transparent 70%),
+    #020500;
+  color: var(--ink);
+  font-family: "Orbitron", "Segoe UI", sans-serif;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.themeBg {
+  filter: blur(30px) saturate(1.1) brightness(0.5) hue-rotate(40deg);
+  opacity: 0.35;
+}
+
+/* the floor grid, running */
+.glow {
+  inset: auto -30% 0 -30%;
+  height: 52%;
+  background:
+    repeating-linear-gradient(90deg, rgba(160, 255, 40, 0.28) 0 1.5px, transparent 1.5px 90px),
+    repeating-linear-gradient(0deg, rgba(160, 255, 40, 0.28) 0 1.5px, transparent 1.5px 90px);
+  transform: perspective(520px) rotateX(64deg);
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(0deg, #000, transparent 88%);
+  animation: floor 4s linear infinite;
+}
+
+@keyframes floor {
+  to {
+    background-position: 0 90px, 0 90px;
+  }
+}
+
+/* ---------- the orb, behind the menu, where it always was ---------- */
+.core {
+  position: absolute;
+  left: -70px;
+  top: 300px;
+  width: 480px;
+  height: 480px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.core b {
+  position: absolute;
+  inset: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #f6ffd0 0 4%, #c8ff4a 14%, #6fd400 40%, #1f5a00 72%, #071800 100%);
+  box-shadow:
+    0 0 60px 10px rgba(140, 255, 20, 0.55),
+    0 0 180px 60px rgba(100, 220, 0, 0.3),
+    inset -30px -40px 60px rgba(0, 20, 0, 0.7);
+  animation: orb 5s ease-in-out infinite;
+}
+
+.core i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(182, 255, 58, 0.7);
+  box-shadow: 0 0 18px rgba(140, 255, 20, 0.6), inset 0 0 18px rgba(140, 255, 20, 0.4);
+  animation: ring 9s linear infinite;
+}
+
+.core i:nth-child(2) {
+  inset: 34px;
+  animation-duration: 13s;
+  animation-direction: reverse;
+}
+
+.core i:nth-child(3) {
+  inset: -44px;
+  border-width: 1.5px;
+  animation-duration: 21s;
+}
+
+.core i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #eaffb0;
+  box-shadow: 0 0 16px 4px #9dff1a;
+}
+
+@keyframes ring {
+  from {
+    transform: rotateX(70deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(70deg) rotateZ(360deg);
+  }
+}
+
+.brand {
+  position: absolute;
+  left: 70px;
+  top: 52px;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  pointer-events: none;
+}
+
+.brand b {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: 12px;
+  color: #d4ff7a;
+  text-shadow: 0 0 22px #7dff00;
+}
+
+.brand em {
+  font-style: normal;
+  font-size: 44px;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 0 18px #7dff00;
+}
+
+.brand span {
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: var(--ink-dim);
+}
+
+/* ---------- the menu: slanted plates, down the left ---------- */
+.hubs {
+  left: 70px;
+  top: 190px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.hubs button,
+.hubs button[data-on] {
+  width: 270px;
+  padding: 15px 24px;
+  font-size: 22px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #c4ff66;
+  clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%);
+  background: linear-gradient(90deg, rgba(8, 30, 0, 0.82), rgba(8, 30, 0, 0.5));
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  transition: color 0.2s, background 0.2s, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.hubs button:hover {
+  color: #eaffb0;
+  transform: translateX(8px);
+}
+
+.hubs button[data-on] {
+  color: #041000;
+  text-shadow: none;
+  background: linear-gradient(90deg, #d4ff5a, #7fe000);
+  transform: translateX(22px);
+  box-shadow: 0 0 30px rgba(140, 255, 20, 0.6);
+}
+
+.gamer {
+  right: 56px;
+  top: 44px;
+  padding: 10px 12px 10px 26px;
+  clip-path: polygon(6% 0, 100% 0, 100% 100%, 6% 100%, 0 50%);
+  background: linear-gradient(270deg, rgba(120, 220, 20, 0.26), rgba(120, 220, 20, 0.04));
+}
+
+.gamer b {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: #eaffb0;
+}
+
+.gamer span {
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+.gamer span i {
+  color: #041000;
+  background: var(--live);
+}
+
+/* ---------- what the menu opens: cut-cornered green glass ---------- */
+.grid {
+  left: 410px;
+  top: 186px;
+  grid-template-columns: repeat(5, 216px);
+  grid-template-rows: repeat(3, 172px);
+  gap: 10px;
+}
+
+.tile,
+.tile[data-tone="grey"],
+.tile[data-tone="lime"],
+.tile[data-tone="dark"],
+.tile[data-tone="white"] {
+  color: #eaffb0;
+  background: linear-gradient(150deg, rgba(120, 220, 20, 0.3), rgba(20, 60, 0, 0.5) 60%, rgba(6, 20, 0, 0.7));
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+  outline: none;
+}
+
+/* the edge light: a clipped tile cannot have a border, so it wears one inside */
+.tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(182, 255, 58, 0.9), rgba(182, 255, 58, 0.15)) 0 0 / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(182, 255, 58, 0.9), rgba(182, 255, 58, 0.1)) 0 0 / 2px 100% no-repeat,
+    linear-gradient(90deg, rgba(182, 255, 58, 0.1), rgba(182, 255, 58, 0.5)) 0 100% / 100% 1px no-repeat;
+}
+
+.tile[data-tone="lime"] {
+  color: #041000;
+  background: linear-gradient(150deg, #d4ff5a, #6fd400);
+}
+
+.tile[data-tone="grey"] {
+  background: linear-gradient(150deg, rgba(120, 140, 110, 0.3), rgba(20, 30, 14, 0.6));
+  color: rgba(214, 255, 160, 0.75);
+}
+
+.tile[data-tone="white"] {
+  background: radial-gradient(circle at 50% 40%, rgba(60, 150, 0, 0.5), #020500 70%);
+}
+
+.tile:hover,
+.tile:focus-visible {
+  transform: scale(1.05);
+  outline: none;
+  box-shadow: none;
+  filter: brightness(1.3) drop-shadow(0 0 14px rgba(157, 255, 26, 0.9));
+}
+
+.art {
+  filter: saturate(0.85) contrast(1.05);
+}
+
+.tile[data-tone="dark"]::after {
+  background: linear-gradient(180deg, rgba(10, 40, 0, 0.1) 30%, rgba(4, 18, 0, 0.9));
+}
+
+.label b {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.label small {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.big {
+  font-size: 120px;
+  font-weight: 700;
+}
+
+.pic {
+  box-shadow: 0 0 0 2px var(--live), 0 0 14px rgba(157, 255, 26, 0.7);
+}
+
+.play {
+  border-color: var(--live);
+  box-shadow: 0 0 24px rgba(157, 255, 26, 0.7);
+}
+
+.play::after {
+  border-left-color: var(--live);
+}
+
+/* ---------- sheets ---------- */
+.sheet {
+  left: 410px;
+  top: 178px;
+  width: 1120px;
+  height: 586px;
+  color: #eaffb0;
+  background: linear-gradient(160deg, #143204, #040c00);
+  box-shadow: 0 0 0 2px rgba(182, 255, 58, 0.6), 0 0 60px rgba(100, 220, 0, 0.35);
+  clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
+}
+
+.sheet header {
+  background: linear-gradient(90deg, #d4ff5a, #7fe000);
+}
+
+.sheet header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #041000;
+}
+
+.sheet header button {
+  color: #041000;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.achs > div {
+  background: rgba(120, 220, 20, 0.1);
+}
+
+.achs > div[data-on] {
+  background: linear-gradient(90deg, rgba(120, 220, 20, 0.55), rgba(120, 220, 20, 0.2));
+}
+
+.achs b {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.achs span,
+.info dd {
+  font-family: "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+.cta {
+  color: #eaffb0;
+  background: rgba(120, 220, 20, 0.2);
+  box-shadow: inset 0 0 0 2px rgba(182, 255, 58, 0.6);
+}
+
+.cta[data-on] {
+  color: #041000;
+  background: linear-gradient(90deg, #d4ff5a, #7fe000);
+}
+
+.pickGrid button {
+  background: rgba(120, 220, 20, 0.12);
+}
+
+.pickGrid button[data-on] {
+  outline-color: var(--live);
+  box-shadow: none;
+}
+
+.info {
+  font-size: 17px;
+}
+
+.info dt {
+  color: var(--ink-dim);
+}
+
+/* ---------- legend + toast ---------- */
+.legend {
+  left: 410px;
+  bottom: 40px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.legend i[data-k="g"] {
+  background: #d8dde0;
+  color: #041000;
+}
+
+.toast {
+  bottom: 100px;
+  color: #eaffb0;
+  background: linear-gradient(180deg, rgba(30, 70, 6, 0.97), rgba(6, 18, 0, 0.97));
+  box-shadow: 0 0 0 2px rgba(182, 255, 58, 0.7), 0 0 40px rgba(100, 220, 0, 0.5);
+}
+
+.toast small {
+  color: var(--live);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.toast b {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .core i,
+  .core b {
+    animation: none;
+  }
+}

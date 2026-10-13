@@ -51,7 +51,7 @@ try {
   files = (await readdir(src, { withFileTypes: true }))
     .filter((e) => e.isFile() && /\.(jpg|jpeg|png|webp)$/i.test(e.name))
     .map((e) => e.name)
-    .filter((n) => n.startsWith(prefix));
+    .filter((n) => prefix.split(",").some((p) => n.startsWith(p)));
 } catch {
   console.log(`\nNo such folder: raw/${aesthetic}\n`);
   process.exit(1);

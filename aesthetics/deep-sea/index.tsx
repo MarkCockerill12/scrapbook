@@ -1,445 +1,469 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMusic } from "@/lib/music";
+import { abyss } from "./music";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useCanvas } from "@/components/CanvasStage";
-import { tone } from "@/lib/audio";
+import { cutN, img } from "@/lib/assets";
+import { noiseLoop, tone, unlock } from "@/lib/audio";
+import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
-import styles from "./styles.module.css";
+import s from "./sub.module.css";
 
 /**
- * Channel 09 — Deep Sea.
+ * Channel — Deep Sea. DSV-4, one seat, one viewport.
  *
- * Fiction: DSV-4 descent log. You go down, it gets worse, nothing reassures you.
- *
- * This is the first page to use the canvas in "width" mode, and the first to earn a
- * scroll under rule R1: scrolling IS descending. The depth gauge, the pressure, the
- * hull creaks and the light all read off scroll position, so the scrollbar is the
- * page's only real control.
- *
- * The other channels are lit. This one is not — nothing has ambient illumination, so
- * most of the frame is genuinely empty and content only exists where your light is.
+ * Fourth build (2026-10). Mark: "it doesn't feel like I'm exploring deep under the
+ * water, or I'm in a sub… I can't see the mouse." So you are IN the sub now. The page
+ * is the pilot's view: a steel-framed viewport with the ocean behind it, an instrument
+ * shelf under it, and a searchlight on the hull that goes wherever you point. You fly
+ * it — down, up, round — and the only way to see anything below two hundred metres is
+ * to put the lamp on it. Every animal out there is a real photograph.
  */
 
-const W = 1600;
-const H = 5400;
-const MAX_DEPTH = 10_994; // Challenger Deep, in metres
+const A = "deep-sea";
+const MAX = 9000;
+const RING = 5200; // px of water all the way round the sub
+const PX = 3.2; // px per metre, vertically
 
-const ZONES = [
-  {
-    y: 420,
-    depth: 0,
-    name: "Surface",
-    body: (
-      <>
-        <b>DSV-4, hatch sealed.</b> Ballast taken on. The support ship is already a
-        shape rather than a boat. From here it is four hours down and there is nothing
-        to do for any of it.
-      </>
-    ),
-  },
-  {
-    y: 1120,
-    depth: 200,
-    name: "Twilight zone",
-    body: (
-      <>
-        Below <b>200 metres</b> there is not enough light to photosynthesise. Below 400
-        there is not enough to see by. Everything you meet from here down either makes
-        its own light or has stopped bothering with eyes.
-      </>
-    ),
-  },
-  {
-    y: 1900,
-    depth: 1000,
-    name: "Midnight zone",
-    body: (
-      <>
-        No sunlight reaches this deep — <b>none</b>, at any hour, ever. And yet most of
-        the animals here are luminous. Bioluminescence is not the exception in the
-        ocean. It is the norm, and daylight is the local anomaly.
-      </>
-    ),
-  },
-  {
-    y: 2760,
-    depth: 3000,
-    name: "Abyssal",
-    body: (
-      <>
-        Pressure at this depth is around <b>300 atmospheres</b>. The viewport is
-        90&nbsp;mm of borosilicate and it is being pushed inward with roughly the weight
-        of a car on every square centimetre.
-      </>
-    ),
-  },
-  {
-    y: 3620,
-    depth: 6000,
-    name: "Hadal",
-    body: (
-      <>
-        Named for Hades. These are the trenches — narrow, cold, and older than most of
-        the surface of the planet. More people have been to the moon than to the bottom
-        of one.
-      </>
-    ),
-  },
-  {
-    y: 4480,
-    depth: 9000,
-    name: "Below the charts",
-    body: (
-      <>
-        The log stops recording detail here. The instruments still work. Nothing is
-        wrong. It simply becomes difficult to describe a place where{" "}
-        <b>nothing has happened for four million years</b>.
-      </>
-    ),
-  },
+interface Animal {
+  id: string;
+  slot: string;
+  n: number;
+  name: string;
+  note: string;
+  depth: number;
+  bearing: number;
+  w: number;
+  /** "cut" = matted cutout in lit water; "glow" = ROV frame on black, screen-blended */
+  kind: "cut" | "glow";
+  drift: number;
+  flip?: boolean;
+}
+
+const ANIMALS: Animal[] = [
+  { id: "dolphin", slot: "ds_sun", n: 2, name: "Bottlenose dolphin", note: "Came to look at the sub. Stayed about a minute.", depth: 14, bearing: 600, w: 340, kind: "cut", drift: 60 },
+  { id: "turtle", slot: "ds_sun", n: 1, name: "Green sea turtle", note: "Unbothered.", depth: 38, bearing: 2300, w: 300, kind: "cut", drift: -22, flip: true },
+  { id: "manta", slot: "ds_sun", n: 3, name: "Manta ray", note: "Three metres across. It banks like an aircraft.", depth: 72, bearing: 3900, w: 460, kind: "cut", drift: 30 },
+  { id: "whaleshark", slot: "ds_sun", n: 4, name: "Whale shark", note: "The biggest fish there is, and it eats plankton.", depth: 118, bearing: 1500, w: 760, kind: "cut", drift: -18, flip: true },
+  { id: "hammerhead", slot: "ds_sun", n: 7, name: "Scalloped hammerhead", note: "They school by the hundred at the edge of the light.", depth: 160, bearing: 4600, w: 420, kind: "cut", drift: 40 },
+  { id: "sunfish", slot: "ds_sun", n: 8, name: "Ocean sunfish", note: "A head with fins. Dives to feed on jellies.", depth: 215, bearing: 3000, w: 320, kind: "cut", drift: 12 },
+  { id: "moon", slot: "ds_sun", n: 6, name: "Moon jellies", note: "The first things you need the light for.", depth: 320, bearing: 900, w: 520, kind: "glow", drift: 6 },
+  { id: "atolla", slot: "ds_twi", n: 1, name: "Atolla jellyfish", note: "When attacked it flashes blue in rings — a burglar alarm.", depth: 520, bearing: 2600, w: 560, kind: "glow", drift: 9 },
+  { id: "comb", slot: "ds_twi", n: 3, name: "Comb jelly", note: "The rainbow is not light it makes. It is your light, combed.", depth: 720, bearing: 4300, w: 380, kind: "glow", drift: 11 },
+  { id: "hatchet", slot: "ds_twi", n: 2, name: "Hatchetfish", note: "Lit from underneath, so nothing below sees its shadow.", depth: 880, bearing: 1700, w: 340, kind: "cut", drift: -8 },
+  { id: "fang", slot: "ds_mid", n: 1, name: "Fangtooth", note: "Largest teeth for its size of any fish. It is the size of your hand.", depth: 1400, bearing: 3400, w: 560, kind: "glow", drift: 8 },
+  { id: "dragon", slot: "ds_mid", n: 4, name: "Dragonfish", note: "Makes red light, which almost nothing down here can see.", depth: 2100, bearing: 500, w: 560, kind: "glow", drift: -10 },
+  { id: "bristle", slot: "ds_mid", n: 2, name: "Barracudina", note: "Hangs head-up in the dark, waiting.", depth: 2800, bearing: 2100, w: 640, kind: "glow", drift: 7 },
+  { id: "dumbo", slot: "ds_mid", n: 3, name: "Dumbo octopus", note: "Flies with its ears. Deepest-living octopus known.", depth: 3900, bearing: 4000, w: 560, kind: "glow", drift: 12 },
+  { id: "coral", slot: "ds_abyss", n: 4, name: "Gorgonian coral", note: "A fan the size of a door, older than any tree on your street.", depth: 5600, bearing: 1200, w: 700, kind: "glow", drift: 0 },
+  { id: "smoker", slot: "ds_abyss", n: 1, name: "Black smoker", note: "Water at 350°C, kept liquid by the weight on top of it.", depth: 7400, bearing: 3000, w: 620, kind: "glow", drift: 0 },
+  { id: "worms", slot: "ds_abyss", n: 3, name: "Giant tube worms", note: "No mouth, no gut. They farm bacteria on the vent's chemistry.", depth: 8700, bearing: 4500, w: 720, kind: "glow", drift: 0 },
+  // The one thing down here that is not alive. A real photograph of the real bow.
+  { id: "wreck", slot: "ds_wreck", n: 1, name: "RMS Titanic — the bow", note: "The rail is still on her. She really lies at 3,800 m off Newfoundland; in this ocean she went all the way down.", depth: 8950, bearing: 1620, w: 1500, kind: "glow", drift: 0 },
 ];
 
-/** Scroll progress at which a zone marker sits in the middle of the viewport. */
-function progressForY(y: number, scale: number, viewportH: number): number {
-  const travel = Math.max(H * scale - viewportH, 1);
-  return Math.min(Math.max((y * scale - viewportH / 2) / travel, 0), 1);
+const ZONES = [
+  { at: 0, name: "Sunlight zone" },
+  { at: 200, name: "Twilight zone" },
+  { at: 1000, name: "Midnight zone" },
+  { at: 4000, name: "Abyssal zone" },
+  { at: 6000, name: "Hadal zone" },
+  { at: 8900, name: "The bottom" },
+];
+
+function lerp(a: number[], b: number[], t: number) {
+  return a.map((v, i) => Math.round(v + (b[i] - v) * t));
 }
-
-/** Piecewise-linear through the zone anchors, so gauge and markers always agree. */
-function depthAt(progress: number, scale: number, viewportH: number): number {
-  const anchors: [number, number][] = (
-    [
-      [0, 0] as [number, number],
-      ...ZONES.map(
-        (z) => [progressForY(z.y, scale, viewportH), z.depth] as [number, number],
-      ),
-      [1, MAX_DEPTH] as [number, number],
-    ]
-  ).sort((a, b) => a[0] - b[0]);
-
-  for (let i = 0; i < anchors.length - 1; i++) {
-    const [p0, d0] = anchors[i];
-    const [p1, d1] = anchors[i + 1];
-    if (progress >= p0 && progress <= p1) {
-      const t = p1 === p0 ? 0 : (progress - p0) / (p1 - p0);
-      return d0 + (d1 - d0) * t;
-    }
-  }
-  return MAX_DEPTH;
-}
-
-interface Creature {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  r: number;
-  hue: number;
-  phase: number;
-  kind: 0 | 1 | 2;
+/** Water colour by depth: blue, then less blue, then nothing. */
+function water(d: number): [string, string] {
+  const stops: [number, number[], number[]][] = [
+    [0, [70, 190, 232], [14, 110, 178]],
+    [150, [16, 98, 160], [6, 52, 104]],
+    [500, [5, 34, 72], [2, 16, 40]],
+    [1200, [2, 10, 24], [1, 4, 12]],
+    [9000, [1, 3, 8], [0, 1, 4]],
+  ];
+  let i = 0;
+  while (i < stops.length - 2 && d > stops[i + 1][0]) i++;
+  const [d0, t0, b0] = stops[i];
+  const [d1, t1, b1] = stops[i + 1];
+  const t = Math.max(0, Math.min(1, (d - d0) / (d1 - d0)));
+  return [`rgb(${lerp(t0, t1, t).join(",")})`, `rgb(${lerp(b0, b1, t).join(",")})`];
 }
 
 export default function DeepSea() {
-  const { toCanvasSpace, scale } = useCanvas();
-  const muted = useShell((s) => s.muted);
+  useMusic(abyss, 30, true, 1);
+  const { toCanvasSpace } = useCanvas();
+  const muted = useShell((st) => st.muted);
+  const [hud, setHud] = useState({ depth: 0, heading: 0, vs: 0 });
+  const [logged, setLogged] = useState<string[]>([]);
+  const [card, setCard] = useState<Animal | null>(null);
+  const [lamp, setLamp] = useState(true);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const lightRef = useRef<HTMLDivElement>(null);
-  const pointer = useRef({ x: -9999, y: -9999 });
-  const pings = useRef<{ x: number; y: number; r: number; life: number }[]>([]);
-  const creatures = useRef<Creature[]>([]);
-  const rafRef = useRef(0);
+  const sub = useRef({ depth: 6, vd: 0, x: 0, vx: 0 });
+  const ptr = useRef({ x: 800, y: 380 });
+  const keys = useRef(new Set<string>());
+  const lampRef = useRef(true);
+  lampRef.current = lamp;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const seaRef = useRef<HTMLDivElement>(null);
+  const snow = useRef<HTMLCanvasElement>(null);
+  const els = useRef<(HTMLDivElement | null)[]>([]);
+  const lit = useRef<number[]>([]);
+  const beamRef = useRef<HTMLDivElement>(null);
+  const reticle = useRef<HTMLDivElement>(null);
+  const floorRef = useRef<HTMLDivElement>(null);
+  const sonar = useRef<HTMLCanvasElement>(null);
+  const pingT = useRef(-10);
 
-  const [scrollY, setScrollY] = useState(0);
-  const [viewportH, setViewportH] = useState(900);
-  const [imploded, setImploded] = useState(false);
-
-  /**
-   * Scroll drives everything on this page. Both of these MUST come from state rather
-   * than being read during render — the component body runs on the server during SSR,
-   * where `window` doesn't exist, and reading it there is a 500 rather than a
-   * hydration warning.
-   */
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    const onResize = () => setViewportH(window.innerHeight);
-    onScroll();
-    onResize();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize);
+    setLogged(sbGet<string[]>(A, "log", []));
+    sub.current.depth = sbGet(A, "depth", 6);
+  }, []);
+
+  useEffect(() => {
+    if (muted) return;
+    const hull = noiseLoop({ gain: 0.05, lowpass: 160, attack: 2 });
+    const fans = noiseLoop({ gain: 0.012, lowpass: 2600, highpass: 1200, attack: 2 });
+    const creak = window.setInterval(() => {
+      if (sub.current.depth > 800 && Math.random() < 0.5) tone({ freq: 70 + Math.random() * 40, toFreq: 50, duration: 0.7, gain: 0.07, type: "sawtooth" });
+    }, 9000);
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
+      hull();
+      fans();
+      window.clearInterval(creak);
     };
-  }, []);
+  }, [muted]);
 
-  const travel = Math.max(H * scale - viewportH, 1);
-  const progress = Math.min(Math.max(scrollY / travel, 0), 1);
-
-  /**
-   * Depth is interpolated through the zone markers rather than mapped linearly.
-   *
-   * A linear map put the gauge at 5,541 m while the marker beside it said 3,000 m,
-   * which undermines the one thing the page is selling. Anchoring the curve to the
-   * markers keeps them honest — and it's truer anyway, since ocean zones are not
-   * evenly spaced by depth.
-   */
-  const depth = Math.round(depthAt(progress, scale, viewportH));
-  const atm = (1 + depth / 10).toFixed(0);
-  const temp = (18 - progress * 16).toFixed(1);
-  const o2 = Math.max(0, 98 - progress * 34).toFixed(0);
-
-  // Hull creaks, spaced out and pressure-dependent. The interval is deliberately
-  // irregular — a metronome would read as a machine rather than a threat.
   useEffect(() => {
-    if (muted || imploded) return;
-    let id: number;
-    const schedule = () => {
-      const gap = 5200 - progress * 3200 + Math.random() * 3000;
-      id = window.setTimeout(() => {
-        tone({
-          freq: 62 + Math.random() * 40,
-          toFreq: 38,
-          duration: 0.5 + Math.random() * 0.5,
-          type: "sawtooth",
-          gain: 0.05 + progress * 0.07,
-        });
-        schedule();
-      }, gap);
+    const root = rootRef.current;
+    const cv = snow.current;
+    const ctx = cv?.getContext("2d");
+    const sc = sonar.current?.getContext("2d");
+    if (!root || !cv || !ctx) return;
+
+    const flakes = Array.from({ length: 170 }, (_, i) => ({ x: (i * 197) % 1600, y: (i * 113) % 760, z: 0.3 + ((i * 31) % 10) / 10, p: i * 1.9 }));
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      unlock();
+      sub.current.vd += e.deltaY * 0.035;
     };
-    schedule();
-    return () => window.clearTimeout(id);
-  }, [progress, muted, imploded]);
-
-  // Implosion at the very bottom.
-  useEffect(() => {
-    if (progress > 0.995 && !imploded) {
-      setImploded(true);
-      tone({ freq: 320, toFreq: 30, duration: 1.6, type: "sawtooth", gain: 0.2 });
-      window.setTimeout(() => setImploded(false), 5200);
-    }
-  }, [progress, imploded]);
-
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      const p = toCanvasSpace(e.clientX, e.clientY);
-      pointer.current = p;
-      if (lightRef.current) {
-        lightRef.current.style.left = `${e.clientX}px`;
-        lightRef.current.style.top = `${e.clientY}px`;
+    const down = (e: KeyboardEvent) => {
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (["w", "a", "s", "d", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Shift"].includes(k)) {
+        e.preventDefault();
+        e.stopPropagation();
+        keys.current.add(k);
+        unlock();
+        if (k === " " && !e.repeat) ping();
       }
-    },
-    [toCanvasSpace],
-  );
+    };
+    const up = (e: KeyboardEvent) => {
+      // space on a focused button would press it on the way back up
+      if (e.key === " ") e.preventDefault();
+      keys.current.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key);
+    };
+    const ping = () => {
+      pingT.current = performance.now() / 1000;
+      tone({ freq: 1500, toFreq: 1460, duration: 0.5, gain: 0.07, type: "sine" });
+      tone({ freq: 1500, duration: 0.3, gain: 0.02, type: "sine", delay: 0.7 });
+    };
+    root.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", down, true);
+    window.addEventListener("keyup", up, true);
 
-  const ping = useCallback(
-    (e: React.PointerEvent) => {
-      const p = toCanvasSpace(e.clientX, e.clientY);
-      pings.current.push({ x: p.x, y: p.y, r: 10, life: 1 });
-      if (pings.current.length > 8) pings.current.shift();
-      tone({ freq: 1400, toFreq: 620, duration: 0.5, type: "sine", gain: 0.1 });
-    },
-    [toCanvasSpace],
-  );
+    let raf = 0;
+    let last = performance.now();
+    let hudT = 0;
+    let saveT = 0;
+    const frame = (now: number) => {
+      const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+      last = now;
+      const t = now / 1000;
+      const sb = sub.current;
+      const k = keys.current;
+      // shift opens the thrusters right up
+      const run = k.has("Shift") ? 5 : 1;
+      if (k.has("s") || k.has("ArrowDown")) sb.vd += 46 * run * dt;
+      if (k.has("w") || k.has("ArrowUp")) sb.vd -= 46 * run * dt;
+      if (k.has("d") || k.has("ArrowRight")) sb.vx += 520 * run * dt;
+      if (k.has("a") || k.has("ArrowLeft")) sb.vx -= 520 * run * dt;
+      sb.vd = Math.max(-60 * run, Math.min(60 * run, sb.vd)) * (1 - dt * 0.9);
+      sb.vx = Math.max(-420 * run, Math.min(420 * run, sb.vx)) * (1 - dt * 1.6);
+      sb.depth = Math.max(2, Math.min(MAX, sb.depth + sb.vd * dt));
+      if (sb.depth <= 2 || sb.depth >= MAX) sb.vd = 0;
+      sb.x = (((sb.x + sb.vx * dt) % RING) + RING) % RING;
 
-  // ---- the animals -------------------------------------------------------
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+      // water, and how much daylight is left in it
+      const [top, bot] = water(sb.depth);
+      const sea = seaRef.current;
+      if (sea) {
+        sea.style.background = `linear-gradient(180deg, ${top}, ${bot})`;
+        sea.style.setProperty("--day", Math.max(0, 1 - sb.depth / 220).toFixed(3));
+      }
+      const dark = Math.max(0, Math.min(1, (sb.depth - 120) / 380));
 
-    canvas.width = W;
-    canvas.height = H;
+      // the lamp
+      const p = ptr.current;
+      const on = lampRef.current;
+      if (beamRef.current) {
+        beamRef.current.style.transform = `translate(${p.x - 340}px, ${p.y - 340}px)`;
+        beamRef.current.style.opacity = on ? String(0.25 + dark * 0.75) : "0";
+      }
+      if (reticle.current) reticle.current.style.transform = `translate(${p.x - 23}px, ${p.y - 23}px)`;
 
-    creatures.current = Array.from({ length: 90 }, () => ({
-      x: Math.random() * W,
-      // Nothing above 900px: the top of the column is lit, and lit water is empty water.
-      y: 900 + Math.random() * (H - 1000),
-      vx: (Math.random() - 0.5) * 0.34,
-      vy: (Math.random() - 0.5) * 0.22,
-      r: 2 + Math.random() * 7,
-      hue: [170, 186, 196, 280][(Math.random() * 4) | 0],
-      phase: Math.random() * Math.PI * 2,
-      kind: ((Math.random() * 3) | 0) as Creature["kind"],
-    }));
+      // the bottom: silt, coming up to meet the skids
+      if (floorRef.current) {
+        const fy = 380 + (MAX + 70 - sb.depth) * PX;
+        floorRef.current.style.display = fy > 800 ? "none" : "block";
+        floorRef.current.style.transform = `translateY(${fy.toFixed(1)}px)`;
+        floorRef.current.style.backgroundPositionX = `${(-sb.x).toFixed(1)}px`;
+        floorRef.current.style.setProperty("--lx", `${p.x}px`);
+      }
 
-    const frame = () => {
-      ctx.clearRect(0, 0, W, H);
-      const p = pointer.current;
-
-      for (const c of creatures.current) {
-        c.phase += 0.03;
-
-        // Flee the light, drift in the dark. This is the page's one behavioural idea:
-        // the thing you're using to see with is the thing driving everything away.
-        const dx = c.x - p.x;
-        const dy = c.y - p.y;
-        const d = Math.hypot(dx, dy);
-        if (d < 300 && d > 0.5) {
-          const push = (1 - d / 300) * 0.5;
-          c.vx += (dx / d) * push;
-          c.vy += (dy / d) * push;
-        }
-
-        c.vx *= 0.97;
-        c.vy *= 0.97;
-        c.vx += (Math.random() - 0.5) * 0.03;
-        c.vy += (Math.random() - 0.5) * 0.02;
-
-        c.x += c.vx;
-        c.y += c.vy;
-
-        if (c.x < -40) c.x = W + 40;
-        if (c.x > W + 40) c.x = -40;
-        if (c.y < 900) c.y = 900;
-        if (c.y > H - 60) c.y = H - 60;
-
-        // Brighter when far from the light — they dim as you close in.
-        const shy = Math.min(d / 340, 1);
-        const pulse = 0.55 + Math.sin(c.phase) * 0.45;
-        const alpha = (0.25 + shy * 0.75) * pulse;
-
-        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r * 5);
-        g.addColorStop(0, `hsla(${c.hue}, 100%, 72%, ${alpha})`);
-        g.addColorStop(0.3, `hsla(${c.hue}, 100%, 60%, ${alpha * 0.35})`);
-        g.addColorStop(1, "transparent");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, c.r * 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = `hsla(${c.hue}, 100%, 88%, ${alpha})`;
-        ctx.beginPath();
-        if (c.kind === 0) {
-          ctx.arc(c.x, c.y, c.r * 0.5, 0, Math.PI * 2);
-        } else if (c.kind === 1) {
-          // trailing filament
-          ctx.ellipse(c.x, c.y, c.r * 0.35, c.r, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = `hsla(${c.hue}, 100%, 80%, ${alpha * 0.4})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(c.x, c.y + c.r);
-          ctx.quadraticCurveTo(
-            c.x + Math.sin(c.phase) * 12,
-            c.y + c.r * 6,
-            c.x + Math.sin(c.phase * 0.7) * 18,
-            c.y + c.r * 11,
-          );
-          ctx.stroke();
+      // the animals
+      for (let i = 0; i < ANIMALS.length; i++) {
+        const a = ANIMALS[i];
+        const el = els.current[i];
+        if (!el) continue;
+        const y = 380 + (a.depth - sb.depth) * PX + Math.sin(t * 0.5 + i) * 10;
+        if (y < -500 || y > 1300) {
+          el.style.display = "none";
+          lit.current[i] = 0;
           continue;
-        } else {
-          for (let i = 0; i < 5; i++) {
-            const a = c.phase + (i / 5) * Math.PI * 2;
-            ctx.moveTo(c.x, c.y);
-            ctx.arc(c.x + Math.cos(a) * c.r, c.y + Math.sin(a) * c.r, c.r * 0.3, 0, Math.PI * 2);
-          }
         }
-        ctx.fill();
+        let dx = (a.bearing + a.drift * t - sb.x) % RING;
+        if (dx > RING / 2) dx -= RING;
+        if (dx < -RING / 2) dx += RING;
+        const x = 800 + dx;
+        el.style.display = "block";
+        el.style.transform = `translate(${(x - a.w / 2).toFixed(1)}px, ${(y - a.w * 0.34).toFixed(1)}px)`;
+        // below the light, a thing exists only where the lamp is
+        const dist = Math.hypot(x - p.x, y - p.y);
+        const inBeam = on ? Math.max(0, 1 - dist / (240 + a.w * 0.3)) : 0;
+        const vis = (1 - dark) * (a.kind === "cut" ? 1 : 0.5) + dark * Math.min(1, inBeam * 1.7);
+        lit.current[i] = vis;
+        el.style.opacity = vis.toFixed(3);
       }
 
-      // sonar
-      for (const s of pings.current) {
-        s.r += 7;
-        s.life -= 0.012;
-        if (s.life <= 0) continue;
-        ctx.strokeStyle = `rgba(127,233,216,${s.life * 0.5})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.stroke();
+      // marine snow: the only thing that tells you that you are moving
+      ctx.clearRect(0, 0, 1600, 760);
+      for (const f of flakes) {
+        f.y -= sb.vd * PX * dt * f.z * 0.9 - 6 * dt * f.z;
+        f.x -= sb.vx * dt * f.z + Math.sin(t * 0.6 + f.p) * 0.2;
+        if (f.y < -10) f.y += 780;
+        if (f.y > 770) f.y -= 780;
+        if (f.x < -10) f.x += 1620;
+        if (f.x > 1610) f.x -= 1620;
+        const d = Math.hypot(f.x - p.x, f.y - p.y);
+        const glow = on ? Math.max(0, 1 - d / 300) : 0;
+        const a = (1 - dark) * 0.28 * f.z + dark * (0.05 + glow * 0.85) * f.z;
+        if (a < 0.02) continue;
+        ctx.fillStyle = `rgba(214, 236, 255, ${a.toFixed(3)})`;
+        const len = Math.min(14, Math.abs(sb.vd) * 0.22 * f.z);
+        ctx.fillRect(f.x, f.y, 1.2 + f.z * 1.6, 1.2 + f.z * 1.6 + len);
       }
-      pings.current = pings.current.filter((s) => s.life > 0);
 
-      rafRef.current = requestAnimationFrame(frame);
+      // sonar: a sweep, and whatever is within four hundred metres
+      if (sc) {
+        sc.clearRect(0, 0, 150, 150);
+        // rAF time can sit a hair behind performance.now(): never a negative radius
+        const since = Math.max(0, t - pingT.current);
+        sc.strokeStyle = "rgba(60, 255, 190, 0.28)";
+        sc.lineWidth = 1;
+        for (const r of [24, 48, 70]) {
+          sc.beginPath();
+          sc.arc(75, 75, r, 0, Math.PI * 2);
+          sc.stroke();
+        }
+        const ang = t * 1.6;
+        sc.strokeStyle = "rgba(60, 255, 190, 0.8)";
+        sc.beginPath();
+        sc.moveTo(75, 75);
+        sc.lineTo(75 + Math.cos(ang) * 70, 75 + Math.sin(ang) * 70);
+        sc.stroke();
+        if (since < 1.4) {
+          sc.strokeStyle = `rgba(60, 255, 190, ${1 - since / 1.4})`;
+          sc.beginPath();
+          sc.arc(75, 75, since * 50, 0, Math.PI * 2);
+          sc.stroke();
+        }
+        for (const a of ANIMALS) {
+          const dz = a.depth - sb.depth;
+          if (Math.abs(dz) > 420) continue;
+          let dx = (a.bearing + a.drift * t - sb.x) % RING;
+          if (dx > RING / 2) dx -= RING;
+          if (dx < -RING / 2) dx += RING;
+          const bx = 75 + (dx / (RING / 2)) * 66;
+          const by = 75 + (dz / 420) * 66;
+          const fresh = since < 4 ? 1 - since / 4 : 0.25;
+          sc.fillStyle = `rgba(160, 255, 220, ${0.25 + fresh * 0.75})`;
+          sc.fillRect(bx - 2, by - 2, 4, 4);
+        }
+      }
+
+      hudT += dt;
+      if (hudT > 0.12) {
+        hudT = 0;
+        setHud({ depth: sb.depth, heading: (sb.x / RING) * 360, vs: sb.vd });
+      }
+      saveT += dt;
+      if (saveT > 4) {
+        saveT = 0;
+        sbSet(A, "depth", Math.round(sb.depth));
+      }
+      raf = requestAnimationFrame(frame);
     };
-
-    frame();
-    return () => cancelAnimationFrame(rafRef.current);
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      root.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", down, true);
+      window.removeEventListener("keyup", up, true);
+    };
   }, []);
 
-  // Which zones the light is near — cheap proximity test in canvas space.
-  const litZone = (zoneY: number) => {
-    const viewCentre = scrollY / scale + viewportH / scale / 2;
-    return Math.abs(zoneY - viewCentre) < 420;
+  const shoot = () => {
+    unlock();
+    // the shutter takes whatever the lamp is most squarely on
+    let best = -1;
+    let score = 0.45;
+    lit.current.forEach((v, i) => {
+      if (v > score) {
+        score = v;
+        best = i;
+      }
+    });
+    tone({ freq: 2400, toFreq: 900, duration: 0.05, gain: 0.08, type: "square" });
+    if (best < 0) return;
+    const a = ANIMALS[best];
+    setCard(a);
+    if (!logged.includes(a.id)) {
+      const next = [...logged, a.id];
+      setLogged(next);
+      sbSet(A, "log", next);
+      tone({ freq: 880, duration: 0.12, gain: 0.06, delay: 0.1 });
+      tone({ freq: 1320, duration: 0.2, gain: 0.06, delay: 0.22 });
+    }
   };
 
+  const zone = [...ZONES].reverse().find((z) => hud.depth >= z.at) ?? ZONES[0];
+  const bar = 1 + hud.depth / 10;
+  const temp = hud.depth < 200 ? 24 - hud.depth * 0.05 : Math.max(1.6, 14 - Math.log10(hud.depth / 200 + 1) * 12);
+
   return (
-    <div className={styles.root} onPointerMove={onPointerMove} onPointerDown={ping}>
-      <div className={styles.column} />
-      <div className={styles.sun} />
-      <canvas ref={canvasRef} width={W} height={H} className={styles.particles} />
-
-      {ZONES.map((z) => (
-        <section
-          key={z.depth}
-          className={`${styles.zone} ${styles.hidden} ${litZone(z.y) ? styles.revealed : ""}`}
-          style={{ top: z.y }}
-        >
-          <div className={styles.zoneDepth}>
-            {z.depth === 0 ? "0" : z.depth.toLocaleString()} m
-          </div>
-          <div className={styles.zoneName}>{z.name}</div>
-          <p className={styles.zoneBody}>{z.body}</p>
-        </section>
-      ))}
-
-      {/* HUD is fixed to the viewport: it's the sub, and the sub doesn't scroll. */}
-      <div className={styles.hud}>
-        <div className={styles.porthole} />
-
-        <div className={styles.gauge}>
-          <div className={styles.gaugeLabel}>Depth</div>
-          <div className={styles.gaugeValue}>{depth.toLocaleString()}</div>
-          <div className={styles.gaugeUnit}>metres</div>
-          <div className={styles.gaugeBar}>
-            <div className={styles.gaugeFill} style={{ height: `${progress * 100}%` }} />
-          </div>
-        </div>
-
-        <div className={styles.readouts}>
-          <div className={styles.readout}>
-            <span>PRESSURE</span>
-            <b className={progress > 0.72 ? styles.alarm : progress > 0.45 ? styles.warn : ""}>
-              {atm} atm
-            </b>
-          </div>
-          <div className={styles.readout}>
-            <span>HULL</span>
-            <b className={progress > 0.86 ? styles.alarm : progress > 0.6 ? styles.warn : ""}>
-              {progress > 0.86 ? "STRESSED" : progress > 0.6 ? "NOMINAL*" : "NOMINAL"}
-            </b>
-          </div>
-          <div className={styles.readout}>
-            <span>TEMP</span>
-            <b>{temp} °C</b>
-          </div>
-          <div className={styles.readout}>
-            <span>O₂</span>
-            <b className={Number(o2) < 72 ? styles.warn : ""}>{o2}%</b>
-          </div>
-          <div className={styles.readout}>
-            <span>LIGHT</span>
-            <b>{progress < 0.04 ? "AMBIENT" : "LAMP ONLY"}</b>
-          </div>
-        </div>
-
-        <div className={styles.hint}>scroll to descend · click to ping</div>
-
-        {progress > 0.86 && !imploded && (
-          <div className={`${styles.banner} ${styles.alarm}`}>
-            ⚠ hull stress beyond rated depth — ascend
-          </div>
-        )}
-
-        {imploded && (
-          <div className={styles.banner} style={{ color: "#ff4d5a", fontSize: 14 }}>
-            HULL BREACH · DSV-4 · NO SIGNAL
-          </div>
-        )}
+    <div
+      ref={rootRef}
+      className={s.root}
+      onPointerMove={(e) => {
+        const p = toCanvasSpace(e.clientX, e.clientY);
+        ptr.current = { x: p.x, y: Math.min(p.y, 730) };
+      }}
+      onPointerDown={() => unlock()}
+    >
+      {/* ---------- outside ---------- */}
+      <div ref={seaRef} className={s.sea} onClick={shoot}>
+        <div className={s.rays} />
+        <div ref={floorRef} className={s.floor} style={{ display: "none" }} />
+        {ANIMALS.map((a, i) => {
+          const art = a.kind === "cut" ? cutN(A, a.slot, a.n) : img(A, a.slot, a.n);
+          return (
+            <div
+              key={a.id}
+              ref={(el) => {
+                els.current[i] = el;
+              }}
+              className={s.animal}
+              data-kind={a.kind}
+              style={{ width: a.w } as CSSProperties}
+            >
+              {art && <img src={art.src} alt={a.name} draggable={false} style={a.flip ? { transform: "scaleX(-1)" } : undefined} />}
+            </div>
+          );
+        })}
+        <canvas ref={snow} className={s.snow} width={1600} height={760} />
+        <div ref={beamRef} className={s.beam} />
+        <div className={s.glass} />
       </div>
 
-      <div ref={lightRef} className={styles.cursorLight} />
+      {/* ---------- the sub ---------- */}
+      <div className={s.frame} />
+      <div ref={reticle} className={s.reticle} />
+
+      <div className={s.console}>
+        <div className={s.depth}>
+          <small>depth</small>
+          <b>{hud.depth.toFixed(0).padStart(4, "0")}</b>
+          <i>m</i>
+          <span>{zone.name}</span>
+        </div>
+
+        <div className={s.dials}>
+          <div>
+            <small>pressure</small>
+            <b>{bar.toFixed(0)}</b>
+            <i>bar</i>
+          </div>
+          <div>
+            <small>water</small>
+            <b>{temp.toFixed(1)}</b>
+            <i>°C</i>
+          </div>
+          <div>
+            <small>heading</small>
+            <b>{String(Math.round(hud.heading) % 360).padStart(3, "0")}</b>
+            <i>°</i>
+          </div>
+          <div data-warn={Math.abs(hud.vs) > 40 || undefined}>
+            <small>{hud.vs >= 0 ? "descending" : "ascending"}</small>
+            <b>{Math.abs(hud.vs).toFixed(0)}</b>
+            <i>m/s</i>
+          </div>
+        </div>
+
+        <div className={s.sonar}>
+          <canvas ref={sonar} width={150} height={150} />
+          <small>sonar · space to ping</small>
+        </div>
+
+        <div className={s.switches}>
+          <button type="button" data-on={lamp || undefined} onClick={() => setLamp((l) => !l)}>
+            <i />
+            light
+          </button>
+          <div className={s.log}>
+            <small>logged</small>
+            <b>
+              {logged.length}
+              <em> / {ANIMALS.length}</em>
+            </b>
+          </div>
+        </div>
+
+        {/* the ladder: how far down this actually is */}
+        <div className={s.ladder}>
+          <i style={{ top: `${(hud.depth / MAX) * 100}%` }} />
+          {ANIMALS.map((a) => (
+            <span key={a.id} data-got={logged.includes(a.id) || undefined} style={{ top: `${(a.depth / MAX) * 100}%` }} />
+          ))}
+        </div>
+      </div>
+
+      <p className={s.hint}>W / S or scroll to dive and rise · A / D to come about · hold shift to move faster · the light goes where you point · click to photograph what it finds</p>
+
+      {card && (
+        <button type="button" className={s.card} onClick={() => setCard(null)}>
+          <img src={(card.kind === "cut" ? cutN(A, card.slot, card.n) : img(A, card.slot, card.n))?.src ?? ""} alt="" data-kind={card.kind} />
+          <div>
+            <small>
+              frame {String(logged.indexOf(card.id) + 1).padStart(2, "0")} · {card.depth} m
+            </small>
+            <b>{card.name}</b>
+            <span>{card.note}</span>
+          </div>
+        </button>
+      )}
     </div>
   );
 }

@@ -10,10 +10,11 @@ import styles from "./styles.module.css";
  * Three details do all the work, and dropping any one of them makes it read as a
  * generic hand cursor:
  *
- *   1. IT LAGS. The real pointer is IR-tracked and never quite catches the wrist.
- *      Position is spring-followed, not assigned.
- *   2. IT ROTATES WITH VELOCITY. Horizontal motion tilts the hand and it springs
- *      back to upright when you stop. This is the single most recognisable part.
+ *   1. IT IS EXACTLY WHERE YOU POINT. An earlier version spring-followed the cursor
+ *      to imitate IR lag; on a mouse that just reads as a slow, drunk cursor. Position
+ *      is now written straight from the pointer event — zero frames behind.
+ *   2. IT LEANS, SLIGHTLY. A few degrees of tilt into a fast sweep, critically damped
+ *      so it settles without ever swinging back past upright.
  *   3. IT CLOSES. Pointer-down folds the hand into a grab.
  *
  * Runs entirely on rAF against a transform — no React state, so a fast sweep
@@ -29,7 +30,7 @@ export function WiiPointer() {
   const target = useRef({ x: width / 2, y: height / 2 });
   const pos = useRef({ x: width / 2, y: height / 2 });
   const rot = useRef(0);
-  const rotVel = useRef(0);
+  const lastX = useRef(width / 2);
   const down = useRef(false);
   const inside = useRef(false);
 
@@ -38,6 +39,10 @@ export function WiiPointer() {
       const p = toCanvasSpace(e.clientX, e.clientY);
       target.current = p;
       inside.current = p.x >= 0 && p.y >= 0 && p.x <= width && p.y <= height;
+      // Written here, not in rAF: the hand must never trail the real cursor.
+      pos.current = p;
+      const el = ref.current;
+      if (el) el.style.transform = `translate3d(${p.x - 15}px, ${p.y - 8}px, 0) rotate(${rot.current.toFixed(2)}deg)`;
     };
     const onDown = () => {
       down.current = true;
@@ -66,25 +71,17 @@ export function WiiPointer() {
   useEffect(() => {
     let raf = 0;
     const step = () => {
-      const t = target.current;
       const p = pos.current;
-
-      // Follow, don't snap. 0.34 is the point where it feels responsive but you can
-      // still see the hand chasing the wrist.
-      const dx = (t.x - p.x) * 0.34;
-      const dy = (t.y - p.y) * 0.34;
-      p.x += dx;
-      p.y += dy;
-
-      // Tilt away from the direction of travel, spring back to upright.
-      const want = Math.max(-26, Math.min(26, -dx * 1.15));
-      rotVel.current += (want - rot.current) * 0.16;
-      rotVel.current *= 0.72;
-      rot.current += rotVel.current;
+      const vx = p.x - lastX.current;
+      lastX.current = p.x;
+      // A plain ease toward the lean — no spring, so nothing to overshoot or wobble.
+      const want = Math.max(-9, Math.min(9, -vx * 0.3));
+      rot.current += (want - rot.current) * 0.22;
+      if (Math.abs(rot.current) < 0.02) rot.current = 0;
 
       const el = ref.current;
       if (el) {
-        el.style.transform = `translate(${p.x - 15}px, ${p.y - 8}px) rotate(${rot.current.toFixed(2)}deg)`;
+        el.style.transform = `translate3d(${p.x - 15}px, ${p.y - 8}px, 0) rotate(${rot.current.toFixed(2)}deg)`;
         el.style.opacity = inside.current ? "1" : "0";
       }
       if (openRef.current && shutRef.current) {

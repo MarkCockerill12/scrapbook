@@ -1,5 +1,7 @@
 "use client";
 
+import { useMusic } from "@/lib/music";
+import { tracker } from "./music";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { tone } from "@/lib/audio";
 import { AESTHETICS } from "@/lib/registry";
@@ -79,6 +81,7 @@ function banner(text: string, indent = 4): string[] {
 const LOGO = [...banner("THE ATTIC"), "", "              B B S   ·   E S T   1 9 8 7"];
 
 export default function BBS() {
+  useMusic(tracker, 100);
   const begin = useShell((s) => s.beginTransition);
 
   const [screen, setScreen] = useState<Screen>("connecting");

@@ -1,0 +1,139 @@
+.clock {
+  filter: drop-shadow(0 6px 10px rgba(0, 40, 20, 0.45));
+}
+
+.weather {
+  position: relative;
+  width: 196px;
+  height: 104px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  color: #fff;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 6px 16px rgba(0, 30, 60, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 3px rgba(0, 30, 60, 0.6);
+  transition: background 600ms ease;
+}
+
+.weather::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.05));
+  border-radius: 10px 10px 40% 40% / 10px 10px 18px 18px;
+  pointer-events: none;
+}
+
+.sunny { background: linear-gradient(180deg, #5fc2ff, #1a78d8); }
+.rain { background: linear-gradient(180deg, #8aa3b8, #3c566c); }
+.rainbow { background: linear-gradient(180deg, #84d8ff, #36a86a); }
+.night { background: linear-gradient(180deg, #1c3570, #06122e); }
+
+.wIcon {
+  position: absolute;
+  right: 12px;
+  top: 6px;
+  font-size: 50px;
+  line-height: 1;
+  color: #ffe45c;
+  filter: drop-shadow(0 0 10px rgba(255, 240, 120, 0.9));
+}
+
+.rain .wIcon { color: #e6f4ff; filter: none; }
+.night .wIcon { color: #fff8d0; }
+
+.wTemp {
+  display: block;
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.wSky {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.wCity {
+  display: block;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.cpu {
+  position: relative;
+  width: 150px;
+  height: 92px;
+  border-radius: 46px 16px 16px 46px;
+  background: linear-gradient(180deg, #3c4a52, #0e1418);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.gauge {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.35), transparent 55%),
+    conic-gradient(from 240deg, #3fe06a 0 60deg, #ffd23c 60deg 150deg, #ff5a3a 150deg 240deg, transparent 240deg),
+    #10171b;
+  box-shadow: inset 0 0 0 4px #10171b, 0 0 0 2px #7d8a92;
+}
+
+.gauge b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  text-align: center;
+  font-size: 10px;
+  color: #cfe;
+}
+
+.needle {
+  position: absolute;
+  left: calc(50% - 1px);
+  bottom: 50%;
+  width: 2px;
+  background: #ff5a3a;
+  transform-origin: 50% 100%;
+  transition: transform 800ms cubic-bezier(0.3, 1.4, 0.4, 1);
+  box-shadow: 0 0 4px #ff5a3a;
+}
+
+.slides {
+  position: relative;
+  width: 200px;
+  height: 140px;
+  padding: 6px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fbfbfb, #cfd8de);
+  box-shadow: 0 8px 18px rgba(0, 30, 50, 0.45), inset 0 1px 0 #fff;
+  overflow: hidden;
+}
+
+.slide, .slideOn {
+  position: absolute;
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.2s ease, transform 6s linear;
+  transform: scale(1);
+}
+
+.slideOn {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.slideGloss {
+  position: absolute;
+  inset: 6px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 40%);
+  pointer-events: none;
+}

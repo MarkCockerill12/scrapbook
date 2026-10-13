@@ -892,12 +892,14 @@
 
 .hints {
   position: absolute;
-  left: 42px;
-  bottom: 26px;
+  left: 46px;
+  bottom: 48px;
   display: flex;
   gap: 22px;
   font-size: 12px;
-  color: var(--ink-dim);
+  /* Not --ink-dim: #9db095 sits too close to the blade green behind it. */
+  color: rgba(226, 240, 220, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   z-index: 50;
   pointer-events: none;
 }
@@ -923,4 +925,338 @@
   .toast {
     animation: none;
   }
+}
+
+
+/* ==========================================================================
+ * 2026-10 — the Blades dashboard (2005–2008), second pass.
+ *
+ * The first pass got the stage right (silver, bright) and the blade wrong: it made
+ * the open blade a pale sheet with pill buttons, which is a Windows Media Center.
+ * On the console the OPEN BLADE IS THE COLOUR. The whole sheet is the blade's hue —
+ * lit from the top-left, ring arcs ghosted across it — and everything on it is white
+ * type on tinted glass: a flat list with hairline rules and one glossy selection
+ * bar, a glass well for content, the silver gamercard, lowercase titles.
+ * ========================================================================== */
+
+.root {
+  --ink: #ffffff;
+  --ink-dim: rgba(255, 255, 255, 0.72);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, #ffffff 0%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, #e9edf0 0%, #c9d1d7 55%, #a9b4bc 100%);
+  cursor: default;
+}
+
+:where(.root) button {
+  cursor: pointer;
+}
+
+.swoosh {
+  inset: -30% -10%;
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 44% 110% at 24% 52%, transparent 56%, rgba(255, 255, 255, 0.95) 59.5%, rgba(255, 255, 255, 0.35) 61%, transparent 66%),
+    radial-gradient(ellipse 60% 130% at 80% 42%, transparent 58%, rgba(255, 255, 255, 0.8) 61%, rgba(255, 255, 255, 0.25) 62.5%, transparent 68%);
+  filter: blur(0.6px);
+}
+
+/* ---------- closed blades: thin curved slivers of the same glass ---------- */
+.strip {
+  top: 18px;
+  bottom: 18px;
+  width: 46px;
+  border-radius: 24px / 120px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 30%, rgba(0, 0, 0, 0.28) 100%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bladeC) 62%, #ffffff) 0%, var(--bladeC) 28%, color-mix(in srgb, var(--bladeC) 58%, #000000) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.25),
+    8px 0 16px -4px rgba(30, 45, 55, 0.5),
+    -8px 0 16px -4px rgba(30, 45, 55, 0.3);
+}
+
+.strip:hover {
+  filter: brightness(1.14) saturate(1.1);
+  width: 54px;
+}
+
+.stripLabel {
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- the open blade: a sheet of its own colour ---------- */
+.blade {
+  top: 18px;
+  bottom: 18px;
+  border-radius: 46px / 150px;
+  padding: 0 62px;
+  overflow: hidden;
+  background:
+    /* the rings, ghosted */
+    radial-gradient(ellipse 70% 120% at 108% 8%, transparent 61%, rgba(255, 255, 255, 0.2) 62%, rgba(255, 255, 255, 0.05) 64.5%, transparent 65%),
+    radial-gradient(ellipse 60% 100% at 104% 24%, transparent 61%, rgba(255, 255, 255, 0.14) 62%, rgba(255, 255, 255, 0.03) 65%, transparent 65.5%),
+    radial-gradient(ellipse 90% 80% at -6% 118%, transparent 62%, rgba(255, 255, 255, 0.13) 63%, rgba(255, 255, 255, 0.03) 66%, transparent 66.5%),
+    /* lit from the top-left */
+    radial-gradient(ellipse 80% 70% at 12% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(170deg, color-mix(in srgb, var(--bladeC) 78%, #ffffff) 0%, var(--bladeC) 34%, color-mix(in srgb, var(--bladeC) 60%, #0a1410) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+    inset 0 0 80px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(40, 58, 70, 0.5),
+    0 18px 50px -10px rgba(30, 45, 55, 0.6);
+}
+
+.blade::before {
+  display: none;
+}
+
+.head {
+  position: relative;
+  align-items: flex-end;
+  margin: 0;
+  padding: 26px 0 16px;
+  background: none;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.bladeName {
+  font-size: 62px;
+  line-height: 0.95;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  text-transform: lowercase;
+  color: #fff;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+}
+
+.bladeSub {
+  margin-top: 6px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- gamercard: brushed silver, as on the console ---------- */
+.gamertag {
+  gap: 14px;
+  padding: 8px 22px 8px 8px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fdfdfd 0%, #dfe3e6 46%, #b9c1c7 54%, #d3d9dd 100%);
+  box-shadow:
+    inset 0 0 0 1px #ffffff,
+    0 0 0 1px rgba(30, 45, 55, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.gpic {
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px rgba(40, 58, 70, 0.6);
+}
+
+.gname {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #1f2a31;
+}
+
+.gsBadge {
+  font-weight: 700;
+  color: #3f7a00;
+}
+
+.rep {
+  color: #d18f00;
+}
+
+/* ---------- the body ---------- */
+.body {
+  padding-top: 22px;
+  height: 506px;
+  gap: 30px;
+}
+
+/* the list: flat rows, hairline rules, one glossy bar */
+.menu {
+  width: 400px;
+  gap: 0;
+  padding: 6px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 6px 16px rgba(0, 0, 0, 0.16);
+  scrollbar-color: rgba(255, 255, 255, 0.7) rgba(0, 0, 0, 0.12);
+  align-self: flex-start;
+  max-height: 100%;
+}
+
+.item {
+  margin: 0;
+  flex: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.itemMeta {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.itemOn,
+.itemOn:hover {
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.28) 48%, rgba(255, 255, 255, 0.08) 52%, rgba(255, 255, 255, 0.22) 100%),
+    color-mix(in srgb, var(--bladeC) 70%, #0a1410);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    0 0 14px rgba(255, 255, 255, 0.45),
+    0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.itemOn .itemMeta {
+  color: #fff;
+}
+
+/* the content well: smoked glass set into the sheet */
+.detail {
+  border-radius: 10px;
+  padding: 20px 24px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(10, 22, 28, 0.5), rgba(10, 22, 28, 0.66));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+.detailTitle {
+  font-size: 28px;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.detailSub {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.detailBody {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.online {
+  color: #c9ff6b;
+}
+
+/* achievements: two columns, so all of them are on the screen at once */
+.achList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  max-height: none;
+  overflow: visible;
+}
+
+.ach {
+  min-width: 0;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.ach > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.achName,
+.achHow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.achGs {
+  flex: none;
+}
+
+.action {
+  border-radius: 6px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.12) 48%, rgba(0, 0, 0, 0.1) 52%, rgba(0, 0, 0, 0.2) 100%),
+    #5aa50c;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 0 1px #2f6200, 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.actionGhost {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- recently played ---------- */
+.recent {
+  left: 62px;
+  right: 62px;
+  bottom: 64px;
+}
+
+.recentTitle {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.recentCard {
+  width: 138px;
+  height: 80px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.45), 0 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.recentCard:hover {
+  box-shadow: 0 0 0 3px #fff, 0 12px 22px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- the button legend ---------- */
+.hints {
+  left: 250px;
+  bottom: 30px;
+  gap: 20px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.hintKey {
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.7), inset 0 -3px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* the toast floats top centre, clear of the recently-played row */
+.toast {
+  bottom: auto;
+  top: 30px;
 }

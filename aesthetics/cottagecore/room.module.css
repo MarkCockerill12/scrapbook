@@ -1,0 +1,389 @@
+/* Cottagecore — one lamplit kitchen. Own reset + tokens (rule R2).
+ * Positions are percentages of the photograph, which fills the frame. */
+
+@font-face { font-family: "Cormorant Garamond"; src: url("/fonts/cottagecore/cormorant-garamond-400.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Cormorant Garamond"; src: url("/fonts/cottagecore/cormorant-garamond-400i.woff2") format("woff2"); font-style: italic; font-display: block; }
+@font-face { font-family: "Homemade Apple"; src: url("/fonts/cottagecore/homemade-apple-400.woff2") format("woff2"); font-display: block; }
+
+.root {
+  --fire: 1;
+  --day: 255 214 150;
+  --dayAmt: 0.5;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #120b06;
+  color: #f6e7c8;
+  font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- the room ---------- */
+.room {
+  position: absolute;
+  left: 0;
+  top: -84px;
+  width: 1600px;
+  height: 1067px;
+  /* lift the exposure a stop and a half; keep it butter-warm */
+  filter: brightness(1.5) contrast(1.02) saturate(1.2) sepia(0.14);
+  transition: filter 3s ease;
+}
+
+/* ---------- the window ---------- */
+.window {
+  position: absolute;
+  left: 612px;
+  top: 0;
+  width: 232px;
+  height: 344px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.window canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+}
+
+/* what is outside, as light on the net curtain */
+.pane {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(var(--day) / 0.9), rgb(var(--day) / 0.5));
+  mix-blend-mode: soft-light;
+  transition: background 3s ease;
+}
+
+/* daylight falling into the room from the window, across the table and floor */
+.daylight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 34% 46% at 45% 16%, rgb(var(--day) / 0.5), transparent 70%),
+    linear-gradient(172deg, transparent 30%, rgb(var(--day) / 0.22) 44%, transparent 66%);
+  mix-blend-mode: soft-light;
+  opacity: var(--dayAmt);
+  transition: opacity 3s ease;
+}
+
+/* ---------- lantern ---------- */
+.lantern {
+  position: absolute;
+  left: 1072px;
+  top: 96px;
+  width: 54px;
+  height: 78px;
+  border-radius: 12px;
+}
+
+.lanternGlow {
+  position: absolute;
+  left: 1100px;
+  top: 138px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.lanternGlow::before {
+  content: "";
+  position: absolute;
+  left: -330px;
+  top: -330px;
+  width: 660px;
+  height: 660px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 96, 0.55), rgba(255, 160, 60, 0.16) 40%, transparent 68%);
+  mix-blend-mode: screen;
+  animation: flicker 3.1s ease-in-out infinite;
+}
+
+.root[data-lantern] .lanternGlow {
+  opacity: 1;
+}
+
+@keyframes flicker {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  34% {
+    transform: scale(0.97);
+    opacity: 0.88;
+  }
+  38% {
+    opacity: 0.97;
+  }
+  71% {
+    transform: scale(1.02);
+    opacity: 0.92;
+  }
+}
+
+/* ---------- hearth ---------- */
+.hearth {
+  position: absolute;
+  left: 1150px;
+  top: 300px;
+  width: 210px;
+  height: 360px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* flames: three tongues of light, the only invented thing in the room, kept inside
+   the firebox where the photograph already shows embers */
+.hearth i {
+  position: absolute;
+  bottom: 62px;
+  width: 40px;
+  height: calc(64px * var(--fire));
+  opacity: 0.85;
+  border-radius: 50% 50% 20% 20% / 70% 70% 30% 30%;
+  background: radial-gradient(ellipse at 50% 100%, #fff3c4 0%, #ffb23a 34%, rgba(255, 90, 20, 0.7) 62%, transparent 80%);
+  mix-blend-mode: screen;
+  filter: blur(7px);
+  transform-origin: 50% 100%;
+  transition: height 1.2s ease;
+  animation: lick 0.42s ease-in-out infinite alternate;
+}
+
+.hearth i:nth-child(1) {
+  left: 66px;
+}
+
+.hearth i:nth-child(2) {
+  left: 96px;
+  height: calc(84px * var(--fire));
+  animation-duration: 0.33s;
+}
+
+.hearth i:nth-child(3) {
+  left: 128px;
+  animation-duration: 0.5s;
+}
+
+@keyframes lick {
+  from {
+    transform: scale(0.9, 0.86) skewX(-4deg);
+  }
+  to {
+    transform: scale(1.06, 1.08) skewX(5deg);
+  }
+}
+
+.fireGlow {
+  position: absolute;
+  left: 1250px;
+  top: 600px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.fireGlow::before {
+  content: "";
+  position: absolute;
+  left: -620px;
+  top: -520px;
+  width: 1240px;
+  height: 1040px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 120, 30, 0.5), rgba(255, 100, 20, 0.16) 38%, transparent 66%);
+  mix-blend-mode: screen;
+  opacity: calc(var(--fire) * 0.62);
+  transition: opacity 1.2s ease;
+  animation: flicker 0.9s steps(6) infinite;
+}
+
+/* ---------- steam ---------- */
+.steam {
+  position: absolute;
+  left: 818px;
+  top: 300px;
+  width: 80px;
+  height: 130px;
+  pointer-events: none;
+}
+
+.steam i {
+  position: absolute;
+  bottom: 0;
+  left: 30px;
+  width: 22px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 250, 235, 0.42), transparent 70%);
+  filter: blur(7px);
+  animation: steam 5.5s ease-in infinite;
+}
+
+.steam i:nth-child(2) {
+  left: 16px;
+  animation-delay: -1.9s;
+}
+
+.steam i:nth-child(3) {
+  left: 42px;
+  animation-delay: -3.7s;
+}
+
+@keyframes steam {
+  0% {
+    transform: translateY(20px) scale(0.5);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(18px, -90px) scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* ---------- the cat ---------- */
+.cat {
+  position: absolute;
+  left: 1010px;
+  top: 640px;
+  width: 132px;
+  cursor: pointer;
+}
+
+.cat img {
+  display: block;
+  width: 100%;
+  /* in the room's light: firelit on her right, dim everywhere else */
+  filter: brightness(0.5) sepia(0.8) saturate(1.5) hue-rotate(-12deg) drop-shadow(-16px 8px 10px rgba(0, 0, 0, 0.7));
+  transform-origin: 50% 100%;
+  transform: scaleX(-1);
+  animation: breathe 3.8s ease-in-out infinite;
+}
+
+.cat[data-purr] img {
+  animation-duration: 1.7s;
+  filter: brightness(0.64) sepia(0.8) saturate(1.5) hue-rotate(-12deg) drop-shadow(-16px 8px 10px rgba(0, 0, 0, 0.7));
+}
+
+@keyframes breathe {
+  50% {
+    transform: scaleX(-1) scaleY(1.022);
+  }
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 86% at 54% 46%, transparent 48%, rgba(14, 7, 2, 0.8) 100%);
+}
+
+/* ---------- words ---------- */
+.title {
+  position: absolute;
+  left: 76px;
+  bottom: 96px;
+  pointer-events: none;
+}
+
+.title h1 {
+  font-family: "Homemade Apple", cursive;
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #fbeed0;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+}
+
+.title p {
+  margin-top: 4px;
+  font-style: italic;
+  font-size: 26px;
+  color: rgba(246, 231, 200, 0.88);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+}
+
+.hint {
+  position: absolute;
+  left: 76px;
+  bottom: 44px;
+  font-style: italic;
+  font-size: 19px;
+  color: rgba(246, 231, 200, 0.8);
+  text-shadow: 0 1px 10px #000;
+  pointer-events: none;
+}
+
+/* ---------- the day going round ---------- */
+.root[data-sky="morning"] {
+  --day: 214 236 255;
+  --dayAmt: 0.85;
+}
+
+.root[data-sky="morning"] .room {
+  filter: brightness(1.75) contrast(1) saturate(1.1) sepia(0.04);
+}
+
+.root[data-sky="golden"] {
+  --day: 255 196 110;
+  --dayAmt: 0.8;
+}
+
+.root[data-sky="rain"] {
+  --day: 150 170 190;
+  --dayAmt: 0.5;
+}
+
+.root[data-sky="rain"] .room {
+  filter: brightness(1.3) contrast(1.02) saturate(1) sepia(0.12);
+}
+
+.root[data-sky="night"] {
+  --day: 40 60 120;
+  --dayAmt: 0.6;
+}
+
+.root[data-sky="night"] .room,
+.root[data-sky="snow"] .room {
+  filter: brightness(1.12) contrast(1.06) saturate(1.2) sepia(0.26);
+}
+
+.root[data-sky="night"] .pane {
+  background: linear-gradient(180deg, rgba(8, 14, 40, 0.92), rgba(20, 30, 70, 0.8));
+  mix-blend-mode: multiply;
+}
+
+.root[data-sky="snow"] {
+  --day: 150 170 215;
+  --dayAmt: 0.55;
+}
+
+.root[data-sky="snow"] .pane {
+  background: linear-gradient(180deg, rgba(40, 52, 96, 0.85), rgba(70, 84, 130, 0.7));
+  mix-blend-mode: multiply;
+}

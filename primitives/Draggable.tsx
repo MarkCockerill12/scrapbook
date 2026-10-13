@@ -67,9 +67,18 @@ export function Draggable({
 }: DraggableProps) {
   const { toCanvasDelta } = useCanvas();
 
-  const [pos, setPos] = useState(() =>
-    persistAs ? sbGet(persistAs.aesthetic, `pos:${persistAs.key}`, { x, y }) : { x, y },
-  );
+  // Start from the authored position so the server render and the first client
+  // render agree; the persisted position is applied after mount. Reading storage
+  // in the initialiser caused a hydration mismatch React never patched, so saved
+  // positions silently didn't apply until something else re-rendered.
+  const [pos, setPos] = useState({ x, y });
+  const persistKey = persistAs ? `${persistAs.aesthetic}|${persistAs.key}` : "";
+  useEffect(() => {
+    if (!persistAs) return;
+    setPos(sbGet(persistAs.aesthetic, `pos:${persistAs.key}`, { x, y }));
+    // persistKey stands in for persistAs, which callers pass as a fresh object literal
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistKey]);
   const [dragging, setDragging] = useState(false);
 
   const posRef = useRef(pos);
@@ -100,6 +109,28 @@ export function Draggable({
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (disabled) return;
+
+    /*
+     * Never start a drag from something the user is trying to use.
+     *
+     * setPointerCapture retargets every subsequent event to this div, so a press that
+     * lands on a control inside the draggable is swallowed whole — the control goes
+     * silently inert and, for text fields, focus never lands. That has now broken the
+     * Vaporwave window controls, all three Cyber Sigilism devices and the Matrix
+     * terminal. Opt a subtree out with data-no-drag.
+     */
+    const target = e.target as Element | null;
+    if (target?.closest?.("input, textarea, select, [contenteditable]:not([contenteditable='false']), [data-no-drag]")) {
+      return;
+    }
+    // Buttons and links too — capture retargets their click to this div, so every
+    // button in every Matrix panel was dead. The one exception is a draggable whose
+    // whole body IS a button (a postcard you can also click): that still drags.
+    const control = target?.closest?.("button, a, [role='button']");
+    if (control && control !== e.currentTarget.firstElementChild && e.currentTarget.contains(control)) {
+      return;
+    }
+
     cancelAnimationFrame(rafRef.current);
     pointerId.current = e.pointerId;
     e.currentTarget.setPointerCapture(e.pointerId);

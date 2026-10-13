@@ -1,351 +1,406 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useCanvas } from "@/components/CanvasStage";
-import { one } from "@/lib/assets";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { img } from "@/lib/assets";
+import { unlock } from "@/lib/audio";
+import { useMusic } from "@/lib/music";
 import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
-import { shutter, splash, startAmbience, startMuzak, strike, tick } from "./sound";
-import styles from "./styles.module.css";
+import { footsteps, mallsoft, paChime } from "./mallsoft";
+import { shutter as rattle, startAmbience } from "./sound";
+import d from "./directory.module.css";
 
 /**
- * Channel 13 — Dead Mall.
+ * Channel — Dead Mall. Randall Park, some weekday afternoon after it closed.
  *
- * Fiction: *Northgate Centre — Directory. 6 of 84 units occupied.*
+ * Sixth build (2026-10). Mark: "I don't want us to be able to walk around like it's a
+ * 3D game… it needs to be more restricted and polished… like seeing all the old
+ * aspects of a dying mall with different places to view."
  *
- * The demo argument: the horror of a dead mall is that **the lights are still on**.
- * Everything is lit, evenly, by fluorescents nobody switched off, and one of them is
- * failing. The palette stays cheerful — teal, salmon, brass, cream — because
- * desaturating to grey turns it into generic decay and loses the specific sadness of
- * a building designed to be busy.
- *
- * Scroll is granted here (R1) because the concept IS a board taller than you are.
- *
- * Assets: `raw/dead-mall/` — real abandoned-mall atrium, fountain and shopfront
- * photography, graded cold rather than desaturated.
+ * So the thing you are standing at is the one object in a mall whose whole job is to
+ * show you the rest of it: the backlit directory by the entrance. The floor plan is
+ * still lit. Nine places on it still answer. Press one and you are looking at it —
+ * a real photograph of a real mall that died — and in each there are a few things
+ * worth leaning in to. That is all you can do here, which is the point: you are a
+ * visitor to somewhere that has stopped.
  */
 
-const SLUG = "dead-mall";
+const A = "dead-mall";
 
-const FORMER = [
-  "Waldenbooks", "Sam Goody", "Suncoast Video", "Radio Shack", "Claire's",
-  "Orange Julius", "KB Toys", "Casual Corner", "The Limited", "Pier 1",
-  "Foot Locker", "Spencer's", "Bath & Body", "Gadzooks", "Software Etc.",
-  "Camelot Music", "Deb Shops", "Lane Bryant", "General Nutrition", "Wicks 'N' Sticks",
-  "Thom McAn", "Chess King", "Merry-Go-Round", "Hot Sam Pretzels", "Regis Hairstylists",
-  "County Seat", "B. Dalton", "Natural Wonders",
-];
-
-const REASONS = [
-  "Lease not renewed.",
-  "Chain entered Chapter 11.",
-  "Relocated to the retail park.",
-  "Closed with no notice over a weekend.",
-  "Fixtures still inside.",
-  "Sign removed, ghost lettering remains.",
-];
-
-/** The six that are genuinely still trading, plus the one that shouldn't be. */
-const OPEN: Record<number, string> = {
-  104: "Northgate Nails",
-  118: "Vape & Phone Repair",
-  127: "Church of the Living Word",
-  133: "GNC (reduced hours)",
-  141: "Auntie's Cookie Co.",
-  159: "Mall Office",
-};
-
-const SECRET_UNIT = 172;
-
-function hash(n: number): number {
-  const x = Math.sin(n * 374.761) * 43758.5453;
-  return x - Math.floor(x);
+interface Detail {
+  /** where to look, as a fraction of the photograph */
+  x: number;
+  y: number;
+  text: string;
 }
 
+interface Place {
+  id: string;
+  no: number;
+  name: string;
+  line: string;
+  slot: string;
+  n: number;
+  at: string;
+  /** pin on the floor plan (viewBox 0 0 400 520) */
+  px: number;
+  py: number;
+  details: Detail[];
+}
+
+const PLACES: Place[] = [
+  {
+    id: "sign",
+    no: 1,
+    name: "The pylon sign",
+    line: "You can read it from the highway. That was the idea.",
+    slot: "dm_hall",
+    n: 15,
+    at: "50% 40%",
+    px: 46,
+    py: 486,
+    details: [
+      { x: 0.58, y: 0.46, text: "The letters are still up. The tubes behind them were switched off in 2009." },
+      { x: 0.7, y: 0.66, text: "Hooks where the tenant panels hung. There were once forty names under this one." },
+    ],
+  },
+  {
+    id: "lot",
+    no: 2,
+    name: "Lot C",
+    line: "Nine thousand spaces. You could park anywhere, and for years everybody has.",
+    slot: "dm_hall",
+    n: 16,
+    at: "50% 50%",
+    px: 330,
+    py: 492,
+    details: [
+      { x: 0.66, y: 0.42, text: "The anchor's canopy: concrete tulips, poured in 1976 and never needed since." },
+      { x: 0.36, y: 0.8, text: "Weeds come up along the old paint lines first, so the lot is still ruled off in green." },
+    ],
+  },
+  {
+    id: "entrance",
+    no: 3,
+    name: "Entrance 4 · the cinema",
+    line: "Twelve screens. The last film it showed is still on the marquee inside.",
+    slot: "dm_hall",
+    n: 12,
+    at: "50% 50%",
+    px: 200,
+    py: 452,
+    details: [
+      { x: 0.5, y: 0.64, text: "Plywood over every door, each sheet cut to fit its own frame. Somebody did that carefully." },
+      { x: 0.74, y: 0.44, text: "THEATRES. Three letters have gone, and it has been decided not to replace them." },
+    ],
+  },
+  {
+    id: "concourse",
+    no: 4,
+    name: "The south concourse",
+    line: "Every unit let, once. Every shutter down, now, as far as you can see.",
+    slot: "dm_hall",
+    n: 13,
+    at: "50% 55%",
+    px: 200,
+    py: 350,
+    details: [
+      { x: 0.47, y: 0.62, text: "The planters are still watered. Nobody on the staff will say who does it." },
+      { x: 0.86, y: 0.6, text: "Roll shutters, both sides, to the end. Behind one there is a calendar still on the month they left." },
+      { x: 0.4, y: 0.14, text: "The lights are on. They are on all night, for nobody." },
+    ],
+  },
+  {
+    id: "court",
+    no: 5,
+    name: "Centre court",
+    line: "The middle of everything. Santa sat here. So did the car they raffled every spring.",
+    slot: "mall_atrium",
+    n: 1,
+    at: "50% 60%",
+    px: 200,
+    py: 250,
+    details: [
+      { x: 0.5, y: 0.14, text: "The skylight. It is the only part of the building that was never closed." },
+      { x: 0.4, y: 0.84, text: "A bench, facing where the stage used to be put up." },
+      { x: 0.34, y: 0.72, text: "A stepladder, left open mid-job. The job was taking a sign down." },
+    ],
+  },
+  {
+    id: "food",
+    no: 6,
+    name: "The food court",
+    line: "Chairs for three hundred, every one pushed in. Somebody thought they would be back.",
+    slot: "dm_hall",
+    n: 18,
+    at: "50% 60%",
+    px: 56,
+    py: 250,
+    details: [
+      { x: 0.48, y: 0.66, text: "The table tops were new in 1994. That teal was in every mall in the country that year." },
+      { x: 0.28, y: 0.46, text: "The counters. Menus taken down, the hoods and the heat lamps left." },
+      { x: 0.6, y: 0.2, text: "The ring lights still come on at four, on a timer nobody can find." },
+    ],
+  },
+  {
+    id: "escalator",
+    no: 7,
+    name: "East court · escalators",
+    line: "Up was always the side that broke. Now it is both.",
+    slot: "mall_escalator",
+    n: 2,
+    at: "50% 70%",
+    px: 346,
+    py: 250,
+    details: [
+      { x: 0.44, y: 0.86, text: "It stopped with people on it, one afternoon, and was never restarted." },
+      { x: 0.56, y: 0.6, text: "A shutter, down. The tile pattern carries on underneath it into the dark." },
+      { x: 0.9, y: 0.84, text: "A wet-floor sign, standing guard over a floor that has been dry for years." },
+    ],
+  },
+  {
+    id: "anchor",
+    no: 8,
+    name: "The anchor store",
+    line: "Four floors of department store. You can hear the roof drip from any of them.",
+    slot: "dm_hall",
+    n: 4,
+    at: "50% 50%",
+    px: 200,
+    py: 58,
+    details: [
+      { x: 0.46, y: 0.2, text: "The ceiling came down the second winter. The tiles that are left are the ones over nothing." },
+      { x: 0.62, y: 0.62, text: "The escalators go down into the basement level. Nobody has a torch that reaches the bottom." },
+      { x: 0.42, y: 0.84, text: "Standing water, with the skylight in it." },
+    ],
+  },
+  {
+    id: "service",
+    no: 9,
+    name: "Service corridor B",
+    line: "Not on the public map. You are looking through a hole somebody made in a door.",
+    slot: "mall_abandoned",
+    n: 1,
+    at: "50% 55%",
+    px: 286,
+    py: 150,
+    details: [
+      { x: 0.62, y: 0.6, text: "Daylight, at the far end, where a loading door has been left up." },
+      { x: 0.26, y: 0.36, text: "Dust on the glass you are looking through. It has your breath on it now." },
+    ],
+  },
+];
+
+/** The tenant list under the map. Most of it has been taped over. */
+const TENANTS: [string, string, boolean][] = [
+  ["101", "Sam's Records", false],
+  ["104", "Photo Hut", false],
+  ["110", "Orange Julep", false],
+  ["117", "Walden Pages", false],
+  ["122", "Hot Pretzel", true],
+  ["128", "Toy Kingdom", false],
+  ["133", "Things Remembered", false],
+  ["140", "Aladdin's Arcade", false],
+  ["146", "Watch Repair", true],
+  ["152", "Suncoast Video", false],
+  ["159", "Glamour Portraits", false],
+  ["163", "Ears Pierced", false],
+];
+
+const TOTAL = PLACES.reduce((n2, p) => n2 + p.details.length, 0);
+
 export default function DeadMall() {
-  const { toCanvasSpace } = useCanvas();
-  const begin = useShell((s) => s.beginTransition);
   const muted = useShell((s) => s.muted);
-
-  const [selected, setSelected] = useState<number | null>(null);
-  const [cardAt, setCardAt] = useState({ x: 0, y: 0 });
-  const [coins, setCoins] = useState(0);
-  const [tosses, setTosses] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [stutter, setStutter] = useState(0);
-  const [you, setYou] = useState({ x: 300, y: 300 });
-  const [gate, setGate] = useState(0);
-  const seq = useRef(0);
-  const planRef = useRef<HTMLDivElement>(null);
-  const gateRef = useRef<HTMLDivElement>(null);
-
-  const atrium = one(SLUG, "mall_atrium", 0);
-  const fountain = one(SLUG, "mall_fountain", 1);
+  const [at, setAt] = useState(4);
+  const [detail, setDetail] = useState<number | null>(null);
+  const [found, setFound] = useState<string[]>([]);
+  const [been, setBeen] = useState<string[]>([]);
+  const still = useRef(0);
 
   useEffect(() => {
-    setCoins(sbGet<number>(SLUG, "coins", 0));
+    setFound(sbGet<string[]>(A, "found", []));
+    setBeen(sbGet<string[]>(A, "been", ["court"]));
+    const id = window.setInterval(() => (still.current += 1), 1000);
+    return () => window.clearInterval(id);
   }, []);
 
+  // The muzak only comes into focus when you stop and stand there.
+  const score = useMemo(() => mallsoft(() => still.current > 5), []);
+  useMusic(score, 58, true);
   useEffect(() => {
     if (muted) return;
-    const stopAmb = startAmbience();
-    const stopMuzak = startMuzak();
+    const stop = startAmbience();
+    const id = window.setInterval(() => Math.random() < 0.5 && paChime(), 47000);
     return () => {
-      stopAmb();
-      stopMuzak();
+      stop();
+      window.clearInterval(id);
     };
   }, [muted]);
 
-  /** 84 units, 101–184. Most of them are nothing. */
-  const units = useMemo(
-    () =>
-      Array.from({ length: 84 }, (_, i) => {
-        const no = 101 + i;
-        return {
-          no,
-          open: OPEN[no],
-          secret: no === SECRET_UNIT,
-          former: FORMER[Math.floor(hash(no) * FORMER.length)],
-          reason: REASONS[Math.floor(hash(no * 3) * REASONS.length)],
-          closed: 1996 + Math.floor(hash(no * 7) * 14),
-        };
-      }),
-    [],
-  );
+  const place = PLACES[at];
+  const photo = img(A, place.slot, place.n);
+  const shown = detail !== null ? place.details[detail] : null;
 
-  const chosen = units.find((u) => u.no === selected);
-
-  const onUnit = (no: number, e: React.MouseEvent) => {
-    tick();
-    if (no === SECRET_UNIT) {
-      begin("liminal");
-      return;
+  const go = (i: number) => {
+    unlock();
+    if (i === at) return;
+    still.current = 0;
+    [0, 260, 520].forEach((ms) => window.setTimeout(footsteps, ms));
+    setAt(i);
+    setDetail(null);
+    const id = PLACES[i].id;
+    if (!been.includes(id)) {
+      const next = [...been, id];
+      setBeen(next);
+      sbSet(A, "been", next);
     }
-    const p = toCanvasSpace(e.clientX, e.clientY);
-    setCardAt({ x: Math.min(p.x, 1150), y: p.y + 14 });
-    setSelected(no);
   };
 
-  const toss = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const p = toCanvasSpace(e.clientX, e.clientY);
-    const o = toCanvasSpace(rect.left, rect.top);
-    const id = ++seq.current;
-    setTosses((t) => [...t, { id, x: p.x - o.x, y: p.y - o.y }]);
-    window.setTimeout(() => {
-      splash();
-      setTosses((t) => t.filter((x) => x.id !== id));
-    }, 900);
-    setCoins((c) => {
-      const n = c + 1;
-      sbSet(SLUG, "coins", n);
-      return n;
-    });
+  const lean = (i: number) => {
+    unlock();
+    still.current = 0;
+    if (detail === i) {
+      setDetail(null);
+      return;
+    }
+    setDetail(i);
+    const key = `${place.id}:${i}`;
+    if (!found.includes(key)) {
+      const next = [...found, key];
+      setFound(next);
+      sbSet(A, "found", next);
+    }
   };
 
   return (
-    <div
-      className={styles.root}
-      onPointerDown={() => {
-        // Clicking anywhere makes the tubes think about it.
-        setStutter((s) => s + 1);
-        strike();
-      }}
-    >
-      {atrium && (
-        <Image
-          src={atrium.src}
-          alt=""
-          width={1600}
-          height={900}
-          priority
-          className={styles.atrium}
-        />
-      )}
-      <div className={styles.atriumFade} />
+    <div className={d.root} onPointerDown={() => unlock()}>
+      <div className={d.room} />
 
-      {/* the ceiling */}
-      {[
-        { left: 190, top: 96, width: 380, bad: false },
-        { left: 640, top: 74, width: 320, bad: true },
-        { left: 1040, top: 104, width: 400, bad: false },
-      ].map((t, i) => (
-        <span
-          key={`${i}-${stutter}`}
-          className={`${styles.tube} ${t.bad ? styles.tubeBad : ""} ${
-            stutter > 0 ? styles.tubeStutter : ""
-          }`}
-          style={{ left: t.left, top: t.top, width: t.width }}
-        />
-      ))}
-
-      <div className={styles.sign}>
-        <div className={styles.signName}>NORTHGATE</div>
-        <div className={styles.signSub}>Centre · est. 1974</div>
-        <div className={styles.signOccupancy}>
-          6 of 84 units occupied · lower level closed
-        </div>
-      </div>
-
-      <div className={styles.hint}>
-        scroll down for the directory
-        <br />
-        every vacant unit remembers what it was
-      </div>
-
-      {/* ------------------------------------------------ the board */}
-      <section className={styles.board}>
-        <header className={styles.boardHead}>
-          <h1 className={styles.boardTitle}>Directory</h1>
-          <span className={styles.boardMeta}>Level 1 · units 101–184</span>
+      {/* ---------- the directory: the one thing here still doing its job ---------- */}
+      <aside className={d.board}>
+        <header>
+          <h1>Randall Park</h1>
+          <p>mall directory · 1976 – 2009</p>
         </header>
 
-        <div className={styles.units}>
-          {units.map((u) => (
-            <button
-              key={u.no}
-              type="button"
-              className={styles.unit}
-              onClick={(e) => onUnit(u.no, e)}
+        <svg className={d.plan} viewBox="0 0 400 520" aria-hidden>
+          {/* the car park, ruled off */}
+          <g className={d.lot}>
+            {Array.from({ length: 13 }, (_, i) => (
+              <line key={i} x1={96 + i * 18} y1="478" x2={96 + i * 18} y2="510" />
+            ))}
+            <line x1="96" y1="494" x2="312" y2="494" />
+          </g>
+          {/* the building */}
+          <g className={d.shell}>
+            <rect x="112" y="24" width="176" height="70" rx="3" />
+            <rect x="168" y="94" width="64" height="336" />
+            <rect x="94" y="226" width="212" height="48" />
+            <rect x="20" y="198" width="76" height="104" rx="3" />
+            <rect x="304" y="210" width="80" height="80" rx="3" />
+            <rect x="130" y="430" width="140" height="44" rx="3" />
+            <rect x="232" y="128" width="96" height="40" />
+            <polygon points="200,198 237,213 252,250 237,287 200,302 163,287 148,250 163,213" />
+          </g>
+          {/* units along the concourse: most of them dark */}
+          <g className={d.units}>
+            {Array.from({ length: 16 }, (_, i) => {
+              const side = i % 2;
+              const row = Math.floor(i / 2);
+              const y = row < 4 ? 102 + row * 23 : 310 + (row - 4) * 28;
+              return <rect key={i} x={side ? 236 : 138} y={y} width="26" height={row < 4 ? 19 : 23} data-lit={i === 4 || i === 13 || undefined} />;
+            })}
+          </g>
+          <g className={d.names}>
+            <text x="200" y="84">ANCHOR</text>
+            <text x="58" y="290">FOOD</text>
+            <text x="344" y="282">EAST</text>
+            <text x="246" y="466">CINEMA</text>
+          </g>
+          {PLACES.map((p, i) => (
+            <g
+              key={p.id}
+              className={d.pin}
+              data-on={i === at || undefined}
+              data-been={been.includes(p.id) || undefined}
+              data-pin={p.id}
+              transform={`translate(${p.px} ${p.py})`}
+              onClick={() => go(i)}
+              role="button"
+              aria-label={p.name}
             >
-              <span className={styles.unitNo}>{u.no}</span>
-              {u.secret ? (
-                <span className={styles.oddOne}>OPEN — no lease on file</span>
-              ) : u.open ? (
-                <span className={styles.open}>{u.open}</span>
-              ) : (
-                <span className={styles.vacant}>VACANT</span>
-              )}
-            </button>
+              <circle r="15" />
+              <text y="5">{p.no}</text>
+            </g>
           ))}
-        </div>
-      </section>
+          <g className={d.here} style={{ transform: `translate(${place.px}px, ${place.py}px)` }}>
+            <circle r="22" />
+          </g>
+        </svg>
 
-      {chosen && !chosen.open && !chosen.secret && (
+        <ul className={d.tenants}>
+          {TENANTS.map(([no, name, open]) => (
+            <li key={no} data-open={open || undefined} onClick={() => !open && rattle()}>
+              <i>{no}</i>
+              <span>{name}</span>
+              <em>{open ? "open" : "vacant"}</em>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      {/* ---------- what that button shows you ---------- */}
+      <figure className={d.view}>
         <div
-          className={styles.card}
-          style={{ left: cardAt.x, top: cardAt.y }}
-          onPointerDown={(e) => e.stopPropagation()}
+          className={d.frame}
+          key={place.id}
+          data-near={shown ? true : undefined}
+          style={{ "--fx": `${(shown?.x ?? 0.5) * 100}%`, "--fy": `${(shown?.y ?? 0.5) * 100}%` } as CSSProperties}
         >
-          {(() => {
-            const shot = one(SLUG, "mall_abandoned", chosen.no);
-            return shot ? (
-              <Image
-                src={shot.src}
-                alt=""
-                width={420}
-                height={190}
-                className={styles.cardShot}
-              />
-            ) : null;
-          })()}
-          <div className={styles.cardName}>{chosen.former}</div>
-          <div className={styles.cardMeta}>
-            Unit {chosen.no} · closed {chosen.closed}
-          </div>
-          <div className={styles.cardBody}>{chosen.reason}</div>
-          <button
-            type="button"
-            className={styles.cardClose}
-            onClick={() => setSelected(null)}
-          >
-            close
-          </button>
+          {photo && <img src={photo.src} alt={place.name} draggable={false} style={{ objectPosition: place.at }} />}
+          <div className={d.dust} />
+          {place.details.map((dt, i) => (
+            <button
+              key={i}
+              type="button"
+              className={d.mark}
+              data-on={detail === i || undefined}
+              data-found={found.includes(`${place.id}:${i}`) || undefined}
+              style={{ left: `${dt.x * 100}%`, top: `${dt.y * 100}%` }}
+              onClick={() => lean(i)}
+              aria-label="Look closer"
+            />
+          ))}
+          {shown && <button type="button" className={d.back} onClick={() => setDetail(null)} aria-label="Step back" />}
         </div>
-      )}
+        <div className={d.glass} />
 
-      {/* ------------------------------------------------ floorplan */}
-      <div
-        ref={planRef}
-        className={styles.plan}
-        onPointerMove={(e) => {
-          if (e.buttons !== 1) return;
-          const rect = planRef.current?.getBoundingClientRect();
-          if (!rect) return;
-          const p = toCanvasSpace(e.clientX, e.clientY);
-          const o = toCanvasSpace(rect.left, rect.top);
-          setYou({
-            x: Math.max(14, Math.min(626, p.x - o.x)),
-            y: Math.max(14, Math.min(406, p.y - o.y)),
-          });
-        }}
-      >
-        <span className={styles.planLabel} style={{ left: 16, top: 12 }}>
-          Level 1 · you are here
-        </span>
-        <span className={styles.planShape} style={{ left: 40, top: 60, width: 210, height: 120 }} />
-        <span className={styles.planShape} style={{ left: 280, top: 60, width: 150, height: 120 }} />
-        <span className={styles.planShape} style={{ left: 460, top: 60, width: 140, height: 120 }} />
-        <span className={styles.planShape} style={{ left: 40, top: 240, width: 260, height: 130 }} />
-        <span className={styles.planShape} style={{ left: 330, top: 240, width: 270, height: 130 }} />
-        <span className={styles.planLabel} style={{ left: 300, top: 200 }}>
-          fountain court
-        </span>
-        <span className={styles.youAreHere} style={{ left: you.x, top: you.y }}>
-          <span className={styles.youLabel}>you are here</span>
-        </span>
-      </div>
+        <figcaption key={`${place.id}${detail}`}>
+          <small>
+            {String(place.no).padStart(2, "0")} / {String(PLACES.length).padStart(2, "0")}
+          </small>
+          <h2>{place.name}</h2>
+          <p>{shown ? shown.text : place.line}</p>
+        </figcaption>
 
-      {/* ------------------------------------------------ fountain */}
-      <div className={styles.fountain} onClick={toss}>
-        {fountain && (
-          <Image
-            src={fountain.src}
-            alt=""
-            width={640}
-            height={420}
-            className={styles.fountainShot}
-          />
-        )}
-        <span className={styles.fountainLabel}>
-          Fountain court · {coins} coin{coins === 1 ? "" : "s"} in the water
-        </span>
-        {tosses.map((t) => (
-          <span key={t.id} className={styles.coin} style={{ left: t.x, top: t.y }} />
-        ))}
-        {tosses.map((t) => (
-          <span
-            key={`r${t.id}`}
-            className={styles.ripple}
-            style={{ left: t.x, top: t.y + 40 }}
-          />
-        ))}
-      </div>
+        <nav>
+          <button type="button" onClick={() => go((at + PLACES.length - 1) % PLACES.length)} aria-label="Previous place">
+            ‹
+          </button>
+          <button type="button" onClick={() => go((at + 1) % PLACES.length)} aria-label="Next place">
+            ›
+          </button>
+        </nav>
+      </figure>
 
-      {/* ------------------------------------------------ plaque + gate */}
-      <div className={styles.plaque}>
-        <div className={styles.plaqueTitle}>Centre hours</div>
-        {[
-          ["Monday – Friday", "10:00 – 18:00"],
-          ["Saturday", "10:00 – 17:00"],
-          ["Sunday", "closed"],
-          ["Public holidays", "closed"],
-          ["Management office", "by appointment"],
-        ].map(([a, b]) => (
-          <div key={a} className={styles.plaqueRow}>
-            <span>{a}</span>
-            <span>{b}</span>
-          </div>
-        ))}
+      <div className={d.count}>
+        <b>
+          {found.length} / {TOTAL}
+        </b>
+        things noticed · {been.length} of {PLACES.length} places
       </div>
-
-      <div
-        ref={gateRef}
-        className={styles.gate}
-        onPointerMove={(e) => {
-          if (e.buttons !== 1) return;
-          const rect = gateRef.current?.getBoundingClientRect();
-          if (!rect) return;
-          const p = toCanvasSpace(e.clientX, e.clientY);
-          const o = toCanvasSpace(rect.left, rect.top);
-          const next = Math.max(0, Math.min(140, p.y - o.y));
-          if (Math.abs(next - gate) > 18) shutter();
-          setGate(next);
-        }}
-      >
-        <span className={styles.gateLabel}>unit 161 · drag the shutter down</span>
-        <span className={styles.gateShutter} style={{ height: gate }} />
-      </div>
+      <p className={d.hint}>press a number on the directory · the rings are things worth leaning in to</p>
+      <div className={d.grade} />
     </div>
   );
 }

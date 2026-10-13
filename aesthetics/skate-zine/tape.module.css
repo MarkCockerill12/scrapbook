@@ -1,0 +1,639 @@
+/* City Escape — a 2001 skate tape on a VHS deck. Own reset + tokens (rule R2). */
+
+@font-face { font-family: "Bungee"; src: url("/fonts/skate-zine/bungee-400.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Russo One"; src: url("/fonts/skate-zine/russo-one-400.woff2") format("woff2"); font-display: block; }
+
+.root {
+  --hot: #ffe600;
+  --ink: #f4f0e6;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0b0a09;
+  color: var(--ink);
+  font-family: "Russo One", "Arial Black", sans-serif;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- the tape ---------- */
+.tape {
+  position: absolute;
+  inset: -30px;
+}
+
+.shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* consumer tape: blown highlights, lifted blacks, colour pushed and a bit green */
+  filter: contrast(1.22) saturate(1.45) brightness(0.86) sepia(0.14) blur(0.6px);
+  animation: cut 0.5s steps(4) both, handheld 7s ease-in-out infinite;
+}
+
+/* a hard cut, with the half-second of tracking mess a deck makes on one */
+@keyframes cut {
+  0% {
+    transform: translateY(-34px) scale(1.06);
+    filter: contrast(2) saturate(0) brightness(1.6);
+  }
+  50% {
+    transform: translateY(14px) scale(1.06);
+  }
+  100% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes handheld {
+  0%, 100% {
+    translate: 0 0;
+    rotate: -0.4deg;
+  }
+  30% {
+    translate: 9px -6px;
+    rotate: 0.5deg;
+  }
+  64% {
+    translate: -8px 7px;
+    rotate: -0.2deg;
+  }
+}
+
+/* chroma bleed: red smears one way, cyan the other */
+.fringe {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 6px 0 0 rgba(255, 0, 60, 0.12), inset -6px 0 0 rgba(0, 220, 255, 0.12);
+  background: linear-gradient(90deg, rgba(255, 0, 60, 0.07), transparent 12%, transparent 88%, rgba(0, 220, 255, 0.07));
+  mix-blend-mode: screen;
+}
+
+/* the fisheye every skate video was shot through */
+.lens {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 72% 78% at 50% 48%, transparent 54%, rgba(0, 0, 0, 0.55) 80%, #000 100%);
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply;
+}
+
+/* the tracking bar that never quite leaves */
+.track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -60px;
+  height: 46px;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 3px, transparent 3px 9px, rgba(255, 255, 255, 0.2) 9px 11px, transparent 11px 20px);
+  filter: blur(1px);
+  opacity: 0.5;
+  animation: track 9s linear infinite;
+}
+
+@keyframes track {
+  0%, 70% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-1000px);
+  }
+}
+
+/* ---------- on-screen display ---------- */
+.osd,
+.stamp {
+  position: absolute;
+  font-family: "Courier New", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 2px 0 0 rgba(255, 0, 60, 0.7), -2px 0 0 rgba(0, 220, 255, 0.7), 0 0 8px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.osd {
+  left: 90px;
+  top: 70px;
+  display: flex;
+  gap: 34px;
+}
+
+.play {
+  animation: blinkPlay 1.6s steps(1) infinite;
+}
+
+@keyframes blinkPlay {
+  60% {
+    opacity: 0.2;
+  }
+}
+
+.stamp {
+  left: 90px;
+  bottom: 96px;
+  font-size: 26px;
+  line-height: 1.3;
+  color: #ffe9a8;
+}
+
+/* ---------- the two words ---------- */
+.letters {
+  position: absolute;
+  right: 96px;
+  top: 62px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.letters > div {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.letters small {
+  font-size: 16px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px #000;
+}
+
+.letters b {
+  display: flex;
+  gap: 5px;
+  font-family: "Bungee", "Arial Black", sans-serif;
+  font-weight: 400;
+}
+
+/* each letter is a sticker slapped on when it's earned */
+.letters i {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 52px;
+  font-style: normal;
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.22);
+  border: 2px dashed rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+}
+
+.letters i[data-on] {
+  color: #0b0a09;
+  background: var(--hot);
+  border: 2px solid #0b0a09;
+  box-shadow: 4px 4px 0 #0b0a09;
+  rotate: -5deg;
+  animation: slap 0.35s cubic-bezier(0.2, 2, 0.4, 1);
+}
+
+.letters i[data-on]:nth-child(even) {
+  rotate: 4deg;
+}
+
+@keyframes slap {
+  from {
+    scale: 2.6;
+    opacity: 0;
+  }
+}
+
+/* ---------- title / over ---------- */
+.title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.title h1 {
+  font-family: "Bungee", "Arial Black", sans-serif;
+  font-size: 118px;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -2px;
+  color: #fff;
+  /* cut-out title card: hard black offset, no glow */
+  text-shadow: 7px 7px 0 #0b0a09, -2px -2px 0 #0b0a09, 2px -2px 0 #0b0a09, -2px 2px 0 #0b0a09;
+  rotate: -2deg;
+}
+
+.title h1 em {
+  font-style: normal;
+  color: var(--hot);
+}
+
+.title p {
+  padding: 8px 18px;
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: #0b0a09;
+  background: var(--ink);
+  rotate: 1deg;
+  box-shadow: 5px 5px 0 #0b0a09;
+}
+
+.title button {
+  margin-top: 16px;
+  padding: 18px 46px;
+  font-family: "Bungee", "Arial Black", sans-serif;
+  font-size: 36px;
+  color: #0b0a09;
+  background: var(--hot);
+  border: 4px solid #0b0a09;
+  box-shadow: 7px 7px 0 #0b0a09;
+  rotate: -1deg;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.title button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0 #0b0a09;
+}
+
+.title button:active {
+  transform: translate(5px, 5px);
+  box-shadow: 2px 2px 0 #0b0a09;
+}
+
+.title small {
+  font-size: 16px;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 6px #000;
+}
+
+/* ---------- the call ---------- */
+.call {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.call small {
+  padding: 6px 16px;
+  font-size: 20px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #0b0a09;
+  background: var(--ink);
+  box-shadow: 4px 4px 0 #0b0a09;
+}
+
+.root[data-phase="copy"] .call small {
+  background: var(--hot);
+}
+
+.root[data-phase="bailed"] .call small {
+  background: #ff3b30;
+  color: #fff;
+}
+
+.call h2 {
+  font-family: "Bungee", "Arial Black", sans-serif;
+  font-size: 84px;
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 6px 6px 0 #0b0a09, -2px -2px 0 #0b0a09, 2px -2px 0 #0b0a09, -2px 2px 0 #0b0a09;
+  rotate: -1.5deg;
+  animation: slap 0.3s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+
+.line {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.line span {
+  display: grid;
+  place-items: center;
+  width: 82px;
+  height: 82px;
+  font-size: 40px;
+  color: rgba(255, 255, 255, 0.35);
+  /* griptape */
+  background: #17161a;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 0.7px, transparent 1px);
+  background-size: 4px 4px;
+  border: 3px solid #0b0a09;
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.7);
+  transition: transform 0.12s, background-color 0.12s, color 0.12s;
+}
+
+.line span[data-done] {
+  color: #0b0a09;
+  background: var(--ink);
+  background-image: none;
+}
+
+.line span[data-now] {
+  background: var(--hot);
+  transform: scale(1.22) rotate(-4deg);
+}
+
+.line span[data-wrong] {
+  color: #fff;
+  background: #ff3b30;
+  animation: wrong 0.3s linear 2;
+}
+
+@keyframes wrong {
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
+
+/* ---------- the board ---------- */
+.pad {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  width: 270px;
+  height: 180px;
+  margin-left: -135px;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+.pad[data-live] {
+  opacity: 1;
+}
+
+.pad button {
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  font-size: 36px;
+  color: #0b0a09;
+  background: var(--ink);
+  border: 4px solid #0b0a09;
+  border-radius: 14px;
+  box-shadow: 6px 6px 0 #0b0a09;
+  transition: transform 0.06s, box-shadow 0.06s, background 0.1s;
+}
+
+.pad button:hover {
+  background: var(--hot);
+}
+
+.pad button:active {
+  transform: translate(5px, 5px);
+  box-shadow: 1px 1px 0 #0b0a09;
+}
+
+.pad button[data-dir="up"] {
+  left: 93px;
+  top: 0;
+}
+
+.pad button[data-dir="down"] {
+  left: 93px;
+  top: 92px;
+}
+
+.pad button[data-dir="left"] {
+  left: 0;
+  top: 92px;
+}
+
+.pad button[data-dir="right"] {
+  left: 186px;
+  top: 92px;
+}
+
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  text-align: center;
+  font-size: 16px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000, 0 0 3px #000;
+  pointer-events: none;
+}
+
+.root[data-phase="title"] .pad,
+.root[data-phase="over"] .pad,
+.root[data-phase="title"] .letters {
+  display: none;
+}
+
+/* ==========================================================================
+ * 2026-10 — the run. The tape is no longer a slideshow: it is a canvas being
+ * played live, graded and tracked exactly as the stills were.
+ * ========================================================================== */
+.film {
+  position: absolute;
+  inset: 0;
+  filter: contrast(1.16) saturate(1.3) brightness(0.96) sepia(0.1);
+}
+
+.root[data-phase="title"] .film,
+.root[data-phase="over"] .film {
+  filter: contrast(1.2) saturate(0.7) brightness(0.45) blur(2px);
+}
+
+.score {
+  position: absolute;
+  left: 64px;
+  top: 96px;
+  line-height: 1;
+  text-shadow: 3px 3px 0 #000;
+}
+
+.score small {
+  display: block;
+  font-size: 15px;
+  letter-spacing: 4px;
+  color: var(--hot);
+}
+
+.score b {
+  font: 400 62px/1 "Bungee", "Arial Black", sans-serif;
+}
+
+.clock {
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  transform: translateX(-50%);
+  font: 400 54px/1 "Bungee", "Arial Black", sans-serif;
+  text-shadow: 3px 3px 0 #000;
+}
+
+.clock[data-low] {
+  color: #ff4b3a;
+  animation: low 0.5s steps(2) infinite;
+}
+
+@keyframes low {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.special {
+  position: absolute;
+  right: 64px;
+  top: 104px;
+  width: 260px;
+  height: 26px;
+  border: 3px solid #000;
+  background: rgba(0, 0, 0, 0.55);
+  transform: skewX(-12deg);
+}
+
+.special i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #ff4b3a, var(--hot));
+  transition: width 0.25s;
+}
+
+.special span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  letter-spacing: 5px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.special[data-full] {
+  animation: low 0.3s steps(2) infinite;
+  box-shadow: 0 0 22px var(--hot);
+}
+
+.combo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 118px;
+  text-align: center;
+  text-shadow: 3px 3px 0 #000;
+  pointer-events: none;
+}
+
+.combo p {
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+.combo b {
+  display: block;
+  margin-top: 4px;
+  font: 400 46px/1 "Bungee", "Arial Black", sans-serif;
+  color: var(--hot);
+}
+
+.combo em {
+  font-style: normal;
+  color: #fff;
+}
+
+.banked {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 250px;
+  text-align: center;
+  font: 400 84px/1 "Bungee", "Arial Black", sans-serif;
+  color: var(--hot);
+  text-shadow: 5px 5px 0 #000;
+  pointer-events: none;
+  animation: banked 1.1s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.banked[data-bail] {
+  color: #ff4b3a;
+}
+
+@keyframes banked {
+  0% {
+    transform: scale(0.4) rotate(-6deg);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.1) rotate(-3deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(-40px) rotate(-3deg);
+    opacity: 0;
+  }
+}
+
+.keys {
+  position: absolute;
+  left: 64px;
+  right: 420px;
+  bottom: 40px;
+  font: 14px/1.5 "Russo One", sans-serif;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.keys b {
+  display: inline-block;
+  margin: 0 3px 0 8px;
+  padding: 0 6px;
+  font-weight: 400;
+  color: #000;
+  background: var(--hot);
+}

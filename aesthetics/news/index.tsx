@@ -1,6 +1,9 @@
 "use client";
 
+import { useMusic } from "@/lib/music";
+import { bed } from "./music";
 import { useEffect, useMemo, useState } from "react";
+import { src } from "@/lib/assets";
 import { AESTHETICS } from "@/lib/registry";
 import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
@@ -20,11 +23,15 @@ import styles from "./styles.module.css";
  * italic, over hard-keyed colour. No soft alpha, no smooth gradients, no rounded
  * corners. Every one of those is a later idea and any single one of them breaks it.
  *
- * No assets.
+ * Fleshed out 2026-09-28 (Mark: "cool but could be fleshed out more"): real feeds.
+ * Studio cam is a real (empty) news set; SKY 7 is a real aerial of the city at dusk,
+ * hand-held shake and rotor noise; three real traffic cams; a real satellite loop of
+ * a hurricane with the forecast cone; the five-day board; the sports desk. The
+ * gallery strips sit over a real control-room photo. The drawn anchor is gone.
  */
 
 const SLUG = "news";
-type Source = "news" | "weather" | "commercial" | "eas";
+type Source = "news" | "weather" | "commercial" | "eas" | "sky" | "traffic" | "sat" | "fiveday" | "sports";
 
 const HEADLINES = [
   "COUNCIL VOTES 4–3 TO KEEP THE FOUNTAIN SWITCHED OFF THROUGH WINTER",
@@ -36,6 +43,7 @@ const HEADLINES = [
 ];
 
 export default function News() {
+  useMusic(bed, 112, true, 2);
   const muted = useShell((s) => s.muted);
   const visited = useShell((s) => s.visited);
 
@@ -48,6 +56,7 @@ export default function News() {
   const [extra, setExtra] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [clock, setClock] = useState<string | null>(null);
+  const [cam, setCam] = useState(0);
 
   useEffect(() => {
     setName(sbGet<string>(SLUG, "name", "YOUR NAME HERE"));
@@ -98,48 +107,21 @@ export default function News() {
     setSource(next);
     if (next === "commercial") jingle();
     if (next === "eas") easTone();
+    if (next === "traffic") setCam((c) => (source === "traffic" ? (c + 1) % 3 : c));
   };
 
   const persist = (key: string, value: unknown) => sbSet(SLUG, key, value);
 
   return (
     <div className={styles.root}>
+      <img className={styles.control} src={src(SLUG, "news_camera", 2)} alt="" />
       {/* ------------------------------------------------ the signal */}
       <div className={styles.signal}>
         <Radar frame={frame} chroma={chroma && source === "weather"} />
+        <Feeds source={source} cam={cam} />
 
-        {(source === "news" || source === "weather") && (
+        {source !== "commercial" && source !== "eas" && (
           <>
-            {source === "news" && (
-              <svg
-                className={styles.anchor}
-                width="360"
-                height="470"
-                viewBox="0 0 440 560"
-                aria-hidden
-              >
-                {/*
-                  Faceless on purpose — a rendered face is uncanny at this size. But
-                  NOT a black silhouette: the weather wall behind is already dark
-                  navy, so a dark figure disappears into it. This one is lit, the way
-                  a real anchor is: key light from camera left, rim from the wall.
-                */}
-                <ellipse cx="220" cy="126" rx="82" ry="94" fill="#c69a76" />
-                <path d="M138 96a82 60 0 0 1 164 0 82 76 0 0 0-164 0z" fill="#3b2b20" />
-                <rect x="188" y="196" width="64" height="60" fill="#a97f5f" />
-                <path d="M60 560c0-168 72-296 160-296s160 128 160 296z" fill="#2c4270" />
-                <path d="M180 268l40 116 40-116-40-16z" fill="#e8eef8" />
-                <path d="M214 286l6 104 8-104-7-10z" fill="#b02a2a" />
-                <path
-                  d="M60 560c0-168 72-296 160-296"
-                  stroke="#6f92cc"
-                  strokeWidth="6"
-                  fill="none"
-                  opacity="0.55"
-                />
-              </svg>
-            )}
-
             <div className={styles.desk}>
               <span className={styles.deskLogo}>7</span>
             </div>
@@ -184,20 +166,34 @@ export default function News() {
                 </div>
               </div>
               <span className={styles.lowerStrap}>
-                {source === "weather" ? "STORM TEAM 7 · DOPPLER" : "AT 6"}
+                {STRAP[source] ?? "AT 6"}
               </span>
             </div>
 
             <div className={styles.ticker}>
               <span className={styles.tickerBadge}>ACTION 7</span>
               <span className={styles.tickerTrack}>
-                <span className={styles.tickerRun}>
-                  {ticker.map((t, i) => (
-                    <span key={i} className={styles.tickerItem}>
-                      <span className={styles.tickerDot}>◆ </span>
-                      {t}
-                    </span>
-                  ))}
+                {/*
+                 * Keyed on the number of user headlines so adding one remounts the
+                 * track and restarts the 46s scroll. Re-rendering alone left the CSS
+                 * animation mid-cycle, so a headline inserted at the front had already
+                 * scrolled past — you'd wait most of a minute for proof it worked, and
+                 * conclude it hadn't.
+                 */}
+                <span className={styles.tickerRun} key={extra.length}>
+                  {/* Twice — the second copy is what the -50% loop lands on. */}
+                  {[0, 1].map((copy) =>
+                    ticker.map((t, i) => (
+                      <span
+                        key={`${copy}-${i}`}
+                        className={styles.tickerItem}
+                        aria-hidden={copy === 1 || undefined}
+                      >
+                        <span className={styles.tickerDot}>◆ </span>
+                        {t}
+                      </span>
+                    )),
+                  )}
                 </span>
               </span>
             </div>
@@ -249,8 +245,13 @@ export default function News() {
         <div className={styles.galleryTitle}>Sources</div>
         {(
           [
-            ["weather", "Weather wall"],
             ["news", "Studio cam"],
+            ["weather", "Weather wall"],
+            ["sat", "Satellite"],
+            ["fiveday", "5-day forecast"],
+            ["sky", "SKY 7 chopper"],
+            ["traffic", "Traffic cams"],
+            ["sports", "Sports desk"],
             ["commercial", "Go to break"],
           ] as const
         ).map(([id, label]) => (
@@ -290,9 +291,6 @@ export default function News() {
           <div className={styles.clockLabel}>on air</div>
         </div>
 
-        <div className={styles.small}>
-          Type straight into the lower third. It sticks.
-        </div>
       </aside>
 
       {/* ------------------------------------------------ right gallery */}
@@ -344,10 +342,116 @@ export default function News() {
             }
           }}
         />
-        <div className={styles.small}>
-          Enter to run it. Yours go first, and they are still there tomorrow.
-        </div>
       </aside>
     </div>
   );
+}
+
+const STRAP: Partial<Record<Source, string>> = {
+  weather: "STORM TEAM 7 · DOPPLER",
+  sat: "STORM TEAM 7 · HURRICANE DORIS",
+  fiveday: "STORM TEAM 7 · 5-DAY",
+  sky: "LIVE · SKY 7 OVER DOWNTOWN",
+  traffic: "TRAFFIC ON THE 7s",
+  sports: "SPORTS WITH GARY",
+  news: "ACTION NEWS AT 6",
+};
+
+const DAYS = [
+  { d: "MON", hi: 71, lo: 58, sky: "☀", note: "SUNNY" },
+  { d: "TUE", hi: 68, lo: 55, sky: "⛅", note: "PARTLY" },
+  { d: "WED", hi: 63, lo: 52, sky: "🌧", note: "SHOWERS" },
+  { d: "THU", hi: 59, lo: 49, sky: "⛈", note: "T-STORMS" },
+  { d: "FRI", hi: 66, lo: 51, sky: "☀", note: "CLEARING" },
+];
+
+const SCORES = [
+  ["HAWKS", 24, "BEARS", 17, "FINAL"],
+  ["NORTHGATE HS", 35, "WESTSIDE", 34, "FINAL/OT"],
+  ["COMETS", 3, "RIVERDOGS", 5, "7TH"],
+  ["STORM", 88, "ROCKETS", 91, "4TH 0:12"],
+] as const;
+
+/** The non-weather feeds — real photographs, keyed under the same CG. */
+function Feeds({ source, cam }: { source: Source; cam: number }) {
+  if (source === "news")
+    return (
+      <div className={styles.feed}>
+        <img src={src(SLUG, "nw_anchor", 1)} alt="The Channel 7 set" />
+        <span className={styles.feedNote}>ANCHOR STEPPED AWAY · BACK IN 2</span>
+      </div>
+    );
+  if (source === "sky")
+    return (
+      <div className={styles.feed}>
+        <img className={styles.shake} src={src(SLUG, "nw_chopper", 1)} alt="Aerial of downtown" />
+        <span className={styles.camId}>SKY 7 · CAM 1 · ALT 1,200 FT</span>
+      </div>
+    );
+  if (source === "traffic") {
+    const n = [6, 4, 1][cam];
+    return (
+      <div className={styles.feed}>
+        <img className={styles.still} src={src(SLUG, "nw_traffic", n)} alt="Traffic camera" />
+        <span className={styles.camId}>
+          DOT CAM {12 + cam * 7} · I-7 {["NB @ EXIT 14", "SB @ RIVER BRIDGE", "EB @ NORTHGATE"][cam]} · click again for next cam
+        </span>
+      </div>
+    );
+  }
+  if (source === "sat")
+    return (
+      <div className={styles.feed}>
+        <img className={styles.spin} src={src(SLUG, "nw_sat", 1)} alt="Hurricane satellite image" />
+        <svg className={styles.cone} viewBox="0 0 1000 750" aria-hidden>
+          <path d="M470 380 C 520 300, 610 220, 720 90 L 900 150 C 760 250, 640 330, 520 420 Z" fill="rgba(255,255,255,.18)" stroke="#fff" strokeWidth="4" strokeDasharray="14 10" />
+          {[[470, 380], [560, 300], [650, 220], [740, 150]].map(([x, y], i) => (
+            <g key={i}>
+              <circle cx={x} cy={y} r="16" fill="#e8141b" stroke="#fff" strokeWidth="4" />
+              <text x={x + 24} y={y + 8} fill="#fff" fontSize="26" fontFamily="Arial Black" fontStyle="italic">
+                {["NOW", "8PM", "2AM", "8AM"][i]}
+              </text>
+            </g>
+          ))}
+        </svg>
+        <div className={styles.satBox}>
+          <b>HURRICANE DORIS</b>
+          <span>CATEGORY 3 · 120 MPH · MOVING NNE 12</span>
+        </div>
+      </div>
+    );
+  if (source === "fiveday")
+    return (
+      <div className={styles.five}>
+        <h3>STORM TEAM 7 · 5-DAY FORECAST</h3>
+        <div className={styles.fiveRow}>
+          {DAYS.map((d) => (
+            <div key={d.d} className={styles.day}>
+              <b>{d.d}</b>
+              <i>{d.sky}</i>
+              <em>{d.note}</em>
+              <span>
+                <strong>{d.hi}°</strong> {d.lo}°
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  if (source === "sports")
+    return (
+      <div className={styles.sports}>
+        <h3>SPORTS SCOREBOARD</h3>
+        {SCORES.map(([a, as, b, bs, st]) => (
+          <div key={a} className={styles.scoreRow}>
+            <span className={as > bs ? styles.win : ""}>{a}</span>
+            <b>{as}</b>
+            <span className={bs > as ? styles.win : ""}>{b}</span>
+            <b>{bs}</b>
+            <em>{st}</em>
+          </div>
+        ))}
+      </div>
+    );
+  return null;
 }

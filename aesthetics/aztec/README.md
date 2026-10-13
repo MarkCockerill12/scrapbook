@@ -1,57 +1,29 @@
-# 11 · Aztec / Izalith
+# 11 · Aztec / Lost Izalith — The Descent
 
-**Fiction:** *Expedition Log — Day 47. We should not have opened it.*
+Redesigned 2026-09-28. Mark: *"a complete rework — a collage of Dark Souls' Lost
+Izalith and Aztec/Mayan structure; this is more like a puzzle wall."* The glyph
+puzzle and rub panel are gone.
 
-**Canvas:** 1600×900, `fit`. Letterbox `#0a0705`.
-**Assets:** `raw/aztec/` — a real Maya stone relief as the wall, matted vines at the
-corners. The harvested "lava" turned out to be basalt columns, so the lava is drawn.
+A panorama (3000px at the near layer) you walk by moving the torch to the screen
+edges, in four parallax layers:
 
-## The argument this page makes
-
-The whole page is a **lighting problem**. There are exactly two light sources and
-they come from different directions: the torch you are carrying, which is at the
-cursor, and the lava, which is underneath. Four rules follow:
-
-1. **Nothing is lit from above.** Overhead light instantly reads as a photograph of
-   a museum exhibit.
-2. **Lava light is orange and it breathes.** A static glow reads as a filter.
-3. **Carving is two shadows, not an outline** — dark edge on the lit side, bright
-   edge on the dark side. Reverse them and the glyph stands proud of the wall
-   instead of sinking into it.
-4. **The dark is actually dark.** Most of the frame is near-black, and the dread is
-   entirely in what the torch doesn't reach.
-
-## Interaction inventory
+1. **The far dark** — Lost Izalith and the Demon Ruins (Dark Souls wiki screenshots),
+   graded down and blurred.
+2. **The pyramids** — real, matted Wikipedia photos of Chichén Itzá, Tikal, the
+   Pyramid of the Magician, Palenque and Cobá, relit: daylight killed, lava light
+   poured up from below.
+3. **The relics** — the Sun Stone, a chacmool, an Olmec colossal head and the Tula
+   warriors (real photos), each examined like a Souls item: name, type, and a lore
+   paragraph that is true archaeology in Izalith's voice (`lore.ts`).
+4. **The ground and the lava** — real paving stone (ambientCG) and a real lava lake
+   (Nyiragongo) flowing along the bottom.
 
 | Element | Behaviour |
 |---|---|
-| Torch | The cursor. Spring-lagged, because a torch has mass and the arm swings. Two-stop falloff: a bright pool, then a long dim reach |
-| Glyphs (9) | Press to sink them into the stone, with dust falling out of the recess |
-| The lock | Four glyphs, in order. Correct ones light and chime up a pentatonic scale |
-| **The rub panel** | Five hundred years of dirt, cleared by dragging (`destination-out` on a canvas). Under it: the four glyphs, in the right order. The journal's handwriting changes once you've read it |
-| Lava | Rises one step with **every** glyph press, correct or not, and never goes back down. Heat haze climbs with it |
-| The door | Correct sequence → stone grinds open. Behind it the passage is carpeted, and it leads to Liminal |
-| **Easter egg** | Three wrong sequences → the floor gives way, a bell rings that nobody rang, and you land in Deep Sea |
-
-## Notes and gotchas
-
-- **The lava sits *above* the darkness overlay (z-index 22 vs 20).** It is a light
-  source; shading it like everything else turned the fissure into a dark band with a
-  pattern on it.
-- **Crust must be irregular islands, not crossed repeating gradients.** Two diagonal
-  repeating-linear-gradients read as hazard tape — a barber pole — which is the worst
-  possible signal on molten rock.
-- **Coverage on the rub panel is sampled every 12th stroke**, not every pointer move:
-  `getImageData` on a 414×190 buffer at pointer rate is far too expensive, and
-  "roughly how clean is it" doesn't need to be exact.
-- Fire is **filtered noise, not a crackle loop** — real fire is broadband hiss with
-  occasional pops, and the hiss is what makes a space feel hot.
-- Drums are struck on an interval rather than sequenced, so nothing lines up and the
-  room never settles into a rhythm you can predict.
-
-## Still to do
-
-- Real lava photography would beat the drawn fissure. The current `aztec_lava` grabs
-  are basalt cliffs.
-- The glyph sequence should differ per visitor and persist.
-- Gold. There are three `aztec_gold` grabs and nothing on the page uses them yet.
+| Torch | the cursor; everything outside it falls to near-black |
+| Relics | examine → item card; relics found persisted |
+| Bonfire | light / rest → BONFIRE LIT |
+| Orange soapstone | five messages on the floor ("praise the sun \o/", "try jumping"…) |
+| Lava | hold the torch in it for two seconds → YOU DIED → back to the bonfire; deaths persisted |
+| **Egg (kept)** | the "try jumping" message is by a crack — strike it three times and the floor gives way to the Deep Sea |
+| Sound | generated low minor choir, drums inside the temple, fire |

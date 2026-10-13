@@ -3,7 +3,24 @@
 **Fiction:** *xX_no_scope_420_Xx's montage upload page*, living inside a blades
 dashboard that never got updated to the NXE.
 
-**Canvas:** 1600×900, `fit`. No scroll. Letterbox `#0b1408`. **No assets.**
+**Canvas:** 1600×900, `fit`. No scroll. Letterbox `#0b1408`.
+**Assets:** `x360_cover` — 20 real box arts (en.wikipedia lead images, via
+`grab.mjs lead:`); `x360_hw` — Evan-Amos / Commons hardware photos, matted.
+
+## Fleshed out 2026-09-28
+
+- **Boot** — ribbons → green orb → X → XBOX 360 wordmark light-sweep, synthesised
+  start-up chord (`Boot.tsx`, `bootSound`). Click to skip.
+- **Game Library / Xbox LIVE Arcade** — real box art in green-banded cases; Play spins
+  the disc up like a jet engine… and it's the Guitar Hero disc. "Unreadable Disc".
+- **Guide** — the real white controller lies on the floor in front of the telly.
+  Its Guide button (or G / Home) opens the Guide: Messages, a live Party with
+  speaking rings, squeaky voice blips and captions; tabs jump blades. A/B/X/Y work
+  (next row / back / montage / forward). It rumbles every 5 hitmarkers.
+- **Themes** — six premium themes (blurred box art behind the blades), persisted.
+- **Gamer Picture** — crops of real box art, persisted; shown in the header/Guide.
+- **Recently played** — real screenshots of the channels (`lib/thumbs`).
+- **RRoD** — the no-scope egg now shows a real photo of three red lights.
 
 ## The argument this page makes
 

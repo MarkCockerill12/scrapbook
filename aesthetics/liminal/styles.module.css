@@ -1,24 +1,11 @@
 /*
- * Liminal — the hallway.
+ * Liminal — the page around the corridor. Own reset, own tokens (rule R2).
+ * px against the 1600x900 canvas. The corridor itself is corridor.module.css.
  *
- * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
- *
- * The corridor is real CSS 3D: four textured quads per segment, eight segments deep,
- * inside one `preserve-3d` world that translates on Z. What makes it work:
- *   1. THE VANISHING POINT IS FOGGED, NOT VIGNETTED. Distance is at the CENTRE of the
- *      frame, so the dark gradient goes in the middle and fades outward — the exact
- *      opposite of a normal vignette. Getting this backwards is what makes most
- *      first-person CSS corridors look like a tunnel decal.
- *   2. BRIGHTNESS IS PER SLOT, NOT PER FRAME. Segment slot i always sits about i*D
- *      away, so its dimming can be a static rule. Recomputing 32 quads every frame
- *      buys nothing you can see.
- *   3. THE LIGHT IS GREEN-YELLOW AND TOO BRIGHT. Old fluorescents are not white.
- *      Everything here is lit at 4200K with the saturation pushed, which is why the
- *      carpet reads as damp.
- *   4. NOTHING MOVES EXCEPT YOU. No animation loops, no drifting particles. The dread
- *      is entirely in the stillness.
+ * DISTANCE IS FOGGED AT THE CENTRE, NOT VIGNETTED. In one-point perspective, far is
+ * the middle of the frame, so one soft dark ellipse there is exact, continuous
+ * distance falloff for every surface at once.
  */
-
 .root {
   --lit: #e8dfa8;
   --wall: #cbbf7e;
@@ -50,252 +37,18 @@
 }
 
 /* ---------- the corridor ---------- */
-
-.scene {
-  position: absolute;
-  inset: 0;
-  perspective: 700px;
-  perspective-origin: 50% 50%;
-  overflow: hidden;
-}
-
-.world {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.quad {
-  position: absolute;
-  transform-origin: 50% 50%;
-  background-size: cover;
-  background-position: center;
-  backface-visibility: hidden;
-}
-
-/* Slot dimming. Slot 0 is around you, slot 8 is at the vanishing point. */
-.d0 { filter: brightness(1); }
-.d1 { filter: brightness(0.9); }
-.d2 { filter: brightness(0.78); }
-.d3 { filter: brightness(0.65); }
-.d4 { filter: brightness(0.52); }
-.d5 { filter: brightness(0.4); }
-.d6 { filter: brightness(0.29); }
-.d7 { filter: brightness(0.19); }
-.d8 { filter: brightness(0.11); }
-
-/*
- * The wall. Drawn, not photographed — see the note in Corridor.tsx.
- *
- * Mono-yellow wallpaper, a skirting board at the local bottom, a faint vertical
- * paper seam, and damp coming up from the floor. The damp is what stops it reading
- * as a flat swatch; a perfectly even wall looks like a colour, not a surface.
- */
-.wallSurface {
-  background-color: #c9ba76;
-  background-image:
-    linear-gradient(0deg, #4c4225 0 4.5%, #6b5c31 4.5% 5.6%, transparent 5.6%),
-    radial-gradient(ellipse 52% 34% at 24% 96%, rgba(84, 64, 18, 0.45), transparent 72%),
-    radial-gradient(ellipse 40% 26% at 74% 100%, rgba(84, 64, 18, 0.35), transparent 72%),
-    radial-gradient(ellipse 30% 40% at 58% 8%, rgba(255, 250, 210, 0.22), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 46px);
-  background-size: auto;
-}
-
-/*
- * A suspended ceiling: T-bar grid, mineral-fibre speckle, and one water stain per
- * tile run. The speckle matters — clean tiles read as a modern office.
- */
-.ceilingSurface {
-  background-color: #ded7c0;
-  background-image:
-    repeating-linear-gradient(90deg, rgba(140, 134, 112, 0.85) 0 3px, transparent 3px 112px),
-    repeating-linear-gradient(0deg, rgba(140, 134, 112, 0.85) 0 3px, transparent 3px 112px),
-    radial-gradient(ellipse 22% 16% at 34% 62%, rgba(150, 120, 60, 0.4), transparent 70%),
-    radial-gradient(ellipse 14% 10% at 76% 26%, rgba(150, 120, 60, 0.3), transparent 70%),
-    repeating-radial-gradient(circle at 0 0, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 4px);
-}
-
-/* An unlit segment: the tube is out and only bounce light reaches it. */
-.dark {
-  filter: brightness(0.16) saturate(0.5) !important;
-}
-
-/* The ceiling tube. Not white — old fluorescents run green-yellow. */
-.tube {
-  position: absolute;
-  transform-origin: 50% 50%;
-  background: linear-gradient(90deg, #fffbe0, #f2ecbc 40%, #fffbe0);
-  box-shadow: 0 0 40px 12px rgba(255, 248, 200, 0.55);
-}
-
-.tubeOut {
-  background: #4a4633;
-  box-shadow: none;
-}
-
-/*
- * A dying tube. Steps, not a smooth fade — a failing fluorescent snaps, it doesn't
- * dim, and an eased flicker instantly reads as "web page animation".
- */
-.tubeFlicker {
-  animation: flick 3.4s steps(1) infinite;
-}
-
-@keyframes flick {
-  0%, 62%, 66%, 71%, 100% { opacity: 1; }
-  64%, 68%, 70% { opacity: 0.12; }
-}
-
-/* An institutional door: two recessed panels, a lever handle, a dark gap beneath. */
-.door {
-  position: absolute;
-  transform-origin: 50% 50%;
-  cursor: pointer;
-  background-color: #7d6f42;
-  background-image:
-    linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0 2.5%, transparent 2.5%),
-    radial-gradient(circle at 88% 52%, #d8cfa4 0 4px, transparent 5px),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0 6%, transparent 6% 40%, rgba(0, 0, 0, 0.28) 40% 46%, transparent 46% 92%, rgba(0, 0, 0, 0.28) 92%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0 5%, transparent 5% 95%, rgba(0, 0, 0, 0.3) 95%);
-  box-shadow:
-    inset 0 0 0 5px #55492a,
-    inset 0 0 22px rgba(0, 0, 0, 0.5);
-}
-
-.doorNew {
-  box-shadow:
-    inset 0 0 0 4px rgba(60, 52, 30, 0.75),
-    0 0 34px 6px rgba(255, 246, 200, 0.45);
-}
-
-/* ---------- fog ---------- */
-
-/*
- * Dark in the MIDDLE. The vanishing point is the far end of the corridor, so this is
- * the inverse of a photographic vignette.
- */
-.fog {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 26% 34% at 50% 50%,
-    rgba(6, 6, 3, 0.97) 0%,
-    rgba(8, 8, 4, 0.7) 40%,
-    rgba(10, 10, 5, 0.22) 74%,
-    transparent 96%
-  );
-}
-
-/* A little air in the light, so the tubes have something to shine through. */
-.haze {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 60% 40% at 50% 34%,
-    rgba(255, 246, 190, 0.09),
-    transparent 70%
-  );
-  mix-blend-mode: screen;
-}
-
-/* ---------- VHS layer ---------- */
-
-.vhs {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 20;
-}
-
-.scanlines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.24) 0 1px,
-    transparent 1px 3px
-  );
-  opacity: 0.7;
-}
-
-/* The tracking band: one horizontal strip of misregistered, brightened signal. */
-.tracking {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 46px;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(255, 255, 255, 0.11) 30%,
-    rgba(255, 255, 255, 0.05) 70%,
-    transparent
-  );
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
-  mix-blend-mode: screen;
-  animation: track 13s linear infinite;
-}
-
-@keyframes track {
-  0% { top: -60px; opacity: 0; }
-  6% { opacity: 1; }
-  46% { top: 940px; opacity: 1; }
-  47%, 100% { top: -60px; opacity: 0; }
-}
-
-.osd {
-  position: absolute;
-  font-size: 26px;
-  letter-spacing: 0.1em;
-  color: #fdfbe8;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 2px 0 0 rgba(255, 0, 0, 0.35);
-}
-
-.osdTopLeft {
-  left: 54px;
-  top: 46px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.osdBottomRight {
-  left: 54px;
-  bottom: 52px;
-  font-size: 22px;
-  opacity: 0.9;
-}
-
-.rec {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: #ff2a2a;
-  box-shadow: 0 0 14px rgba(255, 42, 42, 0.9);
-  animation: blink 1.6s steps(1) infinite;
-}
-
-@keyframes blink {
-  0%, 55% { opacity: 1; }
-  56%, 100% { opacity: 0.15; }
-}
-
 .hint {
   position: absolute;
-  left: 54px;
-  bottom: 22px;
+  left: 330px;
+  /* Clear of the bottom edge — and of the Next dev indicator, which parks itself
+     exactly here and made this line unreadable during every review. */
+  bottom: 52px;
   z-index: 21;
-  font-size: 11px;
-  letter-spacing: 0.2em;
+  font-size: 12px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(216, 210, 180, 0.42);
+  color: rgba(226, 220, 192, 0.82);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   pointer-events: none;
 }
 
@@ -349,5 +102,268 @@
   .rec,
   .tubeFlicker {
     animation: none;
+  }
+}
+
+/* ---------- 2026-09 additions: plaques, photographs, exit signs, viewer ---------- */
+
+.viewer {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(8, 7, 3, 0.9);
+  cursor: zoom-out;
+}
+
+.viewer img {
+  max-width: 1100px;
+  max-height: 680px;
+  border: 18px solid #3a2e1c;
+  outline: 5px solid #c9b98a;
+  outline-offset: -23px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
+  filter: sepia(0.15) contrast(1.05);
+}
+
+.viewer span {
+  font: 14px/1.4 "Courier New", monospace;
+  letter-spacing: 0.08em;
+  color: #cfc4a0;
+}
+
+
+
+/* ==========================================================================
+ * 2026-10 pass — realism. The camcorder dressing (scanlines, tracking bar, OSD)
+ * is gone: it was hiding soft textures and making the page read as retro. Every
+ * surface is now one 2K scanned tile per segment with its own light falloff.
+ * ========================================================================== */
+
+
+.root {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  cursor: default;
+}
+
+/* distance */
+.fog {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 30% 40% at 50% 50%,
+    rgba(5, 5, 2, 0.98) 0%,
+    rgba(6, 6, 3, 0.9) 22%,
+    rgba(7, 7, 3, 0.62) 44%,
+    rgba(8, 8, 4, 0.3) 66%,
+    rgba(8, 8, 4, 0.1) 84%,
+    transparent 100%
+  );
+  transition: opacity 1.2s ease;
+}
+
+/* old fluorescent tubes are not white: the whole frame leans green-yellow */
+.haze {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(214, 222, 120, 0.1), rgba(160, 140, 40, 0.12));
+  mix-blend-mode: multiply;
+}
+
+/* A real lens: a touch of corner falloff and nothing else. */
+.lens {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 78% 78% at 50% 50%, transparent 58%, rgba(0, 0, 0, 0.5) 100%);
+  transition: background 1.2s ease;
+}
+
+.hint {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+}
+
+/* Under the table the camera has turned its head: far is no longer the centre. */
+.root[data-ev="hidden"] .fog,
+.root[data-ev="safe"] .fog {
+  opacity: 0;
+}
+
+.root[data-ev="hidden"] .lens {
+  background: radial-gradient(ellipse 70% 62% at 50% 62%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 0.86) 100%);
+}
+
+.root[data-ev="hidden"] .hint {
+  opacity: 0;
+}
+
+.warn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 118px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #f1ead0;
+  text-align: center;
+  pointer-events: none;
+  animation: warnIn 0.5s ease both;
+}
+
+.warn b {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px #000, 0 0 3px #000;
+}
+
+.warn span {
+  font-size: 60px;
+  font-weight: 200;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 30px #000, 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes warnIn {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+    filter: blur(8px);
+  }
+}
+
+.root[data-ev="warn"],
+.root[data-ev="table"] {
+  animation: dread 0.86s ease-in-out infinite;
+}
+
+@keyframes dread {
+  8% {
+    filter: brightness(0.82) saturate(0.8);
+  }
+}
+
+/* ---------- under the table ---------- */
+.root[data-ev="caught"] {
+  animation: shake 0.07s linear infinite;
+}
+
+@keyframes shake {
+  0% {
+    transform: translate(-14px, 9px) rotate(-0.6deg);
+  }
+  33% {
+    transform: translate(12px, -11px) rotate(0.5deg);
+  }
+  66% {
+    transform: translate(-9px, -6px) rotate(-0.3deg);
+  }
+  100% {
+    transform: translate(11px, 12px) rotate(0.6deg);
+  }
+}
+
+/* ---------- the tab, dead ---------- */
+.dead {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  background: #202124;
+  color: #9aa0a6;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  display: grid;
+  place-items: center;
+  animation: deadGlitch 6.3s steps(1) both;
+}
+
+.snap {
+  width: 560px;
+  margin-top: -80px;
+}
+
+.snap i {
+  display: block;
+  width: 62px;
+  height: 62px;
+  margin-bottom: 34px;
+  border: 3px solid #9aa0a6;
+  border-radius: 6px 20px 6px 6px;
+  background:
+    radial-gradient(circle, #9aa0a6 3px, transparent 3.5px) 14px 16px / 18px 18px no-repeat,
+    radial-gradient(circle, #9aa0a6 3px, transparent 3.5px) 32px 16px / 18px 18px no-repeat,
+    linear-gradient(#9aa0a6, #9aa0a6) 50% 44px / 26px 3px no-repeat;
+}
+
+.snap h2 {
+  font-size: 26px;
+  font-weight: 500;
+  color: #e8eaed;
+}
+
+.snap p {
+  margin-top: 14px;
+  font-size: 16px;
+}
+
+.snap small {
+  display: block;
+  margin-top: 22px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.deadLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 150px;
+  text-align: center;
+  font-size: 17px;
+  letter-spacing: 0.4em;
+  text-transform: lowercase;
+  color: #d9c98a;
+  opacity: 0;
+  animation: deadLine 6.3s steps(1) both;
+}
+
+@keyframes deadGlitch {
+  0% {
+    background: #000;
+    color: transparent;
+  }
+  12% {
+    background: #202124;
+    color: #9aa0a6;
+  }
+  70% {
+    filter: none;
+  }
+  72% {
+    filter: invert(1) hue-rotate(120deg);
+    transform: translateX(-18px);
+  }
+  74% {
+    filter: none;
+    transform: none;
+  }
+  86% {
+    filter: brightness(0.3);
+  }
+}
+
+@keyframes deadLine {
+  60% {
+    opacity: 1;
   }
 }

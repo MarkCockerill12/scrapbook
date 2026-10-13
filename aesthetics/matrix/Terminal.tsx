@@ -139,6 +139,39 @@ export function Terminal({ onSelfDestruct }: { onSelfDestruct: () => void }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [lines]);
 
+  /*
+   * The page tells you to type. Make that true.
+   *
+   * Nothing used to hold focus on load, so the first thing anyone did — read "type
+   * `help`" and type it — went to document.body and vanished without a trace. The
+   * prompt takes focus on mount, and any printable key pressed while focus is loose
+   * gets adopted rather than dropped: the keydown that woke us has already been
+   * dispatched, so focusing alone would still eat that first character.
+   */
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement;
+      if (el === inputRef.current) return;
+      // Don't steal from another field, or from browser/dial shortcuts.
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const printable = e.key.length === 1;
+      if (!printable && e.key !== "Enter" && e.key !== "Backspace") return;
+
+      inputRef.current?.focus({ preventScroll: true });
+      if (printable) {
+        e.preventDefault();
+        setValue((v) => v + e.key);
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const push = (...next: Line[]) => setLines((prev) => [...prev, ...next]);
   const out = (text: string): Line => ({ text, kind: "out" });
   const dimLine = (text: string): Line => ({ text, kind: "dim" });
@@ -301,7 +334,12 @@ export function Terminal({ onSelfDestruct }: { onSelfDestruct: () => void }) {
     <div
       className={styles.termScroll}
       ref={scrollRef}
-      onPointerDown={() => inputRef.current?.focus()}
+      /* Presses in here focus the prompt instead of dragging the window. */
+      data-no-drag
+      onPointerDown={(e) => {
+        // Let a click-and-drag select output text; only bare clicks grab the prompt.
+        if (e.button === 0) inputRef.current?.focus({ preventScroll: true });
+      }}
     >
       {lines.map((l, i) => (
         <div

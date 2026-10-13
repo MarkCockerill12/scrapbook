@@ -1,0 +1,395 @@
+/*
+ * Channel 01 — Frutiger Aero / AquaOS desktop.
+ * Tokens: --tint (rgb triplet), --glass (alpha), --blur. Set on .root from state.
+ */
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  font-family: "Segoe UI", "Frutiger", "Myriad Pro", "Helvetica Neue", Arial, sans-serif;
+  color: #0b1a24;
+  background: #2a8ad0;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: default;
+}
+
+:where(.root) input {
+  font: inherit;
+}
+
+/* ------------------------------------------------ wallpaper + sky */
+.wallpaper {
+  position: absolute;
+  inset: 0;
+}
+
+.wallImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.25) contrast(1.05);
+}
+
+.wallIn {
+  animation: wallFade 1.1s ease;
+}
+
+@keyframes wallFade {
+  from {
+    opacity: 0;
+  }
+}
+
+.sunGlow {
+  position: absolute;
+  left: -220px;
+  top: -260px;
+  width: 900px;
+  height: 700px;
+  background:
+    radial-gradient(circle at 40% 45%, rgba(255, 255, 240, 0.85) 0, rgba(255, 255, 220, 0.35) 12%, transparent 45%),
+    radial-gradient(circle at 70% 75%, rgba(180, 255, 220, 0.25) 0, transparent 8%),
+    radial-gradient(circle at 88% 92%, rgba(160, 230, 255, 0.2) 0, transparent 5%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: breathe 9s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.75;
+    transform: translate(10px, 6px);
+  }
+}
+
+.aurora,
+.rainbow,
+.rainLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.aurora {
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: screen;
+}
+
+.rainbow {
+  background: radial-gradient(
+    circle at 70% 115%,
+    transparent 52%,
+    rgba(255, 0, 0, 0.22) 53%,
+    rgba(255, 150, 0, 0.22) 54.5%,
+    rgba(255, 255, 0, 0.2) 56%,
+    rgba(0, 255, 80, 0.2) 57.5%,
+    rgba(0, 150, 255, 0.2) 59%,
+    rgba(140, 0, 255, 0.18) 60.5%,
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+}
+
+/* raindrops on the glass of the monitor */
+.rainLayer i {
+  position: absolute;
+  border-radius: 50% 50% 45% 45%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.9) 0 12%, rgba(255, 255, 255, 0.15) 35%, rgba(0, 40, 60, 0.25) 100%);
+  box-shadow: 0 2px 2px rgba(0, 20, 40, 0.3), inset 0 -1px 2px rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(1px) brightness(1.1);
+  animation: dropSlide linear infinite;
+}
+
+@keyframes dropSlide {
+  0%, 60% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(90px);
+    opacity: 0;
+  }
+}
+
+.rain .wallImg {
+  filter: saturate(0.6) brightness(0.72) contrast(1.05);
+}
+.rain .rainLayer {
+  opacity: 1;
+}
+.rain .sunGlow {
+  opacity: 0.1;
+}
+
+.rainbow .rainbow {
+  opacity: 1;
+}
+
+.night .wallImg {
+  filter: saturate(0.7) brightness(0.38) hue-rotate(-10deg);
+}
+.night .aurora {
+  opacity: 0.85;
+}
+.night .sunGlow {
+  opacity: 0;
+}
+
+/* ------------------------------------------------ butterflies */
+.butterfly {
+  position: absolute;
+  width: 70px;
+  margin: -35px 0 0 -35px;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 18px 8px rgba(0, 30, 10, 0.25)) saturate(1.2);
+}
+
+/* ------------------------------------------------ desktop + icons */
+.desktop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 852px;
+  z-index: 2;
+}
+
+.dIcon {
+  position: absolute;
+  width: 84px;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.dIcon:hover {
+  background: linear-gradient(180deg, rgba(200, 235, 255, 0.35), rgba(160, 210, 245, 0.25));
+  border-color: rgba(200, 235, 255, 0.55);
+}
+
+.dIconOn,
+.dIconOn:hover {
+  background: linear-gradient(180deg, rgba(170, 220, 255, 0.55), rgba(110, 180, 240, 0.45));
+  border-color: rgba(210, 240, 255, 0.85);
+}
+
+.selRect {
+  position: absolute;
+  background: rgba(80, 160, 230, 0.25);
+  border: 1px solid rgba(60, 140, 220, 0.9);
+  pointer-events: none;
+}
+
+.hint {
+  position: absolute;
+  left: 118px;
+  bottom: 12px;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 20, 30, 0.95), 0 0 8px rgba(0, 30, 40, 0.7);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------ gadgets */
+.gadgets {
+  position: absolute;
+  right: 22px;
+  top: 16px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 210px;
+}
+
+/* ------------------------------------------------ flip, toast, overlays */
+.flipDim {
+  position: absolute;
+  inset: 0 0 48px 0;
+  z-index: 6900;
+  background: rgba(0, 20, 30, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.toast {
+  position: absolute;
+  right: 280px;
+  bottom: 64px;
+  z-index: 5500;
+  width: 260px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  text-align: left;
+  font-size: 12px;
+  color: #10232d;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ffffff 0%, #e2f6ff 60%, #c9eaff 100%);
+  border: 1px solid #6a9fc0;
+  box-shadow: 0 8px 20px rgba(0, 30, 50, 0.45);
+  animation: toastIn 5.2s ease both;
+}
+
+.toast img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 2px solid #4fc04a;
+}
+
+.toast b {
+  display: block;
+  color: #0a4f8a;
+}
+
+@keyframes toastIn {
+  0% {
+    transform: translateY(80px);
+    opacity: 0;
+  }
+  8%, 88% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(80px);
+    opacity: 0;
+  }
+}
+
+.slideshow {
+  position: absolute;
+  inset: 0;
+  z-index: 9500;
+  background: #000;
+}
+
+.ss,
+.ssOn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 1.4s ease, transform 8s linear;
+}
+
+.ssOn {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.ssBar {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 30px;
+  padding: 8px 18px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(40, 60, 70, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.saverShade {
+  position: absolute;
+  inset: 0;
+  z-index: 8990;
+  background: rgba(0, 10, 20, 0.15);
+}
+
+.boot {
+  position: absolute;
+  inset: 0;
+  z-index: 9800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  background: radial-gradient(ellipse at 50% 60%, #0f6a5a 0%, #083a44 45%, #021218 100%);
+  animation: bootIn 400ms ease;
+}
+
+@keyframes bootIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.bootGlow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 20% at 30% 60%, rgba(120, 255, 180, 0.35), transparent 70%),
+    radial-gradient(ellipse 50% 18% at 70% 45%, rgba(80, 200, 255, 0.3), transparent 70%);
+  animation: auroraMove 6s ease-in-out infinite alternate;
+}
+
+@keyframes auroraMove {
+  to {
+    transform: translateX(80px) skewX(-8deg);
+  }
+}
+
+.boot p {
+  position: relative;
+  font-size: 44px;
+  font-weight: 300;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(160, 255, 220, 0.8);
+}
+
+.ring {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 55%, #9ff5d0 70%, #2ad0ff 100%);
+  -webkit-mask: radial-gradient(circle, transparent 10px, #000 11px);
+  mask: radial-gradient(circle, transparent 10px, #000 11px);
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

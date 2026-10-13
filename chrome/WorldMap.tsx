@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CanvasStage } from "@/components/CanvasStage";
 import { AESTHETICS, type Aesthetic } from "@/lib/registry";
 import { useShell } from "@/lib/store";
+import { thumbFor } from "@/lib/thumbs";
 
 /**
  * The map. Tier 2 of the nav: zoom out from a channel to the whole roster.
@@ -17,21 +18,22 @@ import { useShell } from "@/lib/store";
  * identically everywhere instead of reflowing into a responsive grid — a scrapbook
  * that re-columns on a phone stops reading as an object.
  *
- * TODO(assets): the photo wells are accent gradients standing in for real cutouts.
- * IMAGE_MANIFEST.md slot `map_thumb_<slug>`. The label font is a system-cursive
- * fallback until a hand font is self-hosted.
+ * Each photo well is a real screenshot of the channel (scripts/thumbs.mjs), falling
+ * back to an accent gradient only for channels not built yet. The label font is a
+ * system-cursive fallback until a hand font is self-hosted.
  */
 
 const HAND = '"Segoe Script", "Bradley Hand", "Comic Sans MS", cursive';
 
+/* 8 × 4 = 32 slots: room for the roster to keep growing past the original 23. */
 const GRID = {
-  cols: 6,
-  startX: 138,
-  startY: 208,
-  colW: 222,
-  rowH: 157,
-  cardW: 196,
-  cardH: 112,
+  cols: 8,
+  startX: 124,
+  startY: 200,
+  colW: 170,
+  rowH: 152,
+  cardW: 150,
+  cardH: 90,
 };
 
 /** Deterministic scatter — seeded off the index so server and client agree. */
@@ -180,9 +182,11 @@ export function WorldMap() {
                 className="relative overflow-hidden"
                 style={{
                   height: GRID.cardH,
-                  // Angle varies per card so 23 placeholders don't read as one repeated
-                  // swatch. Goes away entirely once real cutouts land.
-                  background: `linear-gradient(${118 + ((i * 47) % 80)}deg, ${a.accent} 0%, ${a.accent}44 62%, #14181f 100%)`,
+                  // A real screenshot of the page; the accent gradient only shows for a
+                  // channel that hasn't been built (and so has nothing to photograph).
+                  background: thumbFor(a.slug)
+                    ? `#14181f url("${thumbFor(a.slug)}") center / cover no-repeat`
+                    : `linear-gradient(${118 + ((i * 47) % 80)}deg, ${a.accent} 0%, ${a.accent}44 62%, #14181f 100%)`,
                   border: "5px solid #fbf6ea",
                   boxShadow: isHovered
                     ? "0 16px 26px -8px rgba(0,0,0,.6)"
@@ -245,7 +249,7 @@ export function WorldMap() {
               />
 
               <span
-                className="mt-2 block truncate text-[16px] leading-tight text-[#2f2418]"
+                className="mt-2 block truncate text-[15px] leading-tight text-[#2f2418]"
                 style={{ fontFamily: HAND }}
               >
                 {a.name}
@@ -258,9 +262,9 @@ export function WorldMap() {
         <div
           className="pointer-events-none absolute"
           style={{
-            left: GRID.startX + 5 * GRID.colW - 8,
+            left: GRID.startX + (GRID.cols - 1) * GRID.colW - 30,
             top: GRID.startY + 3 * GRID.rowH + 6,
-            width: 232,
+            width: 190,
           }}
         >
           {hovered ? (

@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type WheelEvent as ReactWheelEvent } from "react";
-import { one } from "@/lib/assets";
+import { count, src } from "@/lib/assets";
+import { noiseLoop, tone, unlock } from "@/lib/audio";
 import { AESTHETICS } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 import {
   Corridor,
   DEPTH,
   SEGMENTS,
+  TH,
+  TX,
+  HEIGHT,
+  camLocalZ,
+  segmentZ,
+  type Cam,
+  type Entity,
   type LightState,
   type SegmentInfo,
 } from "./Corridor";
@@ -21,9 +29,9 @@ import styles from "./styles.module.css";
  * the horror.
  *
  * The demo argument: dread is made of stillness and repetition, not of jump scares.
- * Nothing on this page moves except in response to you. The corridor is real CSS 3D
- * on real photographs of real carpet, and it loops by modulo, so it is genuinely
- * infinite in both directions — including backwards, which is where the exit is.
+ * Nothing on this page moves except in response to you. The corridor is a lit WebGL
+ * room built from scans of real carpet, and it loops by modulo, so it is genuinely
+ * infinite in both directions.
  *
  * Assets: `raw/liminal/` — wall, carpet, ceiling tile and door photographs.
  */
@@ -41,11 +49,15 @@ function hash(n: number): number {
 
 const LIVE = AESTHETICS.filter((a) => a.status === "live");
 
-const OSD_START = Date.UTC(1997, 7, 12, 3, 14, 0) / 1000;
+/**
+ * The rare event. Once you have walked a fair way, something may come down the
+ * corridor behind the lights. You are told to hide; keep moving and a table turns up
+ * that you can get under. Do, and it walks past. Don't, and it doesn't.
+ */
+type Ev = "none" | "warn" | "table" | "hidden" | "safe" | "caught" | "dead";
 
 export default function Liminal() {
   const begin = useShell((s) => s.beginTransition);
-  const setMapOpen = useShell((s) => s.setMapOpen);
   const muted = useShell((s) => s.muted);
 
   const travel = useRef(0);
@@ -57,24 +69,138 @@ export default function Liminal() {
   const [baseIndex, setBaseIndex] = useState(0);
   /** How many segments ahead the motion sensors still bother to light. */
   const [reach, setReach] = useState(SEGMENTS);
-  const [exit, setExit] = useState(false);
-  const [clock, setClock] = useState(OSD_START);
+  const [ev, setEv] = useState<Ev>("none");
+  const [table, setTable] = useState<number | null>(null);
+  const evRef = useRef<Ev>("none");
+  const cam = useRef<Cam>({ x: 0, y: 0, z: 0, yaw: 0, pitch: 0 });
+  const camTarget = useRef<Cam>({ x: 0, y: 0, z: 0, yaw: 0, pitch: 0 });
+  const [entity, setEntity] = useState<Entity | null>(null);
+  const happened = useRef(false);
+  const timers = useRef<number[]>([]);
+  const go = (next: Ev) => {
+    evRef.current = next;
+    setEv(next);
+  };
+  const later = (fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  };
+  const clearTimers = () => {
+    timers.current.forEach((id) => window.clearTimeout(id));
+    timers.current = [];
+  };
+  useEffect(() => clearTimers, []);
 
   const textures = useMemo(
-    () => ({ floor: one(SLUG, "lim_carpet", 0)?.src ?? "" }),
+    () => ({
+      // 2K photo-scanned surfaces (ambientCG, CC0), one tile per segment so nothing
+      // is ever magnified past its own resolution.
+      floor: src(SLUG, "lm_carpet", 6),
+      floorN: src(SLUG, "lm_nrm", 1),
+      wall: src(SLUG, "lm_wall", 3),
+      wallN: src(SLUG, "lm_nrm", 2),
+      ceiling: src(SLUG, "lm_ceil", 1),
+      ceilingN: src(SLUG, "lm_nrm", 3),
+      woodN: src(SLUG, "lm_nrm", 4),
+      door: src(SLUG, "lm_door", 1),
+      wood: src(SLUG, "lm_wood", 2),
+      exit: src(SLUG, "lim_exit", 7),
+      art: (slot: string, n: number) => src(SLUG, slot, n),
+    }),
     [],
   );
+  const [viewing, setViewing] = useState<{ slot: string; n: number } | null>(null);
 
   useEffect(() => {
     if (muted) return;
     return startRoomTone();
   }, [muted]);
 
-  // The tape's own clock, which does not agree with yours.
+  // ---- the event ----------------------------------------------------------
+  const heartbeat = (n: number) => {
+    for (let i = 0; i < n; i++) {
+      tone({ freq: 58, toFreq: 40, duration: 0.16, gain: 0.3, delay: i * 0.86 });
+      tone({ freq: 50, toFreq: 36, duration: 0.2, gain: 0.22, delay: i * 0.86 + 0.24 });
+    }
+  };
+
+  const caught = () => {
+    if (evRef.current === "hidden" || evRef.current === "caught" || evRef.current === "dead") return;
+    clearTimers();
+    go("caught");
+    velocity.current = 0;
+    // It comes from where you were looking: straight down the corridor, at you.
+    setEntity({ mode: "rush", t0: performance.now(), anchor: camLocalZ(travel.current) });
+    for (const f of [61, 87, 131, 233, 466, 1244]) tone({ freq: f, toFreq: f * 1.9, duration: 1.1, type: "sawtooth", gain: 0.2 });
+    const hiss = noiseLoop({ gain: 0.4, lowpass: 9000, highpass: 900, attack: 0.02 });
+    later(() => {
+      hiss();
+      go("dead");
+      document.title = "it saw you";
+      // The honest attempt. Browsers only allow this for tabs a script opened, so on
+      // most visits it is refused — and the page plays dead instead.
+      try {
+        window.close();
+      } catch {
+        /* refused, as expected */
+      }
+    }, 900);
+    later(() => {
+      document.title = "ScrapBook";
+      travel.current = 0;
+      furthest.current = 0;
+      setTable(null);
+      setEntity(null);
+      go("none");
+    }, 7200);
+  };
+
+  const startEvent = () => {
+    if (evRef.current !== "none") return;
+    happened.current = true;
+    go("warn");
+    strike();
+    heartbeat(13);
+    // Stand there doing nothing and it still arrives.
+    later(caught, 12500);
+  };
+
+  const hide = () => {
+    if (evRef.current !== "table") return;
+    clearTimers();
+    go("hidden");
+    velocity.current = 0;
+    // Get down, get under, and turn to watch the corridor from between the legs.
+    const base = Math.floor(travel.current / DEPTH);
+    const tz = segmentZ(table ?? base, base);
+    camTarget.current = {
+      // well back under it, against the wall
+      x: TX + 34,
+      // the eye ends up 44px under the table top
+      y: HEIGHT / 2 - TH + 44,
+      z: camLocalZ(travel.current) - tz,
+      yaw: -64,
+      pitch: 7,
+    };
+    creak();
+    heartbeat(15);
+    setEntity({ mode: "pass", t0: performance.now(), anchor: tz });
+    later(() => {
+      go("safe");
+      setEntity(null);
+      camTarget.current = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
+    }, 15200);
+    later(() => go("none"), 19600);
+    later(() => setTable(null), 60000);
+  };
+
+  // Rare, and never before you have had time to settle in. `?hide` forces it.
   useEffect(() => {
-    const id = window.setInterval(() => setClock((c) => c + 1), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+    if (evRef.current !== "none" || happened.current) return;
+    const forced = typeof window !== "undefined" && window.location.search.includes("hide");
+    const far = furthest.current / DEPTH;
+    if ((forced && far > 1) || far > 46 || (far > 9 && hash(baseIndex * 53 + 7) < 0.06)) startEvent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseIndex]);
 
   // Something, a long way off, at intervals you can't predict.
   useEffect(() => {
@@ -92,16 +218,28 @@ export default function Liminal() {
   // --- the walk ------------------------------------------------------------
   useEffect(() => {
     let raf = 0;
-    const tick = () => {
-      travel.current += velocity.current;
-      velocity.current *= 0.9;
+    let last = performance.now();
+    const tick = (now: number) => {
+      // everything below was tuned per 60 Hz frame; `f` is how many of those this was
+      const f = Math.min(4, Math.max(0.2, (now - last) / 16.667));
+      last = now;
+      const ease = (k: number) => 1 - (1 - k) ** f;
+      travel.current += velocity.current * f;
+      velocity.current *= 0.9 ** f;
+      const cc = cam.current;
+      const ct = camTarget.current;
+      // Down and across first; the head turns a little after the body has gone.
+      cc.x += (ct.x - cc.x) * ease(0.055);
+      cc.y += (ct.y - cc.y) * ease(0.07);
+      cc.z += (ct.z - cc.z) * ease(0.055);
+      cc.yaw += (ct.yaw - cc.yaw) * ease(0.04);
+      cc.pitch += (ct.pitch - cc.pitch) * ease(0.04);
       if (Math.abs(velocity.current) < 0.02) velocity.current = 0;
 
       if (travel.current > furthest.current) furthest.current = travel.current;
 
       const g = Math.floor(travel.current / DEPTH);
       setBaseIndex((b) => (b === g ? b : g));
-      setExit(travel.current <= -DEPTH * 4);
 
       // A footstep every half a segment, alternating feet.
       const s = Math.floor(travel.current / (DEPTH / 2));
@@ -139,11 +277,24 @@ export default function Liminal() {
 
   const onWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
     wake();
+    unlock();
+    const now = evRef.current;
+    if (now === "hidden" || now === "caught" || now === "dead") return;
+    if (now === "warn") {
+      // You ran — and there, two doors down, is somewhere to get under.
+      setTable(Math.floor(travel.current / DEPTH) + 2);
+      go("table");
+      // A fresh, shorter fuse from the moment there is somewhere to hide.
+      clearTimers();
+      later(caught, 9000);
+    }
     velocity.current = Math.max(-26, Math.min(26, velocity.current + e.deltaY * 0.16));
   };
 
   const segments = useMemo<SegmentInfo[]>(() => {
-    return Array.from({ length: SEGMENTS }, (_, i) => {
+    // One extra segment BEHIND the camera's, so there is corridor there to turn and see.
+    return Array.from({ length: SEGMENTS + 1 }, (_, slot) => {
+      const i = slot - 1;
       const g = baseIndex + i;
 
       let light: LightState = "on";
@@ -151,6 +302,10 @@ export default function Liminal() {
       else if (hash(g * 7 + 2) < 0.14) light = "flicker";
       // The motion sensors only cover so far, and less the longer you stand still.
       if (i >= reach) light = "off";
+      // While it is coming the sensors stop trusting anything past arm's length.
+      if (ev === "warn" || ev === "table") light = i < 4 ? "flicker" : "off";
+      if (ev === "hidden") light = Math.abs(g - (table ?? g)) <= 1 ? (g === table ? "on" : "flicker") : "off";
+      if (ev === "caught" || ev === "dead") light = "off";
 
       // 0.34, not 0.22: at the lower rate the two doors in view were usually in the
       // far, heavily-dimmed slots, so a visitor could walk for a minute without ever
@@ -160,29 +315,41 @@ export default function Liminal() {
       const revisited = travel.current < furthest.current - DEPTH * 5;
       const appeared = !natural && revisited && hash(g * 17 + 3) < 0.3;
 
+      const door = natural || appeared ? (hash(g * 13) > 0.5 ? "left" : "right") : null;
+      const dest = LIVE[Math.floor(hash(g * 23) * LIVE.length)];
+      // Photographs of other places like this one, on the wall without the door.
+      const artSide: "left" | "right" =
+        door === "left" ? "right" : door === "right" ? "left" : hash(g * 29) > 0.5 ? "left" : "right";
+      const pool = hash(g * 31) < 0.72 ? "lim_art" : "lim_art2";
+      const size = count(SLUG, pool);
+      const art = hash(g * 37) < 0.8 && size ? { side: artSide, slot: pool, n: 1 + Math.floor(hash(g * 41) * size) } : null;
+
       return {
         light,
-        door: natural || appeared ? (hash(g * 13) > 0.5 ? "left" : "right") : null,
+        door,
         doorIsNew: appeared,
+        plaque: appeared ? "B2 · NO ACCESS" : `${String(dest.channel).padStart(3, "0")} · ${dest.name.toUpperCase()}`,
+        art,
+        exitSign: ((g % 4) + 4) % 4 === 1,
       };
     });
-  }, [baseIndex, reach]);
+  }, [baseIndex, reach, ev, table]);
 
   const openDoor = (g: number) => {
     creak();
-    const target = segments[g - baseIndex]?.doorIsNew
+    const target = segments[g - baseIndex + 1]?.doorIsNew
       ? (AESTHETICS.find((a) => a.slug === "deep-sea") ?? LIVE[0])
       : LIVE[Math.floor(hash(g * 23) * LIVE.length)];
     window.setTimeout(() => begin(target.slug), 620);
   };
 
-  const t = new Date(clock * 1000);
-  const two = (n: number) => String(n).padStart(2, "0");
 
   return (
     <div
       className={styles.root}
+      data-ev={ev}
       onWheel={onWheel}
+      onPointerDown={() => unlock()}
       onPointerMove={wake}
       role="presentation"
     >
@@ -191,45 +358,62 @@ export default function Liminal() {
         segments={segments}
         textures={textures}
         baseIndex={baseIndex}
+        camRef={cam}
+        table={table}
+        onTable={hide}
+        entity={entity}
+        onFootfall={thump}
         onDoor={openDoor}
+        onArt={(slot, n) => {
+          creak();
+          setViewing({ slot, n });
+        }}
       />
 
       <div className={styles.haze} />
-      <div className={styles.fog} />
 
-      <div className={styles.vhs}>
-        <div className={styles.scanlines} />
-        <div className={styles.tracking} />
-        <div className={`${styles.osd} ${styles.osdTopLeft}`}>
-          <span className={styles.rec} />
-          REC
-        </div>
-        <div className={`${styles.osd} ${styles.osdBottomRight}`}>
-          SP {two(t.getUTCHours())}:{two(t.getUTCMinutes())}:{two(t.getUTCSeconds())}
-          <br />
-          12 AUG 1997
-        </div>
-      </div>
+      <div className={styles.lens} />
 
-      <div className={styles.hint}>
-        scroll to walk · keep going · the doors open
-      </div>
-
-      {exit && (
-        <div className={styles.exit}>
-          <div className={styles.exitSign}>EXIT</div>
-          <div className={styles.exitSub}>
-            you walked back further than there was corridor
-          </div>
-          <button
-            type="button"
-            className={styles.exitButton}
-            onClick={() => setMapOpen(true)}
-          >
-            leave
-          </button>
+      {(ev === "warn" || ev === "table" || ev === "hidden" || ev === "safe") && (
+        <div className={styles.warn} key={ev}>
+          {ev === "warn" && (
+            <>
+              <b>something is coming</b>
+              <span>hide.</span>
+            </>
+          )}
+          {ev === "table" && (
+            <>
+              <b>the table</b>
+              <span>get under it. now.</span>
+            </>
+          )}
+          {ev === "hidden" && <span>don&apos;t move.</span>}
+          {ev === "safe" && <span>it&apos;s gone. for now.</span>}
         </div>
       )}
+
+      <div className={styles.hint}>scroll to walk</div>
+
+      {ev === "dead" && (
+        <div className={styles.dead}>
+          <div className={styles.snap}>
+            <i />
+            <h2>Aw, Snap!</h2>
+            <p>Something went wrong while displaying this webpage.</p>
+            <small>Error code: YOU_WERE_NOT_SUPPOSED_TO_BE_IN_HERE</small>
+          </div>
+          <p className={styles.deadLine}>it knows which tab you were in</p>
+        </div>
+      )}
+
+      {viewing && (
+        <button type="button" className={styles.viewer} onClick={() => setViewing(null)}>
+          <img src={src(SLUG, viewing.slot, viewing.n)} alt="A photograph of an empty place" />
+          <span>photograph · undated · it was hanging in the corridor — click to put it back</span>
+        </button>
+      )}
+
     </div>
   );
 }

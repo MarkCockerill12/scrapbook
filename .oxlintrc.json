@@ -1,18 +1,44 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "unicorn", "nextjs"],
-  "env": { "browser": true, "es2024": true },
-  "ignorePatterns": ["node_modules", ".next", "raw", "public/dev-assets"],
+  "plugins": [
+    "react",
+    "typescript",
+    "unicorn",
+    "nextjs"
+  ],
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "raw",
+    "public/dev-assets"
+  ],
   "rules": {
     "no-console": "warn",
     "typescript/no-explicit-any": "error"
   },
   "overrides": [
     {
-      "files": ["scripts/**"],
-      "env": { "node": true, "browser": false },
+      "files": [
+        "scripts/**"
+      ],
+      "env": {
+        "node": true,
+        "browser": false
+      },
       "rules": {
         "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "aesthetics/**"
+      ],
+      "rules": {
+        "nextjs/no-img-element": "off"
       }
     }
   ]

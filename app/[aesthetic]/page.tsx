@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAestheticComponent } from "@/aesthetics";
 import { CanvasStage } from "@/components/CanvasStage";
 import { ChannelOffline } from "@/components/ChannelOffline";
+import { SceneAudio } from "@/components/SceneAudio";
 import { ALL_SLUGS, getAesthetic } from "@/lib/registry";
 
 export function generateStaticParams() {
@@ -35,6 +36,7 @@ export default async function AestheticPage({ params }: PageProps<"/[aesthetic]"
       mode={a.canvas.mode}
       letterbox={a.letterbox ?? "#000"}
     >
+      <SceneAudio slug={a.slug} />
       {Page ? <Page /> : <ChannelOffline aesthetic={a} />}
     </CanvasStage>
   );

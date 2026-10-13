@@ -1,0 +1,445 @@
+/* Vaporwave — PLAZA 95. Own tokens and fonts (rule R2). */
+
+@font-face { font-family: "VT323"; src: url("/fonts/vaporwave/vt323-400.woff2") format("woff2"); font-display: block; }
+
+.root {
+  --slow: 0.15;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #12021f;
+  font-family: "VT323", "MS Sans Serif", monospace;
+  user-select: none;
+  /* slowed = warmer, softer, more smeared */
+  filter: saturate(calc(1.1 + var(--slow))) hue-rotate(calc(var(--slow) * -40deg));
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.sky {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 480px;
+  background: linear-gradient(180deg, #0c0126 0%, #2b0a5a 30%, #7a1d8c 58%, #ff5f9e 84%, #ffb36b 100%);
+}
+
+.stars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 300px;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 33% 12%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 26%, #ffd6f5, transparent),
+    radial-gradient(1px 1px at 72% 8%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 88% 30%, #d6f5ff, transparent),
+    radial-gradient(1px 1px at 46% 40%, #fff, transparent),
+    radial-gradient(1px 1px at 5% 44%, #fff, transparent);
+  animation: twinkle 4s steps(2) infinite;
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* the striped sun, breathing on the kick */
+.sun {
+  --kick: 0;
+  position: absolute;
+  left: 50%;
+  top: 150px;
+  width: 400px;
+  height: 400px;
+  margin-left: -200px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff27a 0%, #ffb347 40%, #ff4fa3 75%, #d11f8a 100%);
+  /* the classic sliced sunset: solid top, widening gaps toward the horizon */
+  -webkit-mask-image: linear-gradient(180deg, #000 0 50%, transparent 50% 53%, #000 53% 61%, transparent 61% 65%, #000 65% 71%, transparent 71% 76%, #000 76% 81%, transparent 81% 87%, #000 87% 90%, transparent 90%);
+  mask-image: linear-gradient(180deg, #000 0 50%, transparent 50% 53%, #000 53% 61%, transparent 61% 65%, #000 65% 71%, transparent 71% 76%, #000 76% 81%, transparent 81% 87%, #000 87% 90%, transparent 90%);
+  filter: drop-shadow(0 0 calc(30px + var(--kick) * 40px) rgba(255, 90, 170, 0.8));
+  transform: scale(calc(1 + var(--kick) * 0.03));
+}
+
+.fuji {
+  position: absolute;
+  left: 50%;
+  top: 196px;
+  width: 820px;
+  margin-left: -410px;
+  /* the sunset silhouettes it: deep violet body, a rose-lit snowcap */
+  filter: grayscale(1) contrast(1.4) brightness(0.55) sepia(1) hue-rotate(235deg) saturate(3);
+}
+
+.floor {
+  position: absolute;
+  left: 0;
+  top: 470px;
+  width: 1600px;
+  height: 430px;
+}
+
+.palm {
+  position: absolute;
+  top: 250px;
+  width: 420px;
+  filter: brightness(0) drop-shadow(0 0 30px rgba(255, 80, 170, 0.5));
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.palmL {
+  left: -110px;
+  transform: scaleX(-1);
+}
+
+.palmR {
+  right: -110px;
+}
+
+.dolphin {
+  position: absolute;
+  left: 300px;
+  top: 360px;
+  width: 260px;
+  filter: hue-rotate(160deg) saturate(2) drop-shadow(0 0 20px #00f0ff);
+  animation: leap 3.2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes leap {
+  0% { transform: translate(0, 200px) rotate(40deg); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translate(500px, -120px) rotate(0deg); }
+  85% { opacity: 1; }
+  100% { transform: translate(1000px, 200px) rotate(-40deg); opacity: 0; }
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  top: 36px;
+  transform: translateX(-50%);
+  text-align: center;
+  font: 64px/1 "VT323", monospace;
+  letter-spacing: 6px;
+  color: #fff;
+  text-shadow: 3px 0 #ff00c8, -3px 0 #00f0ff, 0 0 30px rgba(255, 100, 200, 0.7);
+  white-space: nowrap;
+}
+
+.title span {
+  display: block;
+  margin-top: 6px;
+  font: 700 22px "Yu Mincho", "MS Mincho", "Noto Serif JP", serif;
+  letter-spacing: 8px;
+  color: #ffd6f5;
+  text-shadow: 0 0 10px #ff4fa3;
+}
+
+.junoWrap {
+  position: absolute;
+  left: 30px;
+  top: 560px;
+  width: 900px;
+  transform: perspective(1400px) rotateX(18deg);
+  transform-origin: 50% 100%;
+}
+
+.trWrap {
+  position: absolute;
+  left: 960px;
+  top: 440px;
+  width: 560px;
+  transform: rotate(1.5deg);
+}
+
+.help {
+  font: 19px/1.25 "VT323", monospace;
+  color: #111;
+}
+
+.help b {
+  color: #800080;
+}
+
+.egg {
+  margin-top: 4px;
+  color: #008080;
+}
+
+.slowed {
+  font: 20px "VT323", monospace;
+  color: #111;
+}
+
+.slowed b {
+  float: right;
+  color: #800080;
+}
+
+.slowed input {
+  width: 100%;
+  margin: 14px 0 6px;
+  accent-color: #800080;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  color: #555;
+}
+
+.stat {
+  margin-top: 12px;
+  font-size: 18px;
+  color: #008080;
+}
+
+.secret {
+  position: absolute;
+  left: 50%;
+  top: 200px;
+  transform: translateX(-50%);
+  padding: 10px 24px;
+  font: 700 38px "Yu Mincho", "MS Mincho", serif;
+  color: #fff;
+  background: linear-gradient(90deg, #ff6ad5, #8a5bff, #00f0ff);
+  box-shadow: 6px 6px 0 #000;
+  animation: glitchIn 5s steps(1) forwards;
+  z-index: 50;
+}
+
+@keyframes glitchIn {
+  0% { clip-path: inset(0 0 60% 0); }
+  5% { clip-path: inset(40% 0 0 0); transform: translateX(-48%); }
+  10%, 90% { clip-path: inset(0); transform: translateX(-50%); }
+  100% { opacity: 0; }
+}
+
+.vhs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 80% 80% at 50% 50%, transparent 60%, rgba(10, 0, 20, 0.6));
+  mix-blend-mode: multiply;
+}
+
+/* ==========================================================================
+ * 2026-10 — yours to turn. Everything out of the window is one layer driven by
+ * custom properties, and AESTHETIC.CPL owns them: how high the hills are and how
+ * fast they come, which sky, how big a sun, and what colour any of it is. The
+ * two machines are cut square to the page and sit on one desk.
+ * ========================================================================== */
+.scene {
+  position: absolute;
+  inset: 0;
+  background: var(--ground);
+}
+
+.sky {
+  background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 30%, var(--s3) 58%, var(--s4) 84%, var(--s5) 100%);
+  transition: background 0.6s;
+}
+
+.sun {
+  background: linear-gradient(180deg, var(--sunA) 0%, var(--sunB) 78%);
+  transform: scale(calc(var(--sunSize) * (1 + var(--kick) * 0.03)));
+  transform-origin: 50% 80%;
+}
+
+.sun[data-plain] {
+  -webkit-mask-image: linear-gradient(180deg, #000 0 80%, transparent 80%);
+  mask-image: linear-gradient(180deg, #000 0 80%, transparent 80%);
+}
+
+/* ---------- the desk ---------- */
+.desk {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(8, 0, 22, 0.85) 60%, #08001a);
+}
+
+.junoWrap {
+  left: 36px;
+  top: 548px;
+  width: 880px;
+  transform: none;
+  filter: drop-shadow(0 22px 24px rgba(8, 0, 26, 0.75));
+}
+
+.trWrap {
+  left: 986px;
+  top: 468px;
+  width: 540px;
+  transform: none;
+  filter: drop-shadow(0 22px 24px rgba(8, 0, 26, 0.75));
+}
+
+/* cut each photograph down to the machine: no table, no studio wall */
+.junoWrap > div {
+  filter: none;
+  clip-path: inset(7.5% 3.4% 2% 3.6% round 6px);
+}
+
+.trWrap > div {
+  filter: none;
+  clip-path: inset(2.6% 1.8% 3.4% 1.6% round 6px);
+}
+
+.title {
+  top: 30px;
+}
+
+/* ---------- AESTHETIC.CPL ---------- */
+.cpl {
+  font: 19px/1.1 "VT323", monospace;
+  color: #111;
+}
+
+.cpl nav {
+  display: flex;
+  gap: 2px;
+  margin-bottom: -2px;
+}
+
+.cpl nav button {
+  padding: 4px 14px 5px;
+  font: inherit;
+  text-transform: capitalize;
+  color: #111;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 transparent #fff;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+}
+
+.cpl nav button[data-on] {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 8px;
+  margin-top: -3px;
+}
+
+.rows {
+  display: grid;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+}
+
+.rows label {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.rows input[type="range"] {
+  width: 100%;
+  accent-color: #800080;
+}
+
+.rows .check {
+  display: flex;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+}
+
+.skies {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.skies button {
+  height: 54px;
+  padding: 0 2px 3px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font: 15px/1 "VT323", monospace;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  cursor: pointer;
+}
+
+.skies button[data-on] {
+  border-color: #404040 #fff #fff #404040;
+  outline: 2px solid #800080;
+}
+
+.hue {
+  appearance: none;
+  height: 14px;
+  background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  border: 2px solid;
+  border-color: #404040 #fff #fff #404040;
+}
+
+.hue::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 22px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+}
+
+.reset {
+  justify-self: end;
+  padding: 4px 18px;
+  font: inherit;
+  color: #111;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  cursor: pointer;
+}
+
+.reset:active {
+  border-color: #404040 #fff #fff #404040;
+}
+
+.keys {
+  margin-top: 8px;
+  font-size: 16px;
+  color: #008080;
+}

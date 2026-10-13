@@ -1,3 +1,5 @@
+import { audioBus } from "@/lib/audio";
+import { playNote, playNoise } from "@/lib/music";
 import { tone } from "@/lib/audio";
 
 /**
@@ -62,4 +64,38 @@ export function drop(): void {
 export function redRing(): void {
   tone({ freq: 140, toFreq: 60, duration: 1.6, type: "sawtooth", gain: 0.12 });
   tone({ freq: 210, duration: 1.6, type: "square", gain: 0.04 });
+}
+
+/**
+ * Power-on: an airy rising whoosh, then a bright bell chord that blooms and hangs —
+ * the shape of the real start-up, built from oscillators and the shared reverb.
+ */
+export function bootSound(): void {
+  const t = audioBus()?.ctx.currentTime;
+  if (t === undefined) return;
+  playNoise({ dur: 0.9, gain: 0.04, highpass: 1800, lowpass: 9000, wet: 0.6 }, t);
+  playNote({ freq: 200, from: 90, dur: 0.8, gain: 0.05, type: "sine", wet: 0.5 }, t);
+  [76, 83, 88, 91, 95].forEach((m, i) =>
+    playNote({ freq: m, midi: true, dur: 0.3, gain: 0.045, attack: 0.01, release: 2.4, type: "sine", wet: 0.8, pan: (i - 2) * 0.3 }, t + 0.95 + i * 0.07),
+  );
+  playNote({ freq: 52, midi: true, dur: 1.2, gain: 0.08, attack: 0.05, release: 1.5, type: "sine", wet: 0.4 }, t + 0.95);
+}
+
+/** The Guide blade sliding in. */
+export function guideOpen(): void {
+  tone({ freq: 500, toFreq: 1400, duration: 0.12, type: "sine", gain: 0.06 });
+  tone({ freq: 1600, duration: 0.18, type: "sine", gain: 0.04, delay: 0.08 });
+}
+
+/** A party member talking — a squeaky formant blip, pitched per person. */
+export function partyBlip(pitch: number): void {
+  for (let i = 0; i < 3; i++) {
+    tone({ freq: pitch * (1 + Math.random() * 0.3), toFreq: pitch * 0.8, duration: 0.05, type: "sawtooth", gain: 0.02, delay: i * 0.07 });
+  }
+}
+
+/** Disc spin-up: the famous jet engine. */
+export function discSpin(): void {
+  tone({ freq: 80, toFreq: 900, duration: 1.4, type: "sawtooth", gain: 0.02 });
+  tone({ freq: 3000, toFreq: 6000, duration: 1.4, type: "sine", gain: 0.012 });
 }

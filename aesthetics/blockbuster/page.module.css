@@ -1,0 +1,443 @@
+/* Video Store — Friday night. Own reset + fonts (rule R2). */
+
+@font-face { font-family: "Anton"; src: url("/fonts/blockbuster/anton-400.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "VT323"; src: url("/fonts/blockbuster/vt323-400.woff2") format("woff2"); font-display: block; }
+
+.root {
+  --blue: #0a3aa8;
+  --yellow: #ffcc00;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0a1a4a;
+  font-family: "Arial", sans-serif;
+  color: #fff;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.aisle {
+  position: absolute;
+  inset: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  object-fit: cover;
+  filter: blur(5px) brightness(0.6) saturate(1.2);
+}
+
+.grade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 30, 120, 0.4), rgba(0, 0, 0, 0.3));
+}
+
+.sign {
+  position: absolute;
+  left: 34px;
+  top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ticket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 28px;
+  background: var(--blue);
+  border: 4px solid var(--yellow);
+  font: 44px/0.9 "Anton", sans-serif;
+  color: var(--yellow);
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 96% 50%, 100% 65%, 100% 100%, 0 100%, 0 65%, 4% 50%, 0 35%);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  transform: rotate(-3deg);
+}
+
+.ticket em {
+  font-style: normal;
+  font-size: 24px;
+  letter-spacing: 6px;
+}
+
+.slogan {
+  font: 22px "Anton", sans-serif;
+  letter-spacing: 3px;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.tabs {
+  position: absolute;
+  left: 34px;
+  top: 150px;
+  display: flex;
+  gap: 6px;
+}
+
+.tabs button {
+  padding: 8px 16px;
+  font: 20px "Anton", sans-serif;
+  letter-spacing: 1px;
+  background: var(--blue);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.tabs .tabOn {
+  color: var(--blue);
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.wall {
+  position: absolute;
+  left: 34px;
+  top: 206px;
+  width: 1080px;
+  display: grid;
+  grid-template-columns: repeat(6, 160px);
+  gap: 22px 18px;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(10, 30, 110, 0.85), rgba(6, 18, 70, 0.9));
+  border: 3px solid var(--yellow);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.tape {
+  position: relative;
+  height: 240px;
+  padding: 6px;
+  background: #0d0d0d;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px #2a2a2a, 0 8px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 180ms ease;
+}
+
+.tape img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tape::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.35), transparent 35%);
+  pointer-events: none;
+}
+
+.tape:hover {
+  transform: translateY(-14px);
+}
+
+.nr {
+  position: absolute;
+  right: -8px;
+  top: 14px;
+  padding: 2px 8px;
+  font: 16px "Anton", sans-serif;
+  color: var(--blue);
+  background: var(--yellow);
+  rotate: 12deg;
+  z-index: 2;
+}
+
+.out img {
+  filter: grayscale(1) brightness(0.4);
+}
+
+.outTag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  padding: 4px;
+  text-align: center;
+  font: 16px "Anton", sans-serif;
+  background: #c01010;
+  rotate: -12deg;
+}
+
+.ledge {
+  display: none;
+}
+
+.basket {
+  position: absolute;
+  left: 1150px;
+  top: 206px;
+  width: 400px;
+  padding: 14px;
+  background: var(--blue);
+  border: 3px solid var(--yellow);
+}
+
+.basket b,
+.fees b {
+  font: 22px "Anton", sans-serif;
+  color: var(--yellow);
+  letter-spacing: 1px;
+}
+
+.basket > div {
+  display: flex;
+  gap: 8px;
+  min-height: 150px;
+  margin: 10px 0;
+}
+
+.basket img {
+  width: 100px;
+  height: 150px;
+  object-fit: cover;
+  border: 3px solid #111;
+}
+
+.basket button,
+.fees button,
+.liftBtns button {
+  padding: 10px 16px;
+  font: 20px "Anton", sans-serif;
+  letter-spacing: 1px;
+  color: var(--blue);
+  background: var(--yellow);
+  box-shadow: 0 4px 0 #8a6a00;
+}
+
+.basket button:disabled,
+.liftBtns button:disabled {
+  opacity: 0.4;
+}
+
+.fees {
+  position: absolute;
+  left: 1150px;
+  top: 520px;
+  width: 400px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #111;
+  border: 3px solid #444;
+}
+
+.fees span {
+  font: 64px "VT323", monospace;
+  color: #3aff5a;
+  text-shadow: 0 0 10px #3aff5a;
+}
+
+.feesDue span {
+  color: #ff3a3a;
+  text-shadow: 0 0 10px #ff3a3a;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.fees small {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.fees button {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+/* lifting a tape off the shelf */
+.lift {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(0, 5, 30, 0.75);
+  perspective: 1400px;
+}
+
+.box {
+  position: relative;
+  width: 340px;
+  height: 500px;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.3, 0.9, 0.3, 1);
+  animation: pull 500ms cubic-bezier(0.2, 1.2, 0.4, 1);
+  cursor: pointer;
+}
+
+@keyframes pull {
+  from {
+    transform: translateY(200px) rotateX(40deg) scale(0.5);
+  }
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+.boxFront,
+.boxBack {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  padding: 10px;
+  background: #0d0d0d;
+  border-radius: 6px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+}
+
+.boxFront img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boxBack {
+  transform: rotateY(180deg);
+  padding: 22px;
+  background: #111;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.boxBack h3 {
+  font: 34px "Anton", sans-serif;
+  color: var(--yellow);
+}
+
+.meta {
+  font-size: 12px;
+  color: #aaa;
+  letter-spacing: 1px;
+}
+
+.warn {
+  font-size: 10px;
+  color: #c33;
+  margin-top: auto;
+}
+
+.barcode {
+  height: 40px;
+  background: repeating-linear-gradient(90deg, #fff 0 2px, #000 2px 3px, #fff 3px 6px, #000 6px 9px, #fff 9px 10px);
+}
+
+.rewind {
+  font: 18px "Anton", sans-serif;
+  color: var(--yellow);
+  text-align: center;
+}
+
+.liftBtns {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.liftBtns span {
+  font-size: 14px;
+  color: #ccd;
+}
+
+.counter {
+  width: 620px;
+  padding: 24px;
+  background: #f4f2ea;
+  color: #111;
+  border-radius: 6px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+}
+
+.counter h3 {
+  font: 26px "Anton", sans-serif;
+  color: var(--blue);
+  margin-bottom: 14px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0a3aa8, #1a5ae0 60%, #0a2a80);
+  color: #fff;
+  box-shadow: inset 0 0 0 3px var(--yellow);
+}
+
+.card b {
+  font: 22px "Anton", sans-serif;
+  color: var(--yellow);
+}
+
+.card input {
+  font: 28px "VT323", monospace;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.5);
+  outline: 0;
+}
+
+.card span {
+  font: 20px "VT323", monospace;
+  letter-spacing: 2px;
+}
+
+.receipt {
+  padding: 12px;
+  margin-bottom: 14px;
+  font: 20px "VT323", monospace;
+  background: #fff;
+  border: 1px dashed #999;
+}
+
+.receipt p {
+  display: flex;
+  justify-content: space-between;
+}
+
+.total {
+  border-top: 1px dashed #999;
+  margin-top: 6px;
+  padding-top: 6px;
+  font-weight: 700;
+}
+
+.hint {
+  position: absolute;
+  left: 34px;
+  bottom: 24px;
+  font-size: 16px;
+  color: #fff;
+  text-shadow: 0 2px 4px #000;
+}

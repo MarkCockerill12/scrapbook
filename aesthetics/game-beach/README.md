@@ -1,56 +1,29 @@
-# 08 · Game Beach
+# 08 · Game Beach — Greetings from the Game Beach
 
-**Fiction:** *Isle Delfino tourist board — level select.*
+Redesigned 2026-09-28. Mark: *"pretty wildly off… it should take inspiration from Sonic
+Adventure 1's beach, Mario Sunshine, Mario Galaxy beaches and other 2000s watery and
+beach games — a celebration and collage of those ideas."*
 
-**Canvas:** 1600×900, `fit`. Letterbox `#0e8fa8`.
-**Assets:** `raw/game-beach/` — a real island, masked and posterised hard.
+A holiday scrapbook tipped out onto real sand (ambientCG `Ground080`): twelve postcards
+of **real screenshots** — Delfino Plaza, Emerald Coast, Sea Slide Galaxy, Windfall
+Island, Gelato Beach, Treasure Trove Cove, Geyser Rock, Sunny Beach, N. Sanity Beach,
+Seaside Hill, Noki Bay, the Animal Crossing shore — with **official character renders**
+standing about (Mario, Yoshi, a Pianta, a Chao, Big fishing, Link sailing past on the
+King of Red Lions, Sonic tearing along the shoreline, Shadow Mario lurking) and the
+**collectibles** in the sand (coins, a blue coin, rings, rupees, star bits, a Shine
+Sprite, a Power Star). The sea at the top is a real reef aerial (Flickr CC).
 
-## The argument this page makes
-
-Toon shading is a **rendering model**, not a bright palette. Four rules, and one soft
-gradient anywhere collapses the whole thing into 2015 flat design:
-
-1. **Shading is banded, not smooth.** Two or three flat steps with hard edges between
-   them. The sea is drawn scanline by scanline: evaluate two summed sines, quantise
-   to three levels, fill. The hard boundary *is* the effect.
-2. **Outlines are a darker tint of their own fill, never black.** Black outlines read
-   as a cartoon; tinted outlines read as a shader.
-3. **The water is the most saturated thing on screen**, and it is a colour no ocean
-   has ever been. That impossible turquoise is the whole memory.
-4. **The HUD is furniture**, not an overlay: chunky, opaque, hard-shadowed, in the
-   corners.
-
-## Interaction inventory
+Sources: en.wikipedia, Super Mario Wiki, Sonic / Zelda / Spyro / Crash / Banjo / Jak /
+Animal Crossing wikis via `grab.mjs lead:` and `page:`. See `raw/ATTRIBUTION.json`.
 
 | Element | Behaviour |
 |---|---|
-| Coins | 12 scattered, bobbing and flipping. Collect them all and the beach respawns after 1.4s, the way a game would. The counter **persists** under `sb:game-beach:coins` |
-| Water | Click anywhere on the sea for a hard-edged expanding splash ring |
-| Right-drag | Orbits the camera; sky, island and palms parallax at different rates, and the "you are here" blip moves on the minimap |
-| Level cards | Four channels as warp pipes, floating out of phase |
-| Signpost | Types itself out one character at a time with a beep every other character |
-| Day / night | A single filter over the whole page, cross-fading over 1.4s. Night stops the steel drums |
-| Minimap | Live: every uncollected coin is a real blip at its real position |
-| **Easter egg** | 100 coins — reachable across visits, since the counter persists — gets the 1-UP jingle and opens a warp |
+| Postcards | drag them about (positions persist); click to pick one up; click again to turn it over — a message from the character, a box-art stamp, a postmark |
+| Goop | five postcards are covered in Shadow Mario's paint; turn **FLUDD** on, hold and sweep to wash it off (water particles, spray hiss) |
+| Pickups | each plays its own game's sound; counters in a Sunshine-style HUD; persisted |
+| Shine Sprite | "SHINE GET!" |
+| Power Star | a ticket to space — sends you to the Wii channel's Galaxy |
+| Cast | click for a boing; Chao waddles; Sonic runs past every ~17s |
+| Music | generated calypso on steel drums, surf bed |
 
-## Notes and gotchas
-
-- **Steel drums are inharmonic.** A pan is a struck metal plate, so each note is a
-  fundamental plus partials at 2.76× and 5.4× — neither a whole multiple. Use octaves
-  and you get a marimba.
-- **The island photograph has to be masked.** Unmasked it is a hard-edged rectangle
-  of photography floating in a cel-shaded sky, which is the fastest possible way to
-  break this aesthetic. It's masked to an ellipse and sat *on* the horizon line.
-- **The palms are drawn even though four were harvested.** Cel shading needs flat
-  bands with hard edges and a photograph cannot supply them.
-- **`display: block` on the card name and subtitle.** Spans inside a button are
-  inline, so the name and the caption ran together — the same bug as the Wii message
-  board.
-- The sea renders at half resolution and is scaled up `pixelated`: the bands should
-  be chunky, and it halves the per-frame work.
-
-## Still to do
-
-- The camera orbit is a translate, not an orbit. Real yaw would sell the depth.
-- Coins should be collectible by *touching* them with a character, not by clicking.
-- Day/night should also swap the sea's three levels rather than filtering the page.
+Title letters are `background-clip: text` over the Emerald Coast and Isle Delfino.

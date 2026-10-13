@@ -3,6 +3,7 @@
 import { animate } from "animejs";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { channelChange, duckScene } from "@/lib/audio";
 import { getAesthetic } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 
@@ -78,6 +79,9 @@ export function Transition() {
 
     departedFrom.current = pathname;
     const target = `/${travellingTo}`;
+    // the page being left goes quiet under the static, and the tuner is heard moving
+    duckScene(OUT_MS / 1000);
+    channelChange();
 
     const anim = animate(el, {
       opacity: [0, 1],

@@ -71,7 +71,19 @@ async function processOne(aesthetic, file, { hasAlpha }) {
 
   const { slot, index } = parseName(file);
   const stem = `${slot}_${String(index).padStart(2, "0")}`;
-  const outDir = join(OUT, aesthetic);
+
+  /*
+   * Cutouts get their own directory.
+   *
+   * raw/<a>/tiki_torch_01.jpg and raw/<a>/cutout/tiki_torch_01.png share a slot AND
+   * an index, so they used to render to the same <a>/tiki_torch_01.webp — whichever
+   * ran last silently won, and the manifest carried two entries pointing at one file
+   * with two different sets of dimensions. Every channel that had been through the
+   * cutout stage was affected. Keeping them in separate trees makes the collision
+   * impossible rather than merely unlikely.
+   */
+  const rel = hasAlpha ? `${aesthetic}/cutout` : aesthetic;
+  const outDir = join(OUT, rel);
   await mkdir(outDir, { recursive: true });
 
   const isGif = extname(file).toLowerCase() === ".gif";
@@ -146,8 +158,8 @@ async function processOne(aesthetic, file, { hasAlpha }) {
     hasAlpha: hasAlpha || Boolean(meta.hasAlpha),
     animated,
     frames: animated ? meta.pages : 1,
-    src: `/dev-assets/${aesthetic}/${stem}.webp`,
-    thumb: `/dev-assets/${aesthetic}/${stem}.thumb.webp`,
+    src: `/dev-assets/${rel}/${stem}.webp`,
+    thumb: `/dev-assets/${rel}/${stem}.thumb.webp`,
     width: outWidth,
     height: outHeight,
     bytes,

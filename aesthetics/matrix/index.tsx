@@ -1,5 +1,7 @@
 "use client";
 
+import { useMusic } from "@/lib/music";
+import { construct } from "./music";
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useCanvas } from "@/components/CanvasStage";
 import { Draggable } from "@/primitives/Draggable";
@@ -8,6 +10,7 @@ import { AESTHETICS } from "@/lib/registry";
 import { useShell } from "@/lib/store";
 import { DigitalRain } from "./DigitalRain";
 import { Terminal } from "./Terminal";
+import { BlackCat, Crack, Monitors, Phone, Pills, Programs, WakeUp } from "./Modules";
 import { WireGlobe } from "./WireGlobe";
 import styles from "./styles.module.css";
 
@@ -84,6 +87,7 @@ function Decrypt({ text }: { text: string }) {
 }
 
 export default function Matrix() {
+  useMusic(construct, 96);
   const { toCanvasSpace } = useCanvas();
   const begin = useShell((s) => s.beginTransition);
 
@@ -137,107 +141,50 @@ export default function Matrix() {
     window.setTimeout(() => setDestroyed(false), 4200);
   }, []);
 
-  return (
-    <div className={styles.root} onPointerMove={onPointerMove} onPointerDown={bump}>
-      <DigitalRain width={W} height={H} pointerRef={pointer} />
+  const [pill, setPill] = useState<"red" | "blue" | null>(null);
+  const [waking, setWaking] = useState(false);
+  const [dejavu, setDejavu] = useState(0);
+  const choose = (p: "red" | "blue") => {
+    setPill(p);
+    bump();
+    if (p === "red") setWaking(true);
+    else tone({ freq: 440, toFreq: 220, duration: 1.2, type: "sine", gain: 0.08 });
+  };
+  const endWake = useCallback(() => setWaking(false), []);
+  const onDejaVu = useCallback(() => {
+    setDejavu((d) => d + 1);
+    tone({ freq: 60, toFreq: 40, duration: 0.8, type: "sawtooth", gain: 0.1 });
+  }, []);
+  const exitCall = () => {
+    const live = AESTHETICS.filter((a) => a.status === "live" && a.slug !== "matrix");
+    begin(live[Math.floor(Math.random() * live.length)].slug);
+  };
 
-      <header className={styles.header}>
-        <div className={styles.headerTitle}>Unauthorised session</div>
-        <div className={styles.headerSub}>
-          no credentials presented · access granted anyway
+  const panel = (key: string, x: number, y: number, w: number, h: number, title: string, right: string, body: React.ReactNode, bodyStyle?: React.CSSProperties) => (
+    <Draggable x={x} y={y} bounds={{ left: 0, top: 70, right: W - w, bottom: H - h }} persistAs={{ aesthetic: "matrix", key: `v2:${key}` }}>
+      <section className={styles.panel} style={{ width: w, height: h }}>
+        <div className={styles.panelBar}>
+          <span>
+            <b>{title}</b>
+          </span>
+          <span className={styles.panelNote}>{right}</span>
         </div>
-      </header>
+        <div className={styles.panelBody} style={bodyStyle}>
+          {body}
+        </div>
+      </section>
+    </Draggable>
+  );
 
-      <div className={destroyed ? styles.collapsing : undefined}>
-        {/* ---- terminal ---- */}
-        <Draggable
-          x={90}
-          y={148}
-          rotate={-0.4}
-          bounds={{ left: 0, top: 60, right: 900, bottom: 420 }}
-          persistAs={{ aesthetic: "matrix", key: "term" }}
-        >
-          <section className={styles.panel} style={{ width: 680, height: 560 }}>
-            <div className={styles.panelBar}>
-              <span>
-                <b>tty0</b> — /bin/sh
-              </span>
-              <span>● ● ●</span>
-            </div>
-            <div className={styles.panelBody}>
-              <Terminal onSelfDestruct={selfDestruct} />
-            </div>
-          </section>
-        </Draggable>
+  return (
+    <div className={`${styles.root} ${pill === "blue" ? styles.bluePill : ""} ${dejavu ? styles.dejavu : ""}`} key={`dv${dejavu}`} onPointerMove={onPointerMove} onPointerDown={bump}>
+      <DigitalRain width={W} height={H} pointerRef={pointer} />
+      <div className={styles.rainDim} />
 
-        {/* ---- globe ---- */}
-        <Draggable
-          x={1060}
-          y={128}
-          rotate={0.5}
-          bounds={{ left: 700, top: 60, right: 1220, bottom: 500 }}
-          persistAs={{ aesthetic: "matrix", key: "globe" }}
-        >
-          <section className={styles.panel} style={{ width: 452, height: 366 }}>
-            <div className={styles.panelBar}>
-              <span>
-                <b>geo</b> — origin unknown
-              </span>
-              <span>LIVE</span>
-            </div>
-            <div className={styles.panelBody} style={{ display: "grid", placeItems: "center" }}>
-              <WireGlobe size={286} />
-            </div>
-          </section>
-        </Draggable>
-
-        {/* ---- target list ---- */}
-        <Draggable
-          x={1060}
-          y={522}
-          rotate={-0.6}
-          bounds={{ left: 700, top: 300, right: 1220, bottom: 720 }}
-          persistAs={{ aesthetic: "matrix", key: "targets" }}
-        >
-          <section className={styles.panel} style={{ width: 452, height: 250 }}>
-            <div className={styles.panelBar}>
-              <span>
-                <b>nodes</b> — {AESTHETICS.length} found
-              </span>
-              <span>hover to decrypt</span>
-            </div>
-            <div className={styles.panelBody} style={{ overflowY: "auto" }}>
-              {AESTHETICS.slice(0, 9).map((a) => (
-                <button
-                  key={a.slug}
-                  type="button"
-                  className={styles.target}
-                  onClick={() => begin(a.slug)}
-                >
-                  <span className={styles.targetId}>
-                    {String(a.channel).padStart(2, "0")}
-                  </span>
-                  <span className={styles.targetName}>
-                    <Decrypt text={a.slug} />
-                  </span>
-                  <span
-                    className={`${styles.targetState} ${
-                      a.status === "live" ? styles.targetLive : ""
-                    }`}
-                  >
-                    {a.status === "live" ? "ONLINE" : "OFFLINE"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </Draggable>
-      </div>
-
-      {/* ---- trace ---- */}
+      {/* ---- trace, now up top where you can see it ---- */}
       <div className={`${styles.trace} ${trace > 0.66 ? styles.traceHot : ""}`}>
         <div className={styles.traceHead}>
-          <span>{complete ? "!! trace complete !!" : "trace in progress"}</span>
+          <span>{complete ? "!! trace complete — agents dispatched !!" : "trace program running"}</span>
           <span>{Math.round(trace * 100)}%</span>
         </div>
         <div className={styles.traceTrack}>
@@ -245,22 +192,55 @@ export default function Matrix() {
         </div>
       </div>
 
-      <div className={styles.hint}>
-        type `help` · drag the windows
-        <br />
-        `connect &lt;name&gt;` to change channel
+      <div className={destroyed ? styles.collapsing : undefined}>
+        {panel("term", 28, 88, 600, 470, "tty0 — /bin/sh", "shell", <Terminal onSelfDestruct={selfDestruct} />)}
+        {panel("progs", 28, 574, 600, 250, "construct — training programs", "click to load", <Programs />)}
+        {panel("mon", 646, 88, 430, 205, "operator — raw feed", "3 screens", <Monitors />)}
+        {panel("pill", 646, 308, 430, 290, "morpheus — the choice", pill ?? "undecided", <Pills chosen={pill} onChoose={choose} />)}
+        {panel("crack", 646, 612, 430, 170, "zion — mainframe", "brute force", <Crack />)}
+        {panel("geo", 1094, 88, 478, 300, "geo — origin unknown", "live", <WireGlobe size={240} />, { display: "grid", placeItems: "center" })}
+        {panel(
+          "nodes",
+          1094,
+          402,
+          478,
+          240,
+          `nodes — ${AESTHETICS.length} found`,
+          "hover to decrypt",
+          <>
+            {AESTHETICS.map((a) => (
+              <button key={a.slug} type="button" className={styles.target} onClick={() => begin(a.slug)}>
+                <span className={styles.targetId}>{String(a.channel).padStart(2, "0")}</span>
+                <span className={styles.targetName}>{pill === "red" ? a.name : <Decrypt text={a.slug} />}</span>
+                <span className={`${styles.targetState} ${a.status === "live" ? styles.targetLive : ""}`}>
+                  {a.status === "live" ? "ONLINE" : "OFFLINE"}
+                </span>
+              </button>
+            ))}
+          </>,
+          { overflowY: "auto" },
+        )}
+        {panel("phone", 1094, 656, 240, 170, "hardline", "exit", <Phone onExit={exitCall} />, { padding: 0 })}
       </div>
+
+      <div className={styles.hint}>
+        type `help` in the shell · drag any panel · take a pill
+        <br />
+        answer the phone to leave · `connect &lt;name&gt;` changes channel
+      </div>
+
+      <BlackCat onDejaVu={onDejaVu} />
+      {dejavu > 0 && <div className={styles.dejavuText} key={dejavu}>déjà vu — they changed something</div>}
 
       {destroyed && (
         <div className={styles.wipe}>
           <div>
             <div className={styles.wipeText}>rm: removing everything</div>
-            <div style={{ marginTop: 14, fontSize: 11, letterSpacing: ".2em", color: "#12b23a" }}>
-              you were warned
-            </div>
+            <div style={{ marginTop: 14, fontSize: 11, letterSpacing: ".2em", color: "#12b23a" }}>you were warned</div>
           </div>
         </div>
       )}
+      {waking && <WakeUp onDone={endWake} />}
 
       <div className={styles.scanlines} />
       <div className={styles.vignette} />

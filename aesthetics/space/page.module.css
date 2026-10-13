@@ -1,0 +1,229 @@
+/* Deep Space — black, thin type, real plates feathered into the dark. */
+
+@font-face {
+  font-family: "Jost";
+  src: url("/fonts/space/jost-200.woff2") format("woff2");
+  font-weight: 200;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Jost";
+  src: url("/fonts/space/jost-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: block;
+}
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000004;
+  color: #eef1ff;
+  font-family: "Jost", "Futura", "Century Gothic", sans-serif;
+  font-weight: 200;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.field {
+  position: absolute;
+  inset: 0;
+}
+
+.plate {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+  /* Feather every exposure to nothing so no plate ever shows an edge. */
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 52%, transparent 100%);
+}
+
+.plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(0 0 4 / 0.82), transparent 36%),
+    radial-gradient(ellipse at 50% 50%, transparent 46%, rgb(0 0 4 / 0.7) 100%);
+}
+
+/* ----------------------------------------------------------------- type */
+.caption {
+  position: absolute;
+  left: 96px;
+  top: 300px;
+  width: 520px;
+  animation: arrive 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  pointer-events: none;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+}
+
+.kind {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #9db4ff;
+}
+
+.caption h1 {
+  margin-top: 16px;
+  font-size: 76px;
+  font-weight: 200;
+  line-height: 0.98;
+  letter-spacing: -1.5px;
+  text-shadow: 0 0 40px rgb(0 0 4 / 0.9);
+}
+
+.note {
+  margin-top: 26px;
+  max-width: 400px;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgb(238 241 255 / 0.78);
+  text-shadow: 0 0 20px #000004;
+}
+
+.odo {
+  position: absolute;
+  left: 96px;
+  bottom: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.num {
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgb(238 241 255 / 0.62);
+}
+
+/* ----------------------------------------------------------------- rail */
+.rail {
+  position: absolute;
+  left: 44px;
+  top: 150px;
+  height: 600px;
+  width: 1px;
+  background: rgb(238 241 255 / 0.16);
+}
+
+.rail > span {
+  position: absolute;
+  inset: 0;
+  background: #9db4ff;
+  transform-origin: 50% 0;
+  transform: scaleY(0);
+  box-shadow: 0 0 8px #9db4ff;
+}
+
+.rail button {
+  position: absolute;
+  left: -10px;
+  width: 21px;
+  height: 21px;
+  margin-top: -10px;
+}
+
+.rail button::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgb(238 241 255 / 0.45);
+  transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
+}
+
+.rail button:hover::after {
+  transform: scale(1.8);
+  background: #fff;
+}
+
+.rail button[data-on]::after {
+  transform: scale(2);
+  background: #fff;
+  box-shadow: 0 0 12px 2px #9db4ff;
+}
+
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 54px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: rgb(238 241 255 / 0.7);
+  animation: breathe 3.2s ease-in-out infinite;
+  transition: opacity 1.2s;
+  pointer-events: none;
+}
+
+.hint[data-gone] {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.3;
+  }
+}

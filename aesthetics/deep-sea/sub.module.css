@@ -1,0 +1,495 @@
+/* Deep Sea — inside DSV-4. Own reset + tokens (rule R2). px against 1600x900.
+ * Everything inside the hull is lit by its own instruments; everything outside is lit
+ * by the sun until 200 m, and after that by one lamp. */
+
+@font-face { font-family: "Barlow Condensed"; src: url("/fonts/deep-sea/barlow-condensed-500.woff2") format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "Barlow Condensed"; src: url("/fonts/deep-sea/barlow-condensed-700.woff2") format("woff2"); font-weight: 700; font-display: block; }
+
+.root {
+  --ui: #7dffd9;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #01070a;
+  color: #d8f4ee;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-weight: 500;
+  user-select: none;
+  cursor: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: none;
+}
+
+/* ---------- the ocean ---------- */
+.sea {
+  --day: 1;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 760px;
+  overflow: hidden;
+}
+
+/* sunlight, coming down in shafts and running out */
+.rays {
+  position: absolute;
+  inset: -20% -10% 0;
+  pointer-events: none;
+  opacity: var(--day);
+  background:
+    conic-gradient(from 160deg at 46% -20%, transparent 0deg, rgba(255, 255, 255, 0.22) 6deg, transparent 12deg, rgba(255, 255, 255, 0.14) 20deg, transparent 27deg, rgba(255, 255, 255, 0.2) 34deg, transparent 41deg),
+    radial-gradient(ellipse 60% 40% at 46% 0%, rgba(255, 255, 255, 0.5), transparent 70%);
+  mix-blend-mode: screen;
+  animation: rays 9s ease-in-out infinite;
+}
+
+@keyframes rays {
+  50% {
+    transform: translateX(26px) skewX(-2deg);
+    opacity: calc(var(--day) * 0.75);
+  }
+}
+
+.animal {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.animal img {
+  display: block;
+  width: 100%;
+}
+
+/* ROV frames are shot on black: screen them in and the black is the water */
+.animal[data-kind="glow"] {
+  mix-blend-mode: screen;
+}
+
+.animal[data-kind="glow"] img {
+  filter: contrast(1.25) brightness(0.95);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 52%, transparent 76%);
+}
+
+/* in lit water a cutout takes the water's colour */
+.animal[data-kind="cut"] img {
+  filter: saturate(0.85) brightness(0.92) drop-shadow(0 0 30px rgba(20, 120, 190, 0.4));
+}
+
+.snow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* the searchlight: a pool of white where the hull lamp is pointed */
+.beam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 680px;
+  height: 680px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(214, 240, 255, 0.34) 0%, rgba(160, 215, 255, 0.16) 30%, rgba(120, 190, 255, 0.05) 55%, transparent 70%);
+  mix-blend-mode: screen;
+}
+
+/* four inches of acrylic: a curve of reflection, a little fog at the rim */
+.glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(118deg, transparent 20%, rgba(255, 255, 255, 0.06) 27%, transparent 34%, transparent 62%, rgba(255, 255, 255, 0.035) 68%, transparent 74%);
+}
+
+/* ---------- the hull round the viewport ---------- */
+.frame {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 760px;
+  pointer-events: none;
+  /* a thick oval port cut through plate: everything outside the oval is hull */
+  background:
+    radial-gradient(ellipse 51.5% 55% at 50% 48%, transparent 0 96.4%, #9aa7ad 96.6%, #56646b 97.4%, #232c31 98.6%, #0c1215 100%),
+    #0c1215;
+  mask-image: radial-gradient(ellipse 51.5% 55% at 50% 48%, transparent 0 96.2%, #000 96.5%);
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
+}
+
+/* bolts round the flange */
+.frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle 9px at 3.5% 12%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 96.5% 12%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 2% 50%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 98% 50%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 3.5% 88%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 96.5% 88%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 20% 3%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%),
+    radial-gradient(circle 9px at 80% 3%, #aab6bb 0 40%, #3b474d 45% 80%, transparent 85%);
+}
+
+.reticle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 46px;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 1.5px solid rgba(125, 255, 217, 0.9);
+  box-shadow: 0 0 10px rgba(125, 255, 217, 0.5), inset 0 0 8px rgba(125, 255, 217, 0.25);
+  z-index: 6;
+}
+
+.reticle::before,
+.reticle::after {
+  content: "";
+  position: absolute;
+  background: rgba(125, 255, 217, 0.9);
+}
+
+.reticle::before {
+  left: 50%;
+  top: -9px;
+  bottom: -9px;
+  width: 1.5px;
+  margin-left: -0.75px;
+  mask-image: linear-gradient(180deg, #000 0 14px, transparent 14px calc(100% - 14px), #000 calc(100% - 14px));
+}
+
+.reticle::after {
+  top: 50%;
+  left: -9px;
+  right: -9px;
+  height: 1.5px;
+  margin-top: -0.75px;
+  mask-image: linear-gradient(90deg, #000 0 14px, transparent 14px calc(100% - 14px), #000 calc(100% - 14px));
+}
+
+/* ---------- the instrument shelf ---------- */
+.console {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 740px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 14px 400px 0 70px;
+  background:
+    linear-gradient(180deg, #2a353b 0 3px, #11181c 3px 9px, transparent 9px),
+    linear-gradient(180deg, #141c20, #070b0d);
+  box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.7);
+  z-index: 5;
+}
+
+.console small {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(125, 255, 217, 0.6);
+}
+
+.depth {
+  position: relative;
+  padding: 8px 18px 10px;
+  min-width: 250px;
+  border-radius: 6px;
+  background: #02090a;
+  box-shadow: inset 0 0 0 1px rgba(125, 255, 217, 0.22), inset 0 0 26px rgba(125, 255, 217, 0.08);
+}
+
+.depth b {
+  font-size: 74px;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 3px;
+  color: var(--ui);
+  text-shadow: 0 0 18px rgba(125, 255, 217, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.depth i {
+  margin-left: 6px;
+  font-style: normal;
+  font-size: 26px;
+  color: rgba(125, 255, 217, 0.7);
+}
+
+.depth span {
+  position: absolute;
+  right: 16px;
+  top: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffd27a;
+}
+
+.dials {
+  display: grid;
+  grid-template-columns: repeat(4, 104px);
+  gap: 10px;
+}
+
+.dials div {
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #02090a;
+  box-shadow: inset 0 0 0 1px rgba(125, 255, 217, 0.16);
+}
+
+.dials b {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: #d8f4ee;
+  font-variant-numeric: tabular-nums;
+}
+
+.dials i {
+  margin-left: 4px;
+  font-style: normal;
+  font-size: 15px;
+  color: rgba(216, 244, 238, 0.6);
+}
+
+.dials div[data-warn] b {
+  color: #ff8d6b;
+}
+
+.sonar {
+  text-align: center;
+}
+
+.sonar canvas {
+  display: block;
+  width: 108px;
+  height: 108px;
+  margin: 0 auto 2px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #03201a, #010a08);
+  box-shadow: inset 0 0 0 2px #2a353b, 0 0 14px rgba(60, 255, 190, 0.2);
+}
+
+.sonar small {
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+.switches {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.switches button {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(216, 244, 238, 0.7);
+  pointer-events: auto;
+}
+
+.switches button i {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #56646b, #1a2226);
+  box-shadow: inset 0 0 0 3px #0c1215, 0 2px 0 #3a474d;
+}
+
+.switches button[data-on] i {
+  background: radial-gradient(circle at 40% 35%, #fff7d0, #ffb93b 60%, #9a5a00);
+  box-shadow: inset 0 0 0 3px #0c1215, 0 0 20px rgba(255, 190, 80, 0.7);
+}
+
+.log b {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffd27a;
+}
+
+.log em {
+  font-style: normal;
+  font-size: 20px;
+  color: rgba(255, 210, 122, 0.55);
+}
+
+/* the depth ladder up the right-hand side of the port */
+.ladder {
+  position: absolute;
+  right: 44px;
+  top: -660px;
+  width: 6px;
+  height: 590px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(125, 255, 217, 0.5), rgba(125, 255, 217, 0.1));
+}
+
+.ladder i {
+  position: absolute;
+  left: -9px;
+  width: 24px;
+  height: 3px;
+  margin-top: -1px;
+  background: #ffd27a;
+  box-shadow: 0 0 10px #ffd27a;
+}
+
+.ladder span {
+  position: absolute;
+  left: 10px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: rgba(216, 244, 238, 0.28);
+}
+
+.ladder span[data-got] {
+  background: var(--ui);
+  box-shadow: 0 0 8px var(--ui);
+}
+
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 22px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(216, 244, 238, 0.75);
+  text-shadow: 0 1px 8px #000;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* a frame off the hull camera */
+.card {
+  position: absolute;
+  left: 90px;
+  top: 110px;
+  z-index: 8;
+  display: flex;
+  width: 560px;
+  text-align: left;
+  background: #02090a;
+  box-shadow: inset 0 0 0 1px rgba(125, 255, 217, 0.35), 0 20px 50px rgba(0, 0, 0, 0.8);
+  animation: card 0.4s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+  pointer-events: auto;
+}
+
+@keyframes card {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+}
+
+.card img {
+  width: 210px;
+  height: 170px;
+  object-fit: cover;
+  background: #000;
+}
+
+.card img[data-kind="cut"] {
+  object-fit: contain;
+  background: linear-gradient(180deg, #0e6fa8, #06365f);
+}
+
+.card div {
+  flex: 1;
+  padding: 14px 18px;
+}
+
+.card small {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(125, 255, 217, 0.7);
+}
+
+.card b {
+  display: block;
+  margin: 4px 0 6px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.card span {
+  font-size: 19px;
+  line-height: 1.25;
+  color: rgba(216, 244, 238, 0.86);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rays {
+    animation: none;
+  }
+}
+
+/* ---------- the bottom ---------- */
+.floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 700px;
+  pointer-events: none;
+  /* silt: only what the lamp is on has any shape */
+  background:
+    radial-gradient(ellipse 520px 150px at var(--lx, 800px) 40px, rgba(190, 205, 215, 0.5), transparent 70%),
+    repeating-radial-gradient(ellipse 240px 30px at 30% 12px, rgba(120, 140, 155, 0.16) 0 6px, transparent 6px 46px),
+    linear-gradient(180deg, #1a2228, #0a0e12 120px, #05070a);
+  background-size: auto, 900px 100%, auto;
+  border-top: 2px solid rgba(150, 170, 185, 0.22);
+  mask-image: linear-gradient(180deg, transparent, #000 26px);
+}
+
+.animal:last-of-type[data-kind="glow"] img {
+  filter: contrast(1.2) brightness(1.15) saturate(0.8);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 60%, transparent 80%);
+}

@@ -164,10 +164,10 @@ const SHOTS = [
   ],
 
   // 18 Windows 98
-  ["win98", "/win98", "desktop", async (p) => p.waitForTimeout(1500)],
+  ["vista", "/vista", "desktop", async (p) => p.waitForTimeout(1500)],
   [
-    "win98-errors",
-    "/win98",
+    "vista-errors",
+    "/vista",
     "desktop",
     async (p) => {
       await p.waitForTimeout(1200);
@@ -485,7 +485,7 @@ const GATE = process.argv.includes("--gate");
 const LIVE = [
   "", "frutiger-aero", "early-internet", "cottagecore", "xbox-360", "liminal",
   "neon", "bbs", "game-beach", "deep-sea", "vaporwave", "aztec", "nintendo-3ds",
-  "dead-mall", "wii", "matrix", "ps1", "win98", "arcade", "news", "cyber-sigilism", "tiki", "skate-zine",
+  "dead-mall", "wii", "matrix", "ps1", "vista", "arcade", "news", "cyber-sigilism", "tiki", "skate-zine",
 ];
 const GATE_SHOTS = LIVE.flatMap((slug) => [
   [`gate-${slug || "map"}`, `/${slug}`, "desktop", async (p) => p.waitForTimeout(2200)],

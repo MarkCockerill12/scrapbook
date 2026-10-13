@@ -1,35 +1,16 @@
-/*
- * Game Beach — Isle Delfino tourist board.
- *
- * Own reset, own tokens (rule R2). px against the 1600x900 canvas.
- *
- * Toon-shaded 2002 games are not "bright colours". They are a specific rendering
- * model and it has rules:
- *   1. SHADING IS BANDED, NOT SMOOTH. Two or three flat steps with hard edges
- *      between them. A gradient anywhere and it collapses into 2015 flat design.
- *   2. EVERYTHING HAS AN OUTLINE, AND THE OUTLINE IS DARKER VERSION OF THE FILL,
- *      never black. Black outlines read as a cartoon; tinted outlines read as a
- *      shader.
- *   3. THE WATER IS THE MOST SATURATED THING ON SCREEN, and it is a colour no
- *      ocean has ever been. That impossible turquoise is the whole memory.
- *   4. THE HUD IS CHUNKY, DROP-SHADOWED AND SITS IN THE CORNERS. It is not a UI
- *      overlay, it is furniture.
- */
+/* Game Beach — a holiday scrapbook tipped out on the sand. Own reset, tokens, fonts. */
+
+@font-face { font-family: "Luckiest Guy"; src: url("/fonts/game-beach/luckiest-guy-400.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Caveat"; src: url("/fonts/game-beach/caveat-400.woff2") format("woff2"); font-weight: 400 700; font-display: block; }
+@font-face { font-family: "Fredoka"; src: url("/fonts/game-beach/fredoka-500.woff2") format("woff2"); font-weight: 400 700; font-display: block; }
 
 .root {
-  --sea: #23c9d8;
-  --sea-deep: #0e8fa8;
-  --sand: #f2dfa8;
-  --leaf: #3fae4a;
-  --ink: #10323c;
-
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #6fd2f5 0%, #a9e8fb 46%, #d8f6ff 58%);
-  color: #ffffff;
-  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
-  cursor: crosshair;
+  background: #e7d3a8;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  color: #1c2b3a;
   user-select: none;
 }
 
@@ -44,408 +25,591 @@
 :where(.root) button {
   font: inherit;
   color: inherit;
-  border: 0;
   background: none;
-  cursor: crosshair;
-}
-
-.night {
-  filter: saturate(0.78) brightness(0.52) hue-rotate(-16deg);
-  transition: filter 1400ms ease;
-}
-
-.day {
-  transition: filter 1400ms ease;
-}
-
-/* ---------- sky ---------- */
-
-.layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  will-change: transform;
-}
-
-/* Cel clouds: hard-edged lumps, two tones, no blur anywhere. */
-.cloud {
-  position: absolute;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow:
-    0 10px 0 0 #d6eefb,
-    0 0 0 6px rgba(255, 255, 255, 0.55);
-}
-
-.sunDisc {
-  position: absolute;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  background: #fff6c2;
-  box-shadow: 0 0 0 18px rgba(255, 246, 194, 0.35), 0 0 0 38px rgba(255, 246, 194, 0.16);
-}
-
-/*
- * Masked to an island shape and sat ON the horizon. Unmasked it is a hard-edged
- * rectangle of photograph floating in a cel-shaded sky, which is the single most
- * obvious way to break this aesthetic.
- */
-.island {
-  position: absolute;
-  object-fit: cover;
-  filter: saturate(1.7) contrast(1.35) brightness(1.06) hue-rotate(-6deg);
-  mask-image: radial-gradient(ellipse 46% 74% at 50% 96%, #000 42%, transparent 74%);
-}
-
-/* ---------- sea ---------- */
-
-.sea {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 460px;
-  bottom: 0;
-  display: block;
-  cursor: crosshair;
-}
-
-.splash {
-  position: absolute;
-  border-radius: 50%;
-  border: 5px solid #ffffff;
-  pointer-events: none;
-  animation: splash 700ms ease-out forwards;
-}
-
-@keyframes splash {
-  from { width: 10px; height: 10px; margin: -5px 0 0 -5px; opacity: 1; }
-  to { width: 190px; height: 190px; margin: -95px 0 0 -95px; opacity: 0; }
-}
-
-/* ---------- beach ---------- */
-
-.beach {
-  position: absolute;
-  left: -40px;
-  right: -40px;
-  bottom: -30px;
-  height: 300px;
-  border-radius: 60% 40% 0 0 / 90px 70px 0 0;
-  background: linear-gradient(180deg, #fbeec4 0 26px, var(--sand) 26px 90px, #dcc182 90px);
-  box-shadow: inset 0 4px 0 #ffffff;
-}
-
-/* ---------- palms ---------- */
-
-.palm {
-  position: absolute;
-  pointer-events: none;
-  filter: drop-shadow(10px 16px 0 rgba(16, 50, 60, 0.16));
-}
-
-/* ---------- coins ---------- */
-
-.coin {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  margin: -20px 0 0 -20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #fff6b0 0 34%, #ffd93b 34% 66%, #e0a80f 66%);
-  box-shadow: 0 0 0 4px #b8830a, 0 6px 0 rgba(16, 50, 60, 0.18);
-  animation: bob 1.6s ease-in-out infinite alternate, flip 1.9s linear infinite;
-  z-index: 12;
-}
-
-@keyframes bob {
-  from { transform: translateY(-6px); }
-  to { transform: translateY(6px); }
-}
-
-@keyframes flip {
-  0%, 100% { width: 40px; margin-left: -20px; }
-  50% { width: 12px; margin-left: -6px; }
-}
-
-.coinPop {
-  position: absolute;
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff6b0;
-  text-shadow: 2px 2px 0 #b8830a;
-  pointer-events: none;
-  animation: pop 700ms ease-out forwards;
-  z-index: 20;
-}
-
-@keyframes pop {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-60px); opacity: 0; }
-}
-
-/* ---------- HUD ---------- */
-
-/*
- * The HUD is furniture: chunky, outlined in a darker tint of its own fill, with a
- * hard offset shadow. Nothing here is translucent.
- */
-.hud {
-  position: absolute;
-  z-index: 30;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff 0 50%, #e2f4fb 50%);
-  color: var(--ink);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.25);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.hudCoin {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #fff6b0 0 34%, #ffd93b 34% 66%, #e0a80f 66%);
-  box-shadow: 0 0 0 3px #b8830a;
-}
-
-.hudNum {
-  font-size: 26px;
-  font-variant-numeric: tabular-nums;
-}
-
-.hearts {
-  display: flex;
-  gap: 5px;
-}
-
-.heart {
-  width: 22px;
-  height: 22px;
-  background: #ff5a5a;
-  box-shadow: 0 0 0 3px #b32222;
-  clip-path: polygon(50% 100%, 0 38%, 18% 8%, 50% 26%, 82% 8%, 100% 38%);
-}
-
-.minimap {
-  position: absolute;
-  z-index: 30;
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, #7fe3f5 0 58%, #2aa4c4 58%);
-  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.25);
-  overflow: hidden;
-}
-
-.mapBlip {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  margin: -6px 0 0 -6px;
-  border-radius: 50%;
-  background: #ffd93b;
-  box-shadow: 0 0 0 2px #b8830a;
-}
-
-.mapYou {
-  background: #ff5a5a;
-  box-shadow: 0 0 0 2px #b32222;
-}
-
-/* ---------- level cards ---------- */
-
-.card {
-  position: absolute;
-  z-index: 16;
-  width: 210px;
-  padding: 12px 12px 14px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0 46%, #eaf7fd 46%);
-  color: var(--ink);
-  box-shadow: 0 0 0 5px #2aa4c4, 0 12px 0 rgba(16, 50, 60, 0.22);
-  animation: float 3.4s ease-in-out infinite alternate;
-  text-align: center;
-}
-
-@keyframes float {
-  from { transform: translateY(-8px) rotate(-1deg); }
-  to { transform: translateY(8px) rotate(1deg); }
-}
-
-.card:hover {
-  filter: brightness(1.06);
-}
-
-.cardArt {
-  height: 92px;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 3px rgba(16, 50, 60, 0.25);
-  display: grid;
-  place-items: center;
-  font-size: 34px;
-  font-weight: 700;
-  color: #ffffff;
-  text-shadow: 2px 2px 0 rgba(16, 50, 60, 0.4);
-}
-
-.cardName {
-  display: block;
-  margin-top: 9px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
-.cardSub {
-  display: block;
-  margin-top: 3px;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #5b7d88;
-}
-
-/* ---------- signpost ---------- */
-
-.signpost {
-  position: absolute;
-  z-index: 18;
+  border: 0;
   cursor: pointer;
 }
 
-.signBoard {
-  width: 190px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #e2b169 0 40%, #c08c42 40%);
-  color: #3a260f;
-  font-weight: 700;
-  font-size: 13px;
-  text-align: center;
-  box-shadow: 0 0 0 5px #8a5f28, 0 8px 0 rgba(16, 50, 60, 0.2);
+.flooding {
+  cursor: crosshair;
 }
 
-.signPost {
-  width: 22px;
-  height: 90px;
-  margin: 0 auto;
-  background: linear-gradient(90deg, #c08c42 0 50%, #8a5f28 50%);
-  box-shadow: 0 0 0 4px #8a5f28;
+/* ------------------------------------------------ sand + sea */
+.sand {
+  position: absolute;
+  inset: 0;
+  background-size: 520px 520px;
+  filter: saturate(1.25) brightness(1.12) sepia(0.12);
 }
 
-/* The text box. Chunky border, opaque, sits above the bottom of frame. */
-.textbox {
+.sand::after {
+  /* warm afternoon sun from the top left */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 70% at 20% 10%, rgba(255, 245, 210, 0.45), transparent 60%), linear-gradient(180deg, transparent 60%, rgba(120, 80, 30, 0.18));
+}
+
+.sea {
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  top: -20px;
+  height: 210px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 72%, transparent 100%);
+  animation: tide 7s ease-in-out infinite alternate;
+}
+
+.sea img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+  transform: scaleY(-1);
+  filter: saturate(1.35) brightness(1.1);
+}
+
+@keyframes tide {
+  from {
+    transform: translateY(-10px);
+  }
+  to {
+    transform: translateY(8px);
+  }
+}
+
+.foam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  height: 36px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.6) 55%, transparent);
+  filter: blur(5px);
+  opacity: 0.85;
+  animation: foam 5s ease-in-out infinite alternate;
+}
+
+@keyframes foam {
+  to {
+    transform: translateY(10px) scaleY(1.4);
+    opacity: 0.5;
+  }
+}
+
+.caustics {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 20px, transparent 20px 70px),
+    repeating-linear-gradient(65deg, rgba(255, 255, 255, 0.04) 0 14px, transparent 14px 60px);
+  mix-blend-mode: soft-light;
+  animation: caust 14s linear infinite;
+}
+
+@keyframes caust {
+  to {
+    background-position: 300px 0, -200px 0;
+  }
+}
+
+.boat {
+  position: absolute;
+  top: -10px;
+  left: -200px;
+  width: 120px;
+  z-index: 2;
+  filter: drop-shadow(0 10px 6px rgba(0, 40, 60, 0.35));
+  animation: sail 46s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes sail {
+  0% { transform: translateX(0) rotate(-3deg); }
+  50% { transform: translateX(1000px) rotate(3deg); }
+  100% { transform: translateX(2000px) rotate(-3deg); }
+}
+
+.big {
+  position: absolute;
+  right: 40px;
+  top: 90px;
+  width: 150px;
+  z-index: 3;
+  filter: drop-shadow(10px 14px 6px rgba(80, 50, 20, 0.35));
+  cursor: pointer;
+}
+
+.sonic {
+  position: absolute;
+  top: 120px;
+  left: 1700px;
+  width: 110px;
+  z-index: 4;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 4px rgba(80, 50, 20, 0.35));
+  animation: dash 1.6s cubic-bezier(0.5, 0, 0.6, 1) forwards;
+}
+
+@keyframes dash {
+  to {
+    transform: translateX(-2000px);
+  }
+}
+
+/* ------------------------------------------------ title */
+.title {
+  position: absolute;
+  left: 34px;
+  top: 150px;
+  z-index: 5;
+  width: 360px;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+.greet {
+  display: block;
+  font: 700 34px/1 "Caveat", cursive;
+  color: #fff;
+  text-shadow: 0 2px 0 #c14a2a, 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.big1,
+.big2 {
+  display: block;
+  font: 96px/0.9 "Luckiest Guy", sans-serif;
+  letter-spacing: 2px;
+  background-size: cover;
+  background-position: center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 3px #fff;
+  filter: drop-shadow(4px 5px 0 #c14a2a) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
+}
+
+.big2 {
+  font-size: 104px;
+}
+
+.sub {
+  display: block;
+  margin-top: 6px;
+  font: 700 22px "Caveat", cursive;
+  color: #7a3a1a;
+}
+
+/* ------------------------------------------------ postcards */
+.card {
+  position: relative;
+  padding: 9px 9px 30px;
+  background: #fffdf6;
+  box-shadow: 0 14px 22px -8px rgba(70, 40, 10, 0.55), 0 2px 4px rgba(70, 40, 10, 0.25);
+}
+
+.card::before {
+  /* a strip of tape */
+  content: "";
   position: absolute;
   left: 50%;
-  bottom: 68px;
-  transform: translateX(-50%);
+  top: -10px;
+  width: 80px;
+  height: 22px;
+  margin-left: -40px;
+  background: rgba(255, 245, 200, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transform: rotate(-3deg);
+  z-index: 2;
+}
+
+.cardImg {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.goop {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: calc(100% - 18px);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)) contrast(1.1);
+}
+
+.cardCap {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  font: 700 21px/1 "Caveat", cursive;
+  color: #20324a;
+  white-space: nowrap;
+}
+
+.cardCap i {
+  font-style: normal;
+  font-size: 16px;
+  color: #b0503a;
+}
+
+/* ------------------------------------------------ the cast */
+.cast {
+  position: absolute;
+  z-index: 60;
+  filter: drop-shadow(14px 16px 8px rgba(80, 50, 20, 0.38));
+  cursor: pointer;
+  transition: transform 200ms ease;
+}
+
+.cast:hover {
+  transform: translateY(-8px) rotate(-2deg);
+}
+
+.mario { left: 20px; top: 470px; width: 150px; }
+.yoshi { left: 1395px; top: 470px; width: 150px; }
+.chao { left: 610px; top: 330px; width: 70px; animation: waddle 3s ease-in-out infinite alternate; }
+.pianta { left: 1300px; top: 170px; width: 100px; }
+.shadow { left: 830px; top: 780px; width: 120px; opacity: 0.85; cursor: default; animation: lurk 9s ease-in-out infinite; }
+
+@keyframes waddle {
+  0% { translate: 0 0; rotate: -6deg; }
+  50% { rotate: 6deg; }
+  100% { translate: 80px 10px; rotate: -6deg; }
+}
+
+@keyframes lurk {
+  0%, 100% { opacity: 0; transform: translateY(20px); }
+  30%, 60% { opacity: 0.85; transform: none; }
+}
+
+/* ------------------------------------------------ pickups */
+.pick {
+  position: absolute;
   z-index: 40;
-  width: 820px;
-  min-height: 130px;
-  padding: 20px 26px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0 12%, #eaf7fd 12%);
-  color: var(--ink);
-  font-size: 20px;
-  line-height: 1.7;
-  box-shadow: 0 0 0 6px #2aa4c4, 0 12px 0 rgba(16, 50, 60, 0.25);
+  animation: bob 1.8s ease-in-out infinite alternate;
+  filter: drop-shadow(0 8px 4px rgba(80, 50, 20, 0.35));
 }
 
-.textboxMore {
-  position: absolute;
-  right: 18px;
-  bottom: 12px;
-  font-size: 18px;
-  color: #2aa4c4;
-  animation: bob 0.7s ease-in-out infinite alternate;
+.pick img {
+  width: 100%;
+  display: block;
 }
 
-/* ---------- toggles ---------- */
+.coin img,
+.ring img,
+.blue img {
+  animation: spin 1.4s linear infinite;
+}
 
-.toggle {
+@keyframes spin {
+  from { transform: rotateY(0); }
+  to { transform: rotateY(360deg); }
+}
+
+@keyframes bob {
+  to {
+    translate: 0 -8px;
+  }
+}
+
+.shine {
+  filter: drop-shadow(0 0 18px rgba(255, 220, 80, 0.9)) drop-shadow(0 10px 6px rgba(80, 50, 20, 0.35));
+}
+
+/* ------------------------------------------------ FLUDD water */
+.drop {
   position: absolute;
-  z-index: 30;
-  padding: 10px 20px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff 0 50%, #e2f4fb 50%);
-  color: var(--ink);
+  z-index: 70;
+  width: 8px;
+  height: 10px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 35% 30%, #fff, #7fd8ff 45%, #1f8fd8);
+  pointer-events: none;
+  animation: splash 600ms ease-out forwards;
+}
+
+@keyframes splash {
+  to {
+    transform: translate(var(--dx), 40px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------ HUD */
+.hud {
+  position: absolute;
+  right: 26px;
+  top: 16px;
+  z-index: 90;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font: 34px "Luckiest Guy", sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 1.5px #1a2a6a;
+  text-shadow: 0 3px 0 #1a2a6a;
+}
+
+.hud span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hud img {
+  height: 36px;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.3));
+}
+
+.hudShine img {
+  height: 48px;
+}
+
+.hudRing {
+  color: #ffd400;
+  font-family: "Fredoka", sans-serif;
   font-weight: 700;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.25);
+  -webkit-text-stroke: 1px #6a3a00;
+}
+
+.fludd {
+  position: absolute;
+  left: 20px;
+  bottom: 26px;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 8px;
+  border-radius: 40px;
+  background: linear-gradient(180deg, #fff, #d9ecf7);
+  border: 3px solid #1a5a9a;
+  box-shadow: 0 6px 0 #1a5a9a, 0 10px 16px rgba(0, 0, 0, 0.3);
+  font: 26px "Luckiest Guy", sans-serif;
+  color: #1a5a9a;
+  text-align: left;
+}
+
+.fludd img {
+  height: 60px;
+}
+
+.fludd small {
+  display: block;
+  font: 600 14px "Fredoka", sans-serif;
+  color: #3a5a7a;
+}
+
+.flOn {
+  background: linear-gradient(180deg, #bfeaff, #5ab8f0);
+  color: #fff;
+  -webkit-text-stroke: 1px #0a3a6a;
+}
+
+.flOn small {
+  color: #062a4a;
 }
 
 .hint {
   position: absolute;
-  left: 40px;
-  bottom: 26px;
-  z-index: 30;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 2px 0 rgba(16, 50, 60, 0.4);
-  line-height: 2;
+  left: 330px;
+  bottom: 30px;
+  z-index: 95;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 253, 246, 0.9);
+  font: 700 20px "Caveat", cursive;
+  color: #20324a;
+  box-shadow: 0 4px 10px rgba(80, 50, 20, 0.25);
+}
+
+.clean {
+  position: absolute;
+  left: 50%;
+  top: 110px;
+  z-index: 96;
+  transform: translateX(-50%);
+  font: 42px "Luckiest Guy", sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 2px #1a5a9a;
+  text-shadow: 0 4px 0 #1a5a9a;
+  animation: pop 600ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.shineGet {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  background: radial-gradient(circle, rgba(255, 240, 150, 0.55), rgba(255, 180, 40, 0.15) 50%, transparent 70%);
   pointer-events: none;
 }
 
-/* ---------- 1-UP ---------- */
+.shineGet img {
+  width: 260px;
+  animation: spin 1s linear infinite, pop 600ms cubic-bezier(0.2, 1.6, 0.4, 1);
+  filter: drop-shadow(0 0 40px #ffd400);
+}
 
-.oneup {
+.shineGet b {
+  font: 90px "Luckiest Guy", sans-serif;
+  color: #ffe34a;
+  -webkit-text-stroke: 3px #9a4a00;
+  text-shadow: 0 6px 0 #9a4a00;
+  animation: pop 600ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------ lightbox postcard */
+.lightbox {
   position: absolute;
   inset: 0;
-  z-index: 60;
+  z-index: 300;
   display: grid;
   place-items: center;
-  gap: 20px;
   align-content: center;
-  background: rgba(16, 50, 60, 0.55);
-  animation: fadeIn 300ms ease;
+  gap: 18px;
+  background: rgba(20, 50, 70, 0.55);
+  backdrop-filter: blur(3px);
+  perspective: 1600px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
+.big3d {
+  position: relative;
+  width: 900px;
+  height: 600px;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.3, 0.9, 0.3, 1);
+  animation: pop 400ms ease;
+  cursor: pointer;
 }
 
-.oneupText {
-  font-size: 62px;
-  font-weight: 700;
-  font-style: italic;
-  color: #ffd93b;
-  text-shadow: 4px 4px 0 #b8830a, 8px 8px 0 rgba(16, 50, 60, 0.4);
+.flipped {
+  transform: rotateY(180deg);
 }
 
-.oneupSub {
-  font-size: 15px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+.front,
+.back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background: #fffdf6;
+  padding: 18px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
 }
 
-.oneupGo {
-  margin-top: 8px;
-  padding: 14px 32px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff 0 50%, #e2f4fb 50%);
-  color: var(--ink);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  box-shadow: 0 0 0 5px #2aa4c4, 0 8px 0 rgba(16, 50, 60, 0.3);
+.front img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .coin,
-  .card,
-  .textboxMore,
-  .oneup {
-    animation: none;
-  }
+.frontCap {
+  position: absolute;
+  left: 40px;
+  bottom: 34px;
+  font: 60px "Luckiest Guy", sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 2px #1a2a6a;
+  text-shadow: 0 5px 0 #1a2a6a;
+}
+
+.back {
+  transform: rotateY(180deg);
+  display: flex;
+  gap: 30px;
+  padding: 40px 44px;
+  background:
+    linear-gradient(90deg, transparent 49.8%, #c9b89a 49.8% 50.2%, transparent 50.2%),
+    #fbf5e6;
+}
+
+.msg {
+  flex: 1;
+  font: 36px/1.35 "Caveat", cursive;
+  color: #20324a;
+}
+
+.sign {
+  margin-top: 14px;
+  color: #b0503a;
+}
+
+.addr {
+  position: relative;
+  flex: 1;
+  padding-top: 170px;
+  font: 32px/1.5 "Caveat", cursive;
+  color: #20324a;
+}
+
+.addr p {
+  border-bottom: 1px solid #c9b89a;
+}
+
+.stamp {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 110px;
+  padding: 5px;
+  background: #fff;
+  border: 3px dashed #e6dcc6;
+  transform: rotate(4deg);
+}
+
+.stampBlank {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 110px;
+  height: 140px;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font: 18px "Luckiest Guy", sans-serif;
+  color: #fff;
+  background: #3a8ac0;
+  border: 5px solid #fff;
+  outline: 3px dashed #e6dcc6;
+}
+
+.postmark {
+  position: absolute;
+  right: 80px;
+  top: 90px;
+  padding: 18px 10px;
+  border: 3px solid rgba(176, 80, 58, 0.7);
+  border-radius: 50%;
+  font: 700 16px "Fredoka", sans-serif;
+  color: rgba(176, 80, 58, 0.8);
+  transform: rotate(-14deg);
+}
+
+.game {
+  margin-top: 30px;
+  font-size: 22px;
+  color: #7a6a4a;
+  border: 0 !important;
+}
+
+.lbHint {
+  font: 700 22px "Caveat", cursive;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }

@@ -2,7 +2,26 @@
 
 **Fiction:** *DSV-4 descent log.* You go down, it gets worse, and nothing reassures you.
 
-**Canvas:** 1600×**5400**, `width` mode. **The first page to earn a scroll** under rule
+**Extended 2026-09-28** (Mark: "needs to be longer, start at the surface, fish swim by,
+more aesthetic"). Now 1600×**9000**. `Life.tsx` adds real photography zone by zone:
+
+- **Surface (0 m):** a real dawn horizon (Flickr CC), the waterline, a humpback that
+  breaches every ~26s, the underside of the surface and god-rays. The porthole
+  vignette only closes in once you're below ~150 m.
+- **Sunlight (0–200 m):** matted Wikipedia photos swimming across — dolphin, green
+  turtle, manta, whale shark, hammerhead, blue shark, ocean sunfish — dimming with
+  depth, plus sardine schools screen-blended into the blue.
+- **Twilight → Abyss:** ROV photographs on black water (atolla, comb jelly, hatchetfish,
+  sea nettle, fangtooth, dragonfish, viperfish, dumbo octopus, gorgonian, yeti crab),
+  screen-blended so the black vanishes, dim until your lamp finds them (rAF writes
+  opacity from the pointer ref).
+- **The bottom:** a black smoker and Riftia tube worms on the silt. The implosion egg
+  now waits until you've lingered on the floor for 14s.
+
+Gotcha: `.root` in the CSS had the canvas height hard-coded — it must match the
+registry's `canvas.height`, or everything below is silently clipped.
+
+**Canvas:** 1600×9000, `width` mode. **The first page to earn a scroll** under rule
 R1 — scrolling *is* descending. Letterbox `#01070a`.
 
 ## What makes the deep read as deep

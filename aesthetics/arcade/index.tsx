@@ -1,325 +1,135 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AESTHETICS } from "@/lib/registry";
-import { sbGet, sbSet } from "@/lib/storage";
+import { useMusic } from "@/lib/music";
+import { attract } from "./music";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { img } from "@/lib/assets";
+import { noiseLoop, unlock } from "@/lib/audio";
+import { sbGet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
-import { LETTERS, Screen, type Mode, type ScoreEntry } from "./Screen";
-import { bleep, clack, coin, jackpot, letterTick, move, start } from "./sound";
-import styles from "./styles.module.css";
+import { Game } from "./Game";
+import { bleep, clack } from "./sound";
+import h from "./hall.module.css";
 
 /**
- * Channel 21 — Arcade attract mode.
+ * Channel — Arcade. The row, from the door.
  *
- * Fiction: *SCRAPBOOK — 1 PLAYER · INSERT COIN.* The page is the cabinet.
- *
- * The demo argument: a cabinet is **hardware you are standing at**, and the thing
- * that makes it hardware is that it does not care about you until you pay. The page
- * demos itself, the marquee is backlit and flickering, the glass reflects the room,
- * and the controls are physical objects that move when pressed. Nothing is
- * interactive until a coin goes in — which is the whole social contract of an
- * arcade, expressed as a UI state machine.
- *
- * No assets.
+ * Fourth build (2026-10). Mark: "a further-out shot of the arcade, and one of the
+ * arcade machines is the fleshed-out main one we can interact with — get rid of the
+ * prize counter and ball and grabber". So: one real photograph of a real arcade, taken
+ * from far enough back to see the whole row and the fairy lights, and exactly one
+ * cabinet in it that is switched on for you. Walk up to it and the room falls away
+ * round the tube; step back and you are in the doorway again.
  */
 
-const SLUG = "arcade";
-const ATTRACT_MS = 4200;
-const FREE_PLAY_AT = 99;
+const A = "arcade";
 
-const DEFAULT_SCORES: ScoreEntry[] = [
-  { initials: "CPU", score: 23000 },
-  { initials: "ZAK", score: 18000 },
-  { initials: "AAA", score: 12000 },
-  { initials: "MRK", score: 9000 },
-  { initials: "???", score: 4000 },
-];
+// the dark tube of the second cabinet, in canvas px (photo is 1600x1200, shown at y -200)
+const QUAD = { tl: [300, 362], tr: [498, 345], br: [521, 472], bl: [336, 500] };
+const GW = 512;
+const GH = 448;
 
-const BUTTONS = [
-  { id: "start", label: "START", colour: "#38c46a" },
-  { id: "fire", label: "SELECT", colour: "#e0392f" },
-  { id: "sign", label: "SIGN", colour: "#2b8fd6" },
-  { id: "back", label: "BACK", colour: "#f0c419" },
-] as const;
-
-type ButtonId = (typeof BUTTONS)[number]["id"];
+function quadMatrix(w: number, hh: number, q: typeof QUAD): string {
+  const [x0, y0] = q.tl;
+  const [x1, y1] = q.tr;
+  const [x2, y2] = q.br;
+  const [x3, y3] = q.bl;
+  const dx1 = x1 - x2;
+  const dx2 = x3 - x2;
+  const dx3 = x0 - x1 + x2 - x3;
+  const dy1 = y1 - y2;
+  const dy2 = y3 - y2;
+  const dy3 = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const a13 = (dx3 * dy2 - dx2 * dy3) / den;
+  const a23 = (dx1 * dy3 - dx3 * dy1) / den;
+  return `matrix3d(${(x1 - x0 + a13 * x1) / w},${(y1 - y0 + a13 * y1) / w},0,${a13 / w},${(x3 - x0 + a23 * x3) / hh},${(y3 - y0 + a23 * y3) / hh},0,${a23 / hh},0,0,1,0,${x0},${y0},0,1)`;
+}
 
 export default function Arcade() {
-  const begin = useShell((s) => s.beginTransition);
-  const visited = useShell((s) => s.visited);
+  useMusic(attract, 126);
+  const muted = useShell((s) => s.muted);
+  const [close, setClose] = useState(false);
+  const [best, setBest] = useState(0);
+  const matrix = useMemo(() => quadMatrix(GW, GH, QUAD), []);
 
-  const games = useMemo(() => AESTHETICS.filter((a) => a.status === "live"), []);
-  const myScore = visited.length * 1000;
+  useEffect(() => setBest(sbGet(A, "hi", 12000)), []);
 
-  const [mode, setMode] = useState<Mode>("attract");
-  const [attractPage, setAttractPage] = useState(0);
-  const [demoIndex, setDemoIndex] = useState(0);
-  const [credits, setCredits] = useState(0);
-  const [totalCoins, setTotalCoins] = useState(0);
-  const [freePlay, setFreePlay] = useState(false);
-  const [selection, setSelection] = useState(0);
-  const [scores, setScores] = useState<ScoreEntry[]>(DEFAULT_SCORES);
-  const [initials, setInitials] = useState([0, 0, 0]);
-  const [cursor, setCursor] = useState(0);
-  const [pressed, setPressed] = useState<ButtonId | null>(null);
-  const [stick, setStick] = useState({ x: 0, y: 0 });
-
-  const idle = useRef(performance.now());
-  const stickRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const lastDir = useRef("");
-  const repeat = useRef(0);
-
+  // the room: transformers, fans, and every other machine in attract mode
   useEffect(() => {
-    setScores(sbGet<ScoreEntry[]>(SLUG, "scores", DEFAULT_SCORES));
-    const coins = sbGet<number>(SLUG, "coins", 0);
-    setTotalCoins(coins);
-    if (coins >= FREE_PLAY_AT) setFreePlay(true);
-  }, []);
-
-  // Attract mode: three pages on a loop, and it takes the screen back if you walk
-  // away mid-select. That reclaiming is what makes it feel like a machine.
-  useEffect(() => {
+    if (muted) return;
+    const hum = noiseLoop({ gain: 0.03, lowpass: 260, attack: 2 });
+    let n = 0;
     const id = window.setInterval(() => {
-      if (mode !== "attract") {
-        if (performance.now() - idle.current > 25000) setMode("attract");
-        return;
+      if (!close && Math.random() < 0.7) bleep(n++ + Math.floor(Math.random() * 4));
+    }, 620);
+    return () => {
+      hum();
+      window.clearInterval(id);
+    };
+  }, [muted, close]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && close) {
+        e.preventDefault();
+        e.stopPropagation();
+        setClose(false);
+        clack();
       }
-      setAttractPage((p) => {
-        const next = (p + 1) % 3;
-        if (next === 2) setDemoIndex((d) => (d + 1) % games.length);
-        bleep(next);
-        return next;
-      });
-    }, ATTRACT_MS);
-    return () => window.clearInterval(id);
-  }, [mode, games.length]);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [close]);
 
-  const wake = () => {
-    idle.current = performance.now();
-  };
-
-  const insertCoin = () => {
-    wake();
-    coin();
-    setCredits((c) => c + 1);
-    setTotalCoins((t) => {
-      const next = t + 1;
-      sbSet(SLUG, "coins", next);
-      if (next >= FREE_PLAY_AT && !freePlay) {
-        setFreePlay(true);
-        window.setTimeout(jackpot, 260);
-      }
-      return next;
-    });
-  };
-
-  const launch = useCallback(() => {
-    const game = games[selection];
-    if (!game) return;
-    start();
-    window.setTimeout(() => begin(game.slug), 620);
-  }, [games, selection, begin]);
-
-  const registerScore = useCallback(() => {
-    const name = initials.map((n) => LETTERS[n]).join("");
-    const next = [...scores.map((s) => ({ ...s, mine: false })), {
-      initials: name,
-      score: myScore,
-      mine: true,
-    }]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
-    setScores(next);
-    sbSet(SLUG, "scores", next);
-    setMode("attract");
-    setAttractPage(1);
-    start();
-  }, [initials, scores, myScore]);
-
-  const press = useCallback(
-    (id: ButtonId) => {
-      wake();
-      clack();
-      setPressed(id);
-      window.setTimeout(() => setPressed(null), 110);
-
-      if (id === "start") {
-        if (mode !== "attract") return;
-        if (!freePlay && credits < 1) return;
-        if (!freePlay) setCredits((c) => c - 1);
-        setMode("select");
-        start();
-      } else if (id === "fire") {
-        if (mode === "select") launch();
-        else if (mode === "initials") registerScore();
-      } else if (id === "sign") {
-        setMode("initials");
-        setCursor(0);
-        letterTick();
-      } else if (id === "back") {
-        setMode("attract");
-      }
-    },
-    [mode, freePlay, credits, launch, registerScore],
-  );
-
-  /** One directional pulse from the stick. */
-  const nudge = useCallback(
-    (dir: string) => {
-      wake();
-      move();
-      if (mode === "select") {
-        setSelection((s) => {
-          const cols = 4;
-          if (dir === "left") return (s - 1 + games.length) % games.length;
-          if (dir === "right") return (s + 1) % games.length;
-          if (dir === "up") return (s - cols + games.length) % games.length;
-          return (s + cols) % games.length;
-        });
-      } else if (mode === "initials") {
-        if (dir === "left") setCursor((c) => (c + 2) % 3);
-        else if (dir === "right") setCursor((c) => (c + 1) % 3);
-        else {
-          setInitials((prev) => {
-            const next = [...prev];
-            const step = dir === "up" ? 1 : -1;
-            next[cursor] = (next[cursor] + step + LETTERS.length) % LETTERS.length;
-            return next;
-          });
-        }
-      }
-    },
-    [mode, games.length, cursor],
-  );
-
-  // --- the stick -----------------------------------------------------------
-  const onStickMove = (clientX: number, clientY: number) => {
-    const rect = stickRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = Math.max(-1, Math.min(1, (clientX - cx) / (rect.width * 0.5)));
-    const dy = Math.max(-1, Math.min(1, (clientY - cy) / (rect.height * 0.5)));
-    setStick({ x: dx, y: dy });
-
-    const dir =
-      Math.abs(dx) < 0.45 && Math.abs(dy) < 0.45
-        ? ""
-        : Math.abs(dx) > Math.abs(dy)
-          ? dx > 0
-            ? "right"
-            : "left"
-          : dy > 0
-            ? "down"
-            : "up";
-
-    const now = performance.now();
-    // New direction fires at once; holding repeats every 180ms, like a real gate.
-    if (dir && (dir !== lastDir.current || now - repeat.current > 180)) {
-      repeat.current = now;
-      nudge(dir);
-    }
-    lastDir.current = dir;
-  };
-
-  const releaseStick = () => {
-    setStick({ x: 0, y: 0 });
-    lastDir.current = "";
-    dragging.current = false;
-  };
+  const photo = img(A, "ar_wide", 2);
 
   return (
-    <div className={styles.root} onPointerDown={wake}>
-      <div className={styles.marquee}>
-        <span className={styles.marqueeText}>SCRAPBOOK</span>
-        <span className={styles.marqueeSub}>23 CHANNELS · 1 OR 2 PLAYERS</span>
-      </div>
+    <div className={h.root} data-close={close || undefined} onPointerDown={() => unlock()}>
+      <div className={h.cam}>
+        {photo && <img className={h.room} src={photo.src} alt="" draggable={false} />}
 
-      <div className={styles.body} />
-
-      <div className={styles.sideArt} style={{ left: 34 }}>
-        <span className={styles.sideArtText}>INSERT COIN</span>
-      </div>
-      <div className={styles.sideArt} style={{ right: 34 }}>
-        <span className={styles.sideArtText}>HIGH SCORE</span>
-      </div>
-
-      <div className={styles.bezel}>
-        <div className={styles.screen}>
-          <Screen
-            mode={mode}
-            attractPage={attractPage}
-            demo={games[demoIndex] ?? games[0]}
-            scores={scores}
-            games={games}
-            selection={selection}
-            initials={initials}
-            cursor={cursor}
-            credits={credits}
-            freePlay={freePlay}
-          />
-          <div className={styles.scanlines} />
-          <div className={styles.aperture} />
-          <div className={styles.glass} />
-          <div className={styles.warmup} />
+        {/* the one tube that is live */}
+        <div className={h.tube} style={{ width: GW, height: GH, transform: matrix } as CSSProperties}>
+          <Game live={close} onScore={(n) => setBest((b) => Math.max(b, n))} />
+          <i className={h.glass} />
         </div>
+        <div className={h.throw} />
+
+        {!close && (
+          <button
+            type="button"
+            className={h.walk}
+            onClick={() => {
+              unlock();
+              clack();
+              setClose(true);
+            }}
+            aria-label="Walk up to the cabinet"
+          >
+            <span>walk up to it</span>
+          </button>
+        )}
+        <div className={h.twinkle} />
       </div>
 
-      <div className={styles.panelDeck}>
-        <div
-          ref={stickRef}
-          className={styles.stick}
-          onPointerDown={(e) => {
-            dragging.current = true;
-            e.currentTarget.setPointerCapture(e.pointerId);
-            onStickMove(e.clientX, e.clientY);
-          }}
-          onPointerMove={(e) => dragging.current && onStickMove(e.clientX, e.clientY)}
-          onPointerUp={(e) => {
-            e.currentTarget.releasePointerCapture?.(e.pointerId);
-            releaseStick();
-          }}
-          onPointerCancel={releaseStick}
-        >
-          <span className={styles.stickBase} />
-          <span
-            className={styles.stickBall}
-            style={{ transform: `translate(${stick.x * 17}px, ${stick.y * 17}px)` }}
-          />
-        </div>
+      <div className={h.grade} />
 
-        <div className={styles.buttons}>
-          {BUTTONS.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              aria-label={b.label}
-              className={`${styles.abutton} ${pressed === b.id ? styles.pressed : ""}`}
-              style={{ background: b.colour }}
-              onClick={() => press(b.id)}
-            >
-              {b.label}
-            </button>
-          ))}
-        </div>
+      <header className={h.title}>
+        <h1>TILT!</h1>
+        <p>open till late · hi-score {best.toLocaleString()}</p>
+      </header>
 
-        <button type="button" className={styles.coinSlot} onClick={insertCoin}>
-          <span className={styles.coinMouth} />
-          INSERT COIN
-        </button>
-      </div>
-
-      <div className={`${styles.credits} ${freePlay ? styles.freeplay : ""}`}>
-        {freePlay ? "FREE PLAY" : `CREDITS ${String(credits).padStart(2, "0")}`}
-        {!freePlay && totalCoins > 0 && ` · ${totalCoins}/${FREE_PLAY_AT} TO FREE PLAY`}
-      </div>
-
-      <div className={styles.hint}>
-        put a coin in · press start
-        <br />
-        your score is how much of the site you have seen
-      </div>
+      {close ? (
+        <>
+          <p className={h.keys}>
+            <b>ENTER</b> coin &amp; start <b>← →</b> move <b>SPACE</b> fire
+          </p>
+          <button type="button" className={h.back} onClick={() => setClose(false)}>
+            step back ⎋
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

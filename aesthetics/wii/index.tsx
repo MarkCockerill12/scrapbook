@@ -5,6 +5,7 @@ import { useCanvas } from "@/components/CanvasStage";
 import { AESTHETICS, type Aesthetic } from "@/lib/registry";
 import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
+import { thumbFor } from "@/lib/thumbs";
 import { GalaxyView } from "./GalaxyView";
 import { MiiParade } from "./MiiParade";
 import { WiiPointer } from "./Pointer";
@@ -250,7 +251,10 @@ export default function Wii() {
               onClick={() => openChannel(a)}
             >
               <div className={styles.screen}>
-                <div className={styles.screenArt} />
+                <div
+                  className={styles.screenArt}
+                  style={thumbFor(a.slug) ? { backgroundImage: `url(${thumbFor(a.slug)})` } : undefined}
+                />
                 <div className={styles.screenNo}>{String(a.channel).padStart(2, "0")}</div>
                 <div className={styles.screenTag}>
                   {a.status === "planned" ? "not yet installed" : a.tagline}

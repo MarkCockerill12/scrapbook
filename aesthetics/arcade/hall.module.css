@@ -1,0 +1,239 @@
+/* Arcade — the row, from the door. Own reset + tokens (rule R2). px on 1600x900. */
+
+@font-face { font-family: "Press Start 2P"; src: url("/fonts/arcade/press-start-2p-400.woff2") format("woff2"); font-display: block; }
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #050308;
+  color: #fff;
+  font-family: "Press Start 2P", ui-monospace, monospace;
+  user-select: none;
+  cursor: default;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- the camera: you, walking up to a cabinet ---------- */
+.cam {
+  position: absolute;
+  inset: 0;
+  transform-origin: 415px 432px;
+  transition: transform 1.5s cubic-bezier(0.6, 0, 0.2, 1);
+}
+
+.root[data-close] .cam {
+  transform: translate(385px, 18px) scale(3.55);
+}
+
+.room {
+  position: absolute;
+  left: 0;
+  top: -200px;
+  width: 1600px;
+  max-width: none;
+  height: 1200px;
+  /* the daylight at the far end is real; everything this side of it is tube-glow */
+  filter: saturate(1.2) contrast(1.06) brightness(0.92);
+}
+
+.tube {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background: #03020a;
+  overflow: hidden;
+  /* a 19-inch tube behind smoked acrylic */
+  filter: saturate(1.25) brightness(1.15) contrast(1.05);
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.26) 0 1px, transparent 1px 2px),
+    radial-gradient(ellipse 80% 80% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.6) 100%),
+    linear-gradient(118deg, transparent 30%, rgba(255, 255, 255, 0.07) 42%, transparent 54%);
+}
+
+/* what the tube throws on its own control panel and the carpet in front */
+.throw {
+  position: absolute;
+  left: 250px;
+  top: 480px;
+  width: 360px;
+  height: 320px;
+  pointer-events: none;
+  background: radial-gradient(ellipse 50% 50% at 50% 20%, rgba(110, 200, 255, 0.24), transparent 70%);
+  mix-blend-mode: screen;
+  animation: throw 0.4s steps(3) infinite;
+}
+
+@keyframes throw {
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.walk {
+  position: absolute;
+  left: 250px;
+  top: 300px;
+  width: 340px;
+  height: 500px;
+  border-radius: 12px;
+}
+
+.walk span {
+  position: absolute;
+  left: 50%;
+  top: -34px;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #ffe45f;
+  background: rgba(5, 3, 8, 0.8);
+  box-shadow: 0 0 0 2px #ffe45f;
+  animation: nudge 1.1s steps(2) infinite;
+}
+
+@keyframes nudge {
+  50% {
+    transform: translate(-50%, -5px);
+  }
+}
+
+.walk:hover {
+  box-shadow: 0 0 0 3px rgba(255, 228, 95, 0.7), 0 0 60px rgba(255, 228, 95, 0.25);
+}
+
+/* the string of bulbs across the ceiling, each on its own cheap flasher */
+.twinkle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle 9px at 84px 46px, rgba(255, 90, 60, 0.9), transparent 70%),
+    radial-gradient(circle 9px at 296px 88px, rgba(255, 200, 60, 0.9), transparent 70%),
+    radial-gradient(circle 9px at 476px 100px, rgba(80, 255, 120, 0.9), transparent 70%),
+    radial-gradient(circle 9px at 652px 236px, rgba(255, 90, 60, 0.9), transparent 70%),
+    radial-gradient(circle 9px at 1098px 38px, rgba(90, 140, 255, 0.9), transparent 70%),
+    radial-gradient(circle 9px at 1222px 150px, rgba(255, 90, 60, 0.9), transparent 70%);
+  mix-blend-mode: screen;
+  animation: twinkle 2.3s steps(2) infinite;
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.grade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 84% 84% at 50% 48%, transparent 52%, rgba(5, 3, 8, 0.82) 100%);
+  transition: background 1.5s;
+}
+
+.root[data-close] .grade {
+  background: radial-gradient(ellipse 70% 76% at 50% 48%, transparent 46%, rgba(5, 3, 8, 0.95) 100%);
+}
+
+/* ---------- words ---------- */
+.title {
+  position: absolute;
+  right: 80px;
+  top: 60px;
+  text-align: right;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+
+.title h1 {
+  font-size: 58px;
+  line-height: 1;
+  color: #ffe45f;
+  text-shadow: 4px 4px 0 #ff3d7f, 0 0 34px rgba(255, 228, 95, 0.6);
+}
+
+.title p {
+  margin-top: 16px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.root[data-close] .title {
+  opacity: 0;
+}
+
+.hint,
+.keys {
+  position: absolute;
+  left: 60px;
+  bottom: 38px;
+  font-size: 11px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+}
+
+.keys b {
+  margin: 0 8px 0 18px;
+  padding: 4px 7px;
+  font-weight: 400;
+  color: #050308;
+  background: #ffe45f;
+  text-shadow: none;
+}
+
+.back {
+  position: absolute;
+  left: 60px;
+  top: 60px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: #ffe45f;
+  background: rgba(5, 3, 8, 0.8);
+  box-shadow: 0 0 0 2px #ffe45f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cam {
+    transition: none;
+  }
+
+  .twinkle,
+  .throw,
+  .walk span {
+    animation: none;
+  }
+}
+
+/* the sign sits on its own dark plate, clear of the mural behind it */
+.title {
+  padding: 16px 20px 14px;
+  background: rgba(5, 3, 8, 0.66);
+}

@@ -20,7 +20,7 @@ const PAGES: Record<string, ComponentType> = {
   "deep-sea": dynamic(() => import("./deep-sea")),
   neon: dynamic(() => import("./neon")),
   tiki: dynamic(() => import("./tiki")),
-  win98: dynamic(() => import("./win98")),
+  vista: dynamic(() => import("./vista")),
   wii: dynamic(() => import("./wii")),
   "xbox-360": dynamic(() => import("./xbox-360")),
   vaporwave: dynamic(() => import("./vaporwave")),
@@ -36,7 +36,10 @@ const PAGES: Record<string, ComponentType> = {
   "game-beach": dynamic(() => import("./game-beach")),
   "skate-zine": dynamic(() => import("./skate-zine")),
 
-  // "jdm": dynamic(() => import("./jdm")),
+  jdm: dynamic(() => import("./jdm")),
+  blockbuster: dynamic(() => import("./blockbuster")),
+  space: dynamic(() => import("./space")),
+  academia: dynamic(() => import("./academia")),
 };
 
 export function getAestheticComponent(slug: string): ComponentType | null {

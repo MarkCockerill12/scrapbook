@@ -131,25 +131,37 @@ export function CanvasStage({
           width: "100%",
           height: measured ? height * scale : "100vh",
           overflow: "hidden",
+          position: "relative",
         }
       : {
           background: letterbox,
           position: "fixed",
           inset: 0,
-          display: "grid",
-          placeItems: "center",
           overflow: "hidden",
         };
 
-  const innerStyle: CSSProperties = {
-    width,
-    height,
-    transform: `scale(${measured ? scale : 1})`,
-    transformOrigin: mode === "width" ? "top left" : "center center",
-    position: "relative",
-    flexShrink: 0,
-    visibility: measured ? "visible" : "hidden",
-  };
+  const innerStyle: CSSProperties = 
+    mode === "width"
+      ? {
+          width,
+          height,
+          transform: `scale(${measured ? scale : 1})`,
+          transformOrigin: "top left",
+          position: "absolute",
+          left: 0,
+          top: 0,
+          visibility: measured ? "visible" : "hidden",
+        }
+      : {
+          width,
+          height,
+          transform: `translate(-50%, -50%) scale(${measured ? scale : 1})`,
+          transformOrigin: "center center",
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          visibility: measured ? "visible" : "hidden",
+        };
 
   return (
     <CanvasContext.Provider value={value}>

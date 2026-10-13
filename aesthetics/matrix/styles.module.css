@@ -27,7 +27,7 @@
   background: var(--mx-black);
   color: var(--mx-green);
   font-family: "Cascadia Mono", "Consolas", "DejaVu Sans Mono", ui-monospace, monospace;
-  font-size: 14px;
+  font-size: 15px;
   cursor: crosshair;
 }
 
@@ -80,8 +80,8 @@
 .panel {
   /* Positioned by <Draggable>, which owns left/top/transform on the wrapper. */
   position: relative;
-  background: rgba(2, 14, 6, 0.82);
-  border: 1px solid rgba(0, 255, 65, 0.34);
+  background: rgba(1, 10, 4, 0.94);
+  border: 1px solid rgba(0, 255, 65, 0.5);
   box-shadow:
     0 0 0 1px rgba(0, 255, 65, 0.07),
     0 0 34px -6px rgba(0, 255, 65, 0.28),
@@ -99,10 +99,10 @@
   padding: 6px 10px;
   border-bottom: 1px solid rgba(0, 255, 65, 0.24);
   background: rgba(0, 255, 65, 0.07);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--mx-dim);
+  color: #3fdc6a;
   cursor: grab;
   user-select: none;
 }
@@ -127,6 +127,10 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 255, 65, 0.4) transparent;
+  /* Draggable sets user-select: none on the wrapper; a shell you can't copy out of
+     isn't a shell. Undo it for the output only. */
+  user-select: text;
+  cursor: text;
 }
 
 .termLine {
@@ -217,9 +221,9 @@
 
 .trace {
   position: absolute;
-  left: 90px;
-  bottom: 46px;
-  width: 660px;
+  left: 646px;
+  top: 22px;
+  width: 926px;
   z-index: 20;
 }
 
@@ -290,8 +294,8 @@
 
 .header {
   position: absolute;
-  left: 90px;
-  top: 54px;
+  left: 30px;
+  top: 20px;
   z-index: 20;
   pointer-events: none;
 }
@@ -317,14 +321,14 @@
  */
 .hint {
   position: absolute;
-  left: 790px;
-  bottom: 50px;
+  left: 648px;
+  bottom: 30px;
   z-index: 20;
-  font-size: 10px;
-  letter-spacing: 0.2em;
+  font-size: 12px;
+  letter-spacing: 0.16em;
   line-height: 1.7;
   text-transform: uppercase;
-  color: rgba(18, 178, 58, 0.72);
+  color: rgba(42, 214, 84, 0.92);
   pointer-events: none;
 }
 
@@ -377,4 +381,74 @@
   .wipeText {
     animation: none;
   }
+}
+
+/* ---------- 2026-09 additions ---------- */
+
+/* the rain stays behind everything, dimmed, so the panels read */
+.rainDim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 4, 1, 0.35);
+  pointer-events: none;
+}
+
+.bluePill {
+  animation: bluewash 6s ease forwards;
+}
+
+@keyframes bluewash {
+  0% {
+    filter: none;
+  }
+  20% {
+    filter: hue-rotate(110deg) saturate(0.6) brightness(1.2) blur(1px);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+.dejavu {
+  animation: dv 700ms steps(4) 1;
+}
+
+@keyframes dv {
+  25% {
+    transform: translateX(6px) skewX(2deg);
+    filter: hue-rotate(20deg);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+}
+
+.dejavuText {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  z-index: 60;
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  color: #eaffef;
+  text-shadow: 0 0 12px #00ff41;
+  pointer-events: none;
+  animation: dvFade 4s ease forwards;
+}
+
+@keyframes dvFade {
+  0%, 70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The right-hand note in a panel bar is a caption, not a control — it must not look pressable. */
+.panelNote {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(63, 220, 106, 0.55);
 }

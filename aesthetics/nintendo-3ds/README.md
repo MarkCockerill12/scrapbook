@@ -1,54 +1,22 @@
-# 12 · Japanese 3DS
+# 12 · Japanese 3DS — 23:14, outside Yodobashi Camera
 
-**Fiction:** *A borrowed 3DS, left on the drawing app.*
+Redesigned 2026-09-28. Mark: *"the 3DS should look better, and there should be other
+stuff going on — the 3DS only a part of it."*
 
-**Canvas:** 1600×900, `fit`. Letterbox `#06070c`.
-**Assets:** `raw/nintendo-3ds/` — a night street, blurred to bokeh behind the console.
-
-## The argument this page makes
-
-Drawing hardware in CSS is a **materials** problem, not a shape problem. Four things:
-
-1. **A hard specular line along the top edge**, not a soft gradient. Injection-moulded
-   ABS has a sharp highlight where the surface turns.
-2. **A screen is a hole, not a panel.** Deep inset shadow all round, and glass in
-   front of the bezel with its own reflection.
-3. **Seams and parting lines.** Two shell halves, a hinge, a bright metal barrel. A
-   perfectly smooth object reads as an icon.
-4. **The background is out of focus.** A device at arm's length has a shallow depth of
-   field; a sharp background is what makes a mockup read as a render.
-
-## Interaction inventory
+- **The console is a real photograph** — an Aqua Blue 3DS (Wikipedia, `n3ds_hw` 7,
+  transparent PNG). Screen rects and button hotspots are measured off the photo as
+  fractions; screen UIs are authored at native 400×240 / 320×240 and scaled into them.
+- **Around it:** a wall of real Tokyo night photos with washi tape (Lawson under Fuji,
+  the ¥100 vending machines, wires at dusk, a konbini shelf, a night alley, a car
+  meet), the blurred Yodobashi Camera neon behind, and a real gachapon wall.
 
 | Element | Behaviour |
 |---|---|
-| Bottom screen | Draw on it. Five colours and an eraser. **Persisted** under `sb:nintendo-3ds:flipnote` |
-| **Play** | Replays every stroke in the order you drew it — the flipnote. This is the reason the drawing is stored as point lists |
-| 3D slider | Genuinely drives parallax: moon, far skyline, near skyline and the Mii parade all move at different rates |
-| StreetPass | One Mii per channel you've actually visited. Each lap round the top screen plays the greeting jingle |
-| Face buttons | Depress properly. **A** goes to the Wii Menu, because that's where a Nintendo home button should go |
-| Lid | Close it — the upper shell rotates away on a real hinge, both screens die, and the notification LED starts pulsing |
-| Sound | The touch panel is **resistive**: a low plate-flex plus a tiny high tick, not a phone blip |
-
-## Notes and gotchas
-
-- **Strokes are point lists, not a PNG data URL.** A 456×342 dataURL is 50–200KB of
-  base64 in localStorage for something mostly white. Coordinates are a couple of KB,
-  redraw at any size, and — the reason it matters — can be replayed in order.
-- **`Array.from({length: n}, fn)` calls `fn(element, index)`**, and the element of a
-  `{length}` object is `undefined`. Passing a single-argument factory directly hands
-  it `undefined` as its index, and every Mii's position computed to `NaN`. React
-  reports this as "`NaN` is an invalid value for the `left` css style property", which
-  is a long way from the actual mistake.
-- **The bottom screen is 456×342, not 496×372.** The taller well's outer shadow
-  pushed onto SELECT / START / HOME along the bottom lip of the shell.
-- The oldest strokes fall off the top at 6000 points rather than the app refusing new
-  ones — a drawing app should never simply stop working.
-
-## Still to do
-
-- `n3ds_ui` reference grabs — Home menu, Mii Plaza, StreetPass — to rebuild the top
-  screen as a real system UI rather than a generic night scene.
-- The camera. There's a lens drawn on the shell and it does nothing.
-- Stereoscopy: the 3D slider should add a true left/right offset with a ghost, not
-  just parallax.
+| HOME menu | dotted wallpaper, app banner on top with 3D-slider parallax, icon grid on the touch screen (tap to select, tap again to open), Play Coin counter |
+| Swapnote | draw on the touch screen; the note appears on the top screen; persisted |
+| Camera | the top screen looks at the real street (⟳ to look elsewhere); lenses normal/sepia/mystery/pinhole; the 3D slider adds the stereo ghost; ◉ / A shoots → the print sticks onto the wall (last 6 persisted) |
+| StreetPass Mii Plaza | every channel you've visited is someone you passed — tap their card to go there; the green LED lights now and then with the jingle |
+| Activity Log | a real pedometer: moving the stylus is walking; 100 steps = 1 Play Coin (persisted) |
+| eShop | the lounge-jazz shop music (generated) and "games" that are other channels |
+| Buttons | A open/shoot · B back · X/Y move the selection · HOME → HOME menu, and from HOME → the Wii Menu (kept) · POWER closes the lid |
+| Gachapon | ¥100 twist → a capsule with a random channel inside; tap it to go |

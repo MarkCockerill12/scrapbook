@@ -1,65 +1,123 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- canvas-space photos, pre-optimised WebP */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMusic } from "@/lib/music";
+import { dash } from "./music";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { cutN, img } from "@/lib/assets";
 import { AESTHETICS, getAesthetic } from "@/lib/registry";
+import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
+import { thumbFor } from "@/lib/thumbs";
 import { ACHIEVEMENTS, MAX_GS, useAchievements } from "./achievements";
+import { Boot } from "./Boot";
+import { GAMERPICS, Gamerpic, Guide } from "./Guide";
 import { HitLayer } from "./HitLayer";
+import { ARCADE, GAMES, Library, Loading } from "./Library";
 import { MontagePlayer } from "./MontagePlayer";
+import { Original } from "./Original";
 import { Quickscope } from "./Quickscope";
-import { bladeSwoosh, blip, drop, redRing } from "./sound";
+import { bladeSwoosh, blip, drop, guideOpen, redRing } from "./sound";
+import x from "./extras.module.css";
+import mt from "./metro.module.css";
 import styles from "./styles.module.css";
 
 /**
  * Channel 04 — Xbox 360.
  *
- * Fiction: *xX_no_scope_420_Xx's montage upload page*, living inside a blades
- * dashboard that never got updated to the NXE.
+ * Fiction: *xX_no_scope_420_Xx's console*, some evening in late 2011.
  *
- * The demo argument: the blades UI is a stack of lit glass sheets, not a row of
- * tabs. Blades overlap in Z and shadow each other, every surface is glossy and lit
- * from above, the green is environmental rather than decorative, and the selected
- * row *inverts* to bright-with-dark-text. Get those four right and a plain list
- * becomes unmistakably 2006.
+ * Fifth build (2026-10). Mark: "you keep ruining xbox 360… look at what it currently
+ * looks like… incorporate original xbox ideas too. revamp it." He picked the last
+ * dashboard the console ever had — the 2011 one — for its bones: hubs you move
+ * between, a grid of tiles with one big one in the middle, sheets that open over it.
+ * Then (sixth pass): "a better theme, more ideas from the original xbox and its
+ * layout". So the skin and the layout are 2001: a black-and-acid-green room, the orb
+ * with its rings behind a menu of slanted plates down the left, cut-cornered glass.
+ *
+ * The 2001 console is in here too, where it actually was on a 360: under Games, as
+ * "Xbox Originals". That tile drops you into the first dashboard — black, acid
+ * green, the orb — and its Memory screen shows your real saves in blocks.
  *
  * The achievements are real: they read the shell's genuine `visited` list, persist
  * under `sb:xbox-360:achievements`, and are the site's exploration reward.
- *
- * No assets. The montage clip is canvas; everything else is CSS.
  */
 
-interface Blade {
-  id: string;
-  name: string;
-  sub: string;
-  color: string;
-}
+const A = "xbox-360";
 
-const BLADES: Blade[] = [
-  { id: "marketplace", name: "Marketplace", sub: "23 channels available", color: "#6ab023" },
-  { id: "live", name: "Xbox Live", sub: "friends list", color: "#8fd400" },
-  { id: "games", name: "Games", sub: "achievements · snipez 360", color: "#4a8a12" },
-  { id: "media", name: "Media", sub: "my montage", color: "#2b7fd4" },
-  { id: "system", name: "System", sub: "console settings", color: "#8b969d" },
+const THEMES = [
+  { id: "default", name: "Xbox 360 Default", cover: 0 },
+  { id: "halo", name: "Halo 3 Premium Theme", cover: 1 },
+  { id: "gears", name: "Gears of War", cover: 2 },
+  { id: "cod", name: "Modern Warfare", cover: 3 },
+  { id: "reach", name: "Halo: Reach", cover: 11 },
+  { id: "portal", name: "Portal 2", cover: 16 },
 ];
+
+const HUBS = ["home", "social", "games", "video", "channels", "settings"] as const;
+type Hub = (typeof HUBS)[number];
+type Sheet = "library" | "arcade" | "achievements" | "snipez" | "montage" | "themes" | "gamerpic" | "system" | null;
 
 interface Friend {
   tag: string;
   playing: string | null;
   state: string;
-  hue: number;
+  pic: number;
 }
 
 const FRIENDS: Friend[] = [
-  { tag: "MLGxDoritos99", playing: "frutiger-aero", state: "In a lobby", hue: 96 },
-  { tag: "sn1per_pete", playing: "bbs", state: "300 baud", hue: 186 },
-  { tag: "GamerTag2007", playing: "win98", state: "Employee Portal", hue: 214 },
-  { tag: "420BlazeItGuy", playing: "deep-sea", state: "Depth 1,840m", hue: 168 },
-  { tag: "HALO_M0M", playing: "neon", state: "Customising", hue: 312 },
-  { tag: "xX_QuickScope_Xx", playing: null, state: "Away — 2h", hue: 40 },
-  { tag: "TrueSkill_Andy", playing: null, state: "Offline", hue: 0 },
-  { tag: "n0scope_nathan", playing: "matrix", state: "Unauthorised session", hue: 120 },
+  { tag: "MLGxDoritos99", playing: "frutiger-aero", state: "In a lobby", pic: 1 },
+  { tag: "sn1per_pete", playing: "bbs", state: "300 baud", pic: 2 },
+  { tag: "GamerTag2007", playing: "vista", state: "Solitaire", pic: 3 },
+  { tag: "420BlazeItGuy", playing: "deep-sea", state: "Depth 1,840m", pic: 4 },
+  { tag: "HALO_M0M", playing: "neon", state: "Customising", pic: 5 },
+  { tag: "n0scope_nathan", playing: "matrix", state: "Unauthorised session", pic: 0 },
+  { tag: "xX_QuickScope_Xx", playing: null, state: "Away — 2h", pic: 2 },
+  { tag: "TrueSkill_Andy", playing: null, state: "Offline", pic: 4 },
 ];
+
+/** Hotspots on the controller photo, as % of the cutout's box. */
+const hot = (l: number, t: number, d = 11): CSSProperties => ({
+  left: `${l - d / 2}%`,
+  top: `${t - d / 2}%`,
+  width: `${d}%`,
+  height: `${d * 1.1}%`,
+});
+const PAD = { guide: hot(54, 30, 12), a: hot(80, 42, 9), b: hot(89, 35, 9), x: hot(73, 34, 9), y: hot(82, 25, 9) };
+
+/** One tile. `c`/`r` are grid column / row spans, 1-based "start / span". */
+function Tile({
+  c,
+  r,
+  label,
+  sub,
+  art,
+  tone = "green",
+  onClick,
+  children,
+  delay = 0,
+}: {
+  c: string;
+  r: string;
+  label: string;
+  sub?: string;
+  art?: string | null;
+  tone?: "green" | "dark" | "grey" | "lime" | "white";
+  onClick?: () => void;
+  children?: ReactNode;
+  delay?: number;
+}) {
+  return (
+    <button type="button" className={mt.tile} data-tone={tone} style={{ gridColumn: c, gridRow: r, animationDelay: `${delay * 28}ms` }} onClick={onClick} onPointerEnter={() => blip()}>
+      {art && <img className={mt.art} src={art} alt="" draggable={false} />}
+      {children}
+      <span className={mt.label}>
+        <b>{label}</b>
+        {sub && <small>{sub}</small>}
+      </span>
+    </button>
+  );
+}
 
 export default function Xbox360() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -67,29 +125,72 @@ export default function Xbox360() {
   const visited = useShell((s) => s.visited);
   const { unlocked, unlock, toast, score } = useAchievements();
 
-  const [blade, setBlade] = useState(1);
-  const [row, setRow] = useState<Record<string, number>>({});
+  const [hub, setHub] = useState(0);
+  const [dir, setDir] = useState(1);
+  const [sheet, setSheet] = useState<Sheet>(null);
+  const [og, setOg] = useState(false);
   const [montage, setMontage] = useState(false);
   const [rrod, setRrod] = useState(false);
-  const [seen, setSeen] = useState<Set<string>>(() => new Set(["live"]));
+  const [seen, setSeen] = useState<Set<Hub>>(() => new Set<Hub>(["home"]));
+  const [booting, setBooting] = useState(true);
+  const [guide, setGuide] = useState(false);
+  const [loading, setLoading] = useState<(typeof GAMES)[number] | null>(null);
+  const [theme, setTheme] = useState(0);
+  const [gpic, setGpic] = useState(0);
+  const [rumble, setRumble] = useState(0);
+  const [tray, setTray] = useState(false);
+  const [page, setPage] = useState(0);
+  const [clock, setClock] = useState("--:--");
+  useMusic(dash, 50, !booting && !montage && !rrod, 1);
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
+    tick();
+    const id = window.setInterval(tick, 20000);
+    return () => window.clearInterval(id);
+  }, []);
+  useEffect(() => {
+    setTheme(sbGet(A, "theme", 0));
+    setGpic(sbGet(A, "gpic", 0));
+  }, []);
+  const endBoot = useCallback(() => setBooting(false), []);
 
-  const current = BLADES[blade];
-  const selected = row[current.id] ?? 0;
+  const openGuide = useCallback(() => {
+    setGuide(true);
+    guideOpen();
+  }, []);
+
+  const go = useCallback((i: number) => {
+    const next = Math.max(0, Math.min(HUBS.length - 1, i));
+    setHub((h) => {
+      if (next === h) return h;
+      setDir(next > h ? 1 : -1);
+      bladeSwoosh();
+      return next;
+    });
+    setSheet(null);
+    setSeen((s) => new Set(s).add(HUBS[next]));
+  }, []);
 
   useEffect(() => {
-    if (seen.size >= BLADES.length) unlock("blades");
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Home" || e.key.toLowerCase() === "g") openGuide();
+      else if (e.key === "Escape") {
+        setSheet(null);
+        setOg(false);
+      } else if (e.key === "ArrowRight") go(hub + 1);
+      else if (e.key === "ArrowLeft") go(hub - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openGuide, go, hub]);
+
+  useEffect(() => {
+    if (seen.size >= HUBS.length) unlock("blades");
   }, [seen, unlock]);
 
-  const openBlade = (i: number) => {
-    if (i === blade) return;
-    setBlade(i);
+  const open = (s: Sheet) => {
+    setSheet(s);
     bladeSwoosh();
-    setSeen((s) => new Set(s).add(BLADES[i].id));
-  };
-
-  const pick = (i: number) => {
-    setRow((r) => ({ ...r, [current.id]: i }));
-    blip();
   };
 
   const toggleMontage = () => {
@@ -105,21 +206,8 @@ export default function Xbox360() {
     unlock("noscope");
     setRrod(true);
     redRing();
-    window.setTimeout(() => setRrod(false), 6000);
+    window.setTimeout(() => setRrod(false), 7000);
   };
-
-  // Blade x-extents: everything left of the active blade stays a strip, everything
-  // right of it stacks against the right edge. That stacking IS the blades metaphor.
-  const geometry = useMemo(() => {
-    const STRIP = 46;
-    return BLADES.map((_, i) => ({
-      stripX: i < blade ? i * STRIP : 1600 - (BLADES.length - i) * STRIP,
-      isLeft: i < blade,
-    }));
-  }, [blade]);
-
-  const panelLeft = blade * 46;
-  const panelRight = (BLADES.length - 1 - blade) * 46;
 
   /* Most-recently-visited first, backfilled with live channels so the row is never
      half-empty on a first visit. */
@@ -127,124 +215,293 @@ export default function Xbox360() {
     const seenLive = [...visited]
       .reverse()
       .map((s) => getAesthetic(s))
-      .filter((a): a is NonNullable<typeof a> => !!a && a.status === "live");
-    const fill = AESTHETICS.filter(
-      (a) => a.status === "live" && !seenLive.some((s) => s.slug === a.slug),
-    );
-    return [...seenLive, ...fill].slice(0, 7);
+      .filter((a): a is NonNullable<typeof a> => !!a && a.status === "live" && a.slug !== A);
+    const fill = AESTHETICS.filter((a) => a.status === "live" && a.slug !== A && !seenLive.some((s) => s.slug === a.slug));
+    return [...seenLive, ...fill].slice(0, 6);
   }, [visited]);
 
-  return (
-    <div
-      ref={rootRef}
-      className={`${styles.root} ${montage ? styles.montage : ""}`}
-      style={{ "--bladeC": current.color } as React.CSSProperties}
-    >
-      <div className={styles.swoosh} />
+  const live = useMemo(() => AESTHETICS.filter((a) => a.status === "live"), []);
+  const PER = 10;
+  const pages = Math.ceil(live.length / PER);
+  const cover = (n: number) => img(A, "x360_cover", n)?.src ?? null;
+  const name = HUBS[hub];
+  const hero = recent[0];
 
-      {BLADES.map((b, i) =>
-        i === blade ? null : (
-          <button
-            key={b.id}
-            type="button"
-            className={styles.strip}
-            style={
-              { left: geometry[i].stripX, "--bladeC": b.color } as React.CSSProperties
-            }
-            onClick={() => openBlade(i)}
-          >
-            <span className={styles.stripLabel}>{b.name}</span>
+  return (
+    <div ref={rootRef} className={`${mt.root} ${montage ? styles.montage : ""}`}>
+      {THEMES[theme].cover > 0 && <img className={mt.themeBg} src={cover(THEMES[theme].cover) ?? ""} alt="" />}
+      <div className={mt.glow} />
+      {/* the orb, behind the menu: the first dashboard's whole idea */}
+      <div className={mt.core}>
+        <i />
+        <i />
+        <i />
+        <b />
+      </div>
+      <header className={mt.brand}>
+        <b>XBOX</b>
+        <em>360</em>
+        <span>{clock}</span>
+      </header>
+
+      {/* ---- the hubs, along the top */}
+      <nav className={mt.hubs} aria-label="Dashboard">
+        {HUBS.map((h, i) => (
+          <button key={h} type="button" data-on={i === hub || undefined} onClick={() => go(i)}>
+            {h}
           </button>
-        ),
+        ))}
+      </nav>
+
+      <button type="button" className={mt.gamer} onClick={openGuide} aria-label="Open the guide">
+        <div>
+          <b>xX_no_scope_420_Xx</b>
+          <span>
+            <i>G</i> {score} <em>/ {MAX_GS}</em>
+          </span>
+        </div>
+        <Gamerpic pic={gpic} size={58} />
+      </button>
+
+      {/* ---- the grid for this hub */}
+      <div className={mt.grid} key={name} data-dir={dir}>
+        {name === "home" && (
+          <>
+            <Tile c="1 / span 1" r="1 / span 1" label={tray ? "Close Tray" : "Open Tray"} tone="grey" onClick={() => { setTray((t) => !t); drop(); }}>
+              <i className={mt.disc} data-out={tray || undefined} />
+            </Tile>
+            <Tile c="1 / span 1" r="2 / span 1" label="My Pins" sub={`${recent.length} channels`} delay={1} onClick={() => go(4)} />
+            <Tile c="1 / span 1" r="3 / span 1" label="Achievements" sub={`${score} G`} tone="lime" delay={2} onClick={() => open("achievements")} />
+            {hero && (
+              <Tile c="2 / span 3" r="1 / span 2" label={hero.name} sub={`channel ${String(hero.channel).padStart(2, "0")} · continue`} art={thumbFor(hero.slug)} tone="dark" delay={1} onClick={() => begin(hero.slug)} />
+            )}
+            {recent.slice(1, 4).map((a, i) => (
+              <Tile key={a.slug} c={`${2 + i} / span 1`} r="3 / span 1" label={a.name} art={thumbFor(a.slug)} tone="dark" delay={3 + i} onClick={() => begin(a.slug)} />
+            ))}
+            <Tile c="5 / span 1" r="1 / span 1" label="SNIPEZ 360" sub="arcade" art={cover(3)} tone="dark" delay={2} onClick={() => { go(2); open("snipez"); }} />
+            <Tile c="5 / span 1" r="2 / span 1" label="Xbox Originals" sub="the 2001 dashboard" tone="white" delay={3} onClick={() => setOg(true)}>
+              <i className={mt.orb} />
+            </Tile>
+            <Tile c="5 / span 1" r="3 / span 1" label="Montage" sub={montage ? "mode: ON" : "MONTAGE_FINAL_v7"} delay={4} onClick={() => { go(3); open("montage"); }} />
+          </>
+        )}
+
+        {name === "social" && (
+          <>
+            <Tile c="1 / span 1" r="1 / span 2" label="Friends" sub={`${FRIENDS.filter((f) => f.playing).length} online`} tone="lime">
+              <span className={mt.big}>{FRIENDS.filter((f) => f.playing).length}</span>
+            </Tile>
+            <Tile c="1 / span 1" r="3 / span 1" label="Party" sub="start a party" delay={1} onClick={openGuide} />
+            {FRIENDS.map((f, i) => {
+              const game = f.playing ? getAesthetic(f.playing) : undefined;
+              return (
+                <Tile
+                  key={f.tag}
+                  c={`${2 + (i % 4)} / span 1`}
+                  r={`${1 + Math.floor(i / 4)} / span 1`}
+                  label={f.tag}
+                  sub={game ? `playing ${game.name}` : f.state}
+                  art={game ? thumbFor(game.slug) : null}
+                  tone={game ? "dark" : "grey"}
+                  delay={1 + i}
+                  onClick={() => game && begin(game.slug)}
+                >
+                  <span className={mt.pic}>
+                    <Gamerpic pic={f.pic} size={46} />
+                  </span>
+                </Tile>
+              );
+            })}
+            <Tile c="2 / span 2" r="3 / span 1" label="Messages" sub="1 new: “1v1 me rust quickscopes only”" delay={8} />
+            <Tile c="4 / span 2" r="3 / span 1" label="Beacons & Activity" sub="nobody has set a beacon since 2012" tone="grey" delay={9} />
+          </>
+        )}
+
+        {name === "games" && (
+          <>
+            <Tile c="1 / span 1" r="1 / span 1" label="My Games" sub={`${GAMES.length} discs`} onClick={() => open("library")} />
+            <Tile c="1 / span 1" r="2 / span 1" label="Arcade" sub={`${ARCADE.length} games`} delay={1} onClick={() => open("arcade")} />
+            <Tile c="1 / span 1" r="3 / span 1" label="Achievements" sub={`${unlocked.length} of ${ACHIEVEMENTS.length}`} tone="lime" delay={2} onClick={() => open("achievements")} />
+            <Tile c="2 / span 3" r="1 / span 2" label="Halo 3" sub="disc in tray · play" art={cover(1)} tone="dark" delay={1} onClick={() => setLoading(GAMES[0])} />
+            {[2, 3, 11].map((n, i) => (
+              <Tile key={n} c={`${2 + i} / span 1`} r="3 / span 1" label={GAMES[[1, 2, 10][i]]?.title ?? "Game"} art={cover(n)} tone="dark" delay={3 + i} onClick={() => setLoading(GAMES[[1, 2, 10][i]] ?? GAMES[0])} />
+            ))}
+            <Tile c="5 / span 1" r="1 / span 1" label="SNIPEZ 360" sub="hold right mouse to scope" art={cover(3)} tone="dark" delay={2} onClick={() => open("snipez")} />
+            <Tile c="5 / span 1" r="2 / span 2" label="Xbox Originals" sub="the first dashboard, 2001" tone="white" delay={3} onClick={() => setOg(true)}>
+              <i className={mt.orb} />
+            </Tile>
+          </>
+        )}
+
+        {name === "video" && (
+          <>
+            <Tile c="1 / span 1" r="1 / span 1" label="My Video Apps" sub="1 app" tone="grey" />
+            <Tile c="1 / span 1" r="2 / span 1" label={montage ? "Montage: ON" : "Montage: OFF"} sub="colour grading" tone={montage ? "lime" : "green"} delay={1} onClick={toggleMontage} />
+            <Tile c="1 / span 1" r="3 / span 1" label="clip_003.wmv" sub="corrupt" tone="grey" delay={2} />
+            <Tile c="2 / span 3" r="1 / span 3" label="MONTAGE_FINAL_v7.wmv" sub="uploaded 2010 · 4 views · 1 like (mine)" art={cover(3)} tone="dark" delay={1} onClick={() => open("montage")}>
+              <i className={mt.play} />
+            </Tile>
+            <Tile c="5 / span 1" r="1 / span 2" label="intro" sub="do not delete" art={cover(11)} tone="dark" delay={2} onClick={() => open("montage")} />
+            <Tile c="5 / span 1" r="3 / span 1" label="Zune" sub="sign in" tone="grey" delay={3} />
+          </>
+        )}
+
+        {name === "channels" && (
+          <>
+            {live.slice(page * PER, page * PER + PER).map((a, i) => (
+              <Tile
+                key={a.slug}
+                c={`${1 + (i % 5)} / span 1`}
+                r={`${1 + Math.floor(i / 5)} / span 1`}
+                label={a.name}
+                sub={visited.includes(a.slug) ? "owned" : "free · 0 MS points"}
+                art={thumbFor(a.slug)}
+                tone="dark"
+                delay={i}
+                onClick={() => begin(a.slug)}
+              />
+            ))}
+            <Tile c="1 / span 2" r="3 / span 1" label={`Marketplace · page ${page + 1} of ${pages}`} sub={`${live.length} channels, all free today`} tone="grey" />
+            <Tile c="3 / span 1" r="3 / span 1" label="‹ previous" tone="green" onClick={() => { setPage((p) => (p + pages - 1) % pages); blip(); }} />
+            <Tile c="4 / span 1" r="3 / span 1" label="next ›" tone="green" onClick={() => { setPage((p) => (p + 1) % pages); blip(); }} />
+            <Tile c="5 / span 1" r="3 / span 1" label="Redeem Code" sub="25 characters" tone="lime" />
+          </>
+        )}
+
+        {name === "settings" && (
+          <>
+            <Tile c="1 / span 1" r="1 / span 1" label="System" sub="console information" tone="grey" onClick={() => open("system")} />
+            <Tile c="1 / span 1" r="2 / span 1" label="Profile" sub="gamer picture" delay={1} onClick={() => open("gamerpic")}>
+              <span className={mt.pic}>
+                <Gamerpic pic={gpic} size={46} />
+              </span>
+            </Tile>
+            <Tile c="1 / span 1" r="3 / span 1" label="Turn Off" sub="red ring not included" tone="grey" delay={2} onClick={triggerRrod} />
+            <Tile c="2 / span 3" r="1 / span 2" label="Themes" sub={THEMES[theme].name} art={THEMES[theme].cover ? cover(THEMES[theme].cover) : cover(1)} tone="dark" delay={1} onClick={() => open("themes")} />
+            <Tile c="2 / span 1" r="3 / span 1" label="Preferences" sub="vibration: yes" delay={3} onClick={() => setRumble((r) => r + 1)} />
+            <Tile c="3 / span 1" r="3 / span 1" label="Kinect" sub="no sensor found" tone="grey" delay={4} />
+            <Tile c="4 / span 1" r="3 / span 1" label="Storage" sub="20 GB · 19.2 GB of screenshots" tone="grey" delay={5} onClick={() => open("system")} />
+            <Tile c="5 / span 1" r="1 / span 2" label="Xbox Originals" sub="settings from 2001" tone="white" delay={2} onClick={() => setOg(true)}>
+              <i className={mt.orb} />
+            </Tile>
+            <Tile c="5 / span 1" r="3 / span 1" label={montage ? "Grading: ON" : "Grading: OFF"} sub="display" tone={montage ? "lime" : "green"} delay={3} onClick={toggleMontage} />
+          </>
+        )}
+      </div>
+
+      {/* ---- whatever a tile opened */}
+      {sheet && (
+        <section className={mt.sheet} key={sheet}>
+          <header>
+            <button type="button" onClick={() => { setSheet(null); blip(); }} aria-label="Back">
+              <i>B</i> back
+            </button>
+            <h2>
+              {
+                {
+                  library: "my games",
+                  arcade: "xbox live arcade",
+                  achievements: "achievements",
+                  snipez: "snipez 360",
+                  montage: "montage_final_v7.wmv",
+                  themes: "themes",
+                  gamerpic: "gamer picture",
+                  system: "console information",
+                }[sheet]
+              }
+            </h2>
+          </header>
+          <div className={mt.sheetBody}>
+            {(sheet === "library" || sheet === "arcade") && (
+              <div style={{ height: 470 }}>
+                <Library key={sheet} list={sheet === "library" ? GAMES : ARCADE} onPlay={setLoading} />
+              </div>
+            )}
+            {sheet === "snipez" && <Quickscope onTrickshot={() => unlock("trickshot")} onNoScope={triggerRrod} />}
+            {sheet === "montage" && (
+              <div className={mt.cinema}>
+                <MontagePlayer montage={montage} />
+                <button type="button" className={mt.cta} data-on={montage || undefined} onClick={toggleMontage}>
+                  {montage ? "Montage mode: ON" : "Montage mode: OFF"}
+                </button>
+              </div>
+            )}
+            {sheet === "achievements" && (
+              <div className={mt.achs}>
+                {ACHIEVEMENTS.map((a) => {
+                  const on = unlocked.includes(a.id);
+                  return (
+                    <div key={a.id} data-on={on || undefined}>
+                      <i>{on ? "🏆" : ""}</i>
+                      <div>
+                        <b>{on ? a.name : "Locked achievement"}</b>
+                        <span>{a.how}</span>
+                      </div>
+                      <em>{a.gs} G</em>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {sheet === "themes" && (
+              <div className={mt.pickGrid}>
+                {THEMES.map((t, i) => (
+                  <button key={t.id} type="button" data-on={i === theme || undefined} onClick={() => { setTheme(i); sbSet(A, "theme", i); blip(); }}>
+                    {t.cover > 0 && <img src={cover(t.cover) ?? ""} alt="" />}
+                    <span>{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {sheet === "gamerpic" && (
+              <div className={x.picks}>
+                {GAMERPICS.map((_, i) => (
+                  <button key={i} type="button" className={i === gpic ? x.pickOn : ""} onClick={() => { setGpic(i); sbSet(A, "gpic", i); blip(); }}>
+                    <Gamerpic pic={i} size={96} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {sheet === "system" && (
+              <dl className={mt.info}>
+                <dt>Dashboard</dt>
+                <dd>2.0.14699.0</dd>
+                <dt>Channels visited</dt>
+                <dd>
+                  {visited.length} of {AESTHETICS.length}
+                </dd>
+                <dt>Achievements</dt>
+                <dd>
+                  {unlocked.length} of {ACHIEVEMENTS.length} · {score} G
+                </dd>
+                <dt>Storage</dt>
+                <dd>20 GB hard drive, 19.2 GB of screenshots</dd>
+                <dt>Warranty</dt>
+                <dd>expired</dd>
+                <dt>Temperature</dt>
+                <dd style={{ color: "#ff8a5b" }}>elevated</dd>
+                <dt>Red ring of death status</dt>
+                <dd style={{ color: "#ff5a4a" }}>yeah it&apos;ll happen eventually</dd>
+              </dl>
+            )}
+          </div>
+        </section>
       )}
 
-      <section
-        className={styles.blade}
-        style={{ left: panelLeft, right: panelRight }}
-        key={current.id}
-      >
-        <header className={styles.head}>
-          <div>
-            <h1 className={styles.bladeName}>{current.name}</h1>
-            <div className={styles.bladeSub}>{current.sub}</div>
-          </div>
-
-          <div className={styles.gamertag}>
-            <div className={styles.gpic}>☠</div>
-            <div>
-              <div className={styles.gname}>xX_no_scope_420_Xx</div>
-              <div className={styles.grow}>
-                <span className={styles.gsBadge}>
-                  G {score}
-                  <span style={{ opacity: 0.45 }}>/ {MAX_GS}</span>
-                </span>
-                <span className={styles.rep}>★★★★☆</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className={styles.body}>
-          {current.id === "marketplace" && (
-            <Marketplace selected={selected} onPick={pick} onGo={begin} visited={visited} />
-          )}
-          {current.id === "live" && <Live selected={selected} onPick={pick} onGo={begin} />}
-          {current.id === "games" && (
-            <Games
-              selected={selected}
-              onPick={pick}
-              unlocked={unlocked}
-              onTrickshot={() => unlock("trickshot")}
-              onNoScope={triggerRrod}
-            />
-          )}
-          {current.id === "media" && (
-            <Media montage={montage} onToggle={toggleMontage} selected={selected} onPick={pick} />
-          )}
-          {current.id === "system" && (
-            <System
-              visited={visited.length}
-              score={score}
-              unlockedCount={unlocked.length}
-              montage={montage}
-              onToggle={toggleMontage}
-              selected={selected}
-              onPick={pick}
-            />
-          )}
-        </div>
-        <div className={styles.recent}>
-          <div className={styles.recentTitle}>Recently played</div>
-          <div className={styles.recentRow}>
-            {recent.map((a) => (
-              <button
-                key={a.slug}
-                type="button"
-                className={styles.recentCard}
-                style={{ "--cardC": a.accent } as React.CSSProperties}
-                onClick={() => begin(a.slug)}
-              >
-                <span className={styles.recentArt} />
-                <span className={styles.recentNo}>
-                  {String(a.channel).padStart(2, "0")}
-                </span>
-                <span className={styles.recentName}>{a.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.hints}>
+      <footer className={mt.legend}>
         <span>
-          <span className={styles.hintKey} style={{ background: "#8fd400" }}>
-            A
-          </span>
-          select
+          <i data-k="a">A</i> select
         </span>
-        <span>click a blade edge to switch</span>
-        <span>right-drag in SNIPEZ to scope</span>
-      </div>
+        <span>
+          <i data-k="b">B</i> back
+        </span>
+        <span>
+          <i data-k="lb">◂ ▸</i> change hub
+        </span>
+        <span>
+          <i data-k="g">✕</i> guide (G)
+        </span>
+      </footer>
 
       {montage && (
         <>
@@ -253,325 +510,51 @@ export default function Xbox360() {
         </>
       )}
 
+      {/* your controller, on the floor in front of the telly — its buttons work */}
+      <div className={`${x.pad} ${rumble ? x.rumble : ""}`} key={rumble}>
+        <img src={cutN(A, "x360_hw", 1)?.src ?? ""} alt="Xbox 360 controller" />
+        <button type="button" className={x.padBtn} style={PAD.guide} onClick={openGuide} aria-label="Guide button" />
+        <button type="button" className={x.padBtn} style={PAD.a} onClick={() => go(hub + 1)} aria-label="A" />
+        <button type="button" className={x.padBtn} style={PAD.b} onClick={() => (sheet ? setSheet(null) : go(hub - 1))} aria-label="B" />
+        <button type="button" className={x.padBtn} style={PAD.y} onClick={() => open("achievements")} aria-label="Y" />
+        <button type="button" className={x.padBtn} style={PAD.x} onClick={toggleMontage} aria-label="X" />
+      </div>
+
       <HitLayer
         hostRef={rootRef}
         onCount={(n) => {
           if (n >= 25) unlock("hits");
+          if (n % 5 === 0) setRumble((r) => r + 1);
         }}
       />
 
       {toast && (
-        <div className={styles.toast}>
-          <div className={`${styles.achOrb} ${styles.achOrbOn}`} />
+        <div className={mt.toast}>
+          <i />
           <div>
-            <div className={styles.toastTitle}>Achievement Unlocked</div>
-            <div className={styles.toastName}>{toast.name}</div>
+            <small>Achievement unlocked</small>
+            <b>
+              {toast.gs} G — {toast.name}
+            </b>
           </div>
-          <div className={styles.toastGs}>{toast.gs} G</div>
         </div>
       )}
 
       {rrod && (
-        <div className={styles.rrod}>
-          <div className={styles.ring} />
-          <div className={styles.rrodText}>
-            E74 — system error
+        <div className={x.rrodPhoto}>
+          <img src={img(A, "x360_hw", 10)?.src ?? ""} alt="Red Ring of Death" />
+          <p>
+            E74 — general hardware failure
             <br />
-            three red lights · towel not included
-          </div>
+            three red lights · towel trick not recommended
+          </p>
         </div>
       )}
+
+      {og && <Original onClose={() => setOg(false)} unlocked={unlocked.length} visited={visited.length} score={score} />}
+      {guide && <Guide onClose={() => setGuide(false)} onBlade={(i) => go([4, 1, 2, 3, 5][i] ?? 0)} score={score} pic={gpic} />}
+      {loading && <Loading game={loading} onDone={() => setLoading(null)} />}
+      {booting && <Boot onDone={endBoot} />}
     </div>
-  );
-}
-
-/* ---------------------------------------------------------------- marketplace */
-
-function Marketplace({
-  selected,
-  onPick,
-  onGo,
-  visited,
-}: {
-  selected: number;
-  onPick: (i: number) => void;
-  onGo: (slug: string) => void;
-  visited: string[];
-}) {
-  const a = AESTHETICS[Math.min(selected, AESTHETICS.length - 1)];
-  return (
-    <>
-      <div className={styles.menu}>
-        {AESTHETICS.map((x, i) => (
-          <button
-            key={x.slug}
-            type="button"
-            className={`${styles.item} ${i === selected ? styles.itemOn : ""}`}
-            onClick={() => onPick(i)}
-          >
-            <span>{x.name}</span>
-            <span className={styles.itemMeta}>
-              {x.status === "live" ? (visited.includes(x.slug) ? "owned" : "free") : "coming soon"}
-            </span>
-          </button>
-        ))}
-      </div>
-      <div className={styles.detail}>
-        <div className={styles.detailTitle}>{a.name}</div>
-        <div className={styles.detailSub}>
-          Channel {String(a.channel).padStart(2, "0")} · {a.tags.join(" · ")}
-        </div>
-        <div className={styles.detailBody}>
-          {a.tagline}
-          <br />
-          <br />
-          {a.status === "live"
-            ? "Full version. No trial. Downloads instantly because it is a web page."
-            : "Not yet released. The developer keeps saying it is nearly done."}
-        </div>
-        <button
-          type="button"
-          className={styles.action}
-          disabled={a.status !== "live"}
-          style={a.status !== "live" ? { opacity: 0.4 } : undefined}
-          onClick={() => a.status === "live" && onGo(a.slug)}
-        >
-          {a.status === "live" ? "Download — 0 MS Points" : "Unavailable"}
-        </button>
-      </div>
-    </>
-  );
-}
-
-/* ---------------------------------------------------------------------- live */
-
-function Live({
-  selected,
-  onPick,
-  onGo,
-}: {
-  selected: number;
-  onPick: (i: number) => void;
-  onGo: (slug: string) => void;
-}) {
-  const f = FRIENDS[Math.min(selected, FRIENDS.length - 1)];
-  const game = f.playing ? getAesthetic(f.playing) : undefined;
-  return (
-    <>
-      <div className={styles.menu}>
-        {FRIENDS.map((x, i) => (
-          <button
-            key={x.tag}
-            type="button"
-            className={`${styles.item} ${i === selected ? styles.itemOn : ""}`}
-            onClick={() => onPick(i)}
-          >
-            <span>{x.tag}</span>
-            <span className={styles.itemMeta}>{x.playing ? "online" : x.state}</span>
-          </button>
-        ))}
-      </div>
-      <div className={styles.detail}>
-        <div className={styles.detailTitle}>{f.tag}</div>
-        <div className={`${styles.detailSub} ${f.playing ? styles.online : ""}`}>
-          {f.playing ? `Playing ${game?.name}` : f.state}
-        </div>
-        <div className={styles.detailBody}>
-          {f.state}
-          {f.playing
-            ? ". Session is open — you can drop straight in."
-            : ". Last seen a very long time ago."}
-        </div>
-        {f.playing && game && (
-          <button type="button" className={styles.action} onClick={() => onGo(game.slug)}>
-            Join Session
-          </button>
-        )}
-      </div>
-    </>
-  );
-}
-
-/* --------------------------------------------------------------------- games */
-
-function Games({
-  selected,
-  onPick,
-  unlocked,
-  onTrickshot,
-  onNoScope,
-}: {
-  selected: number;
-  onPick: (i: number) => void;
-  unlocked: string[];
-  onTrickshot: () => void;
-  onNoScope: () => void;
-}) {
-  const items = ["Achievements", "SNIPEZ 360"];
-  return (
-    <>
-      <div className={styles.menu}>
-        {items.map((x, i) => (
-          <button
-            key={x}
-            type="button"
-            className={`${styles.item} ${i === selected ? styles.itemOn : ""}`}
-            onClick={() => onPick(i)}
-          >
-            <span>{x}</span>
-            <span className={styles.itemMeta}>
-              {i === 0 ? `${unlocked.length}/${ACHIEVEMENTS.length}` : "arcade"}
-            </span>
-          </button>
-        ))}
-      </div>
-      <div className={styles.detail}>
-        {selected === 1 ? (
-          <>
-            <div className={styles.detailTitle}>SNIPEZ 360</div>
-            <div className={styles.detailSub}>
-              hold right mouse to scope · sweep a full circle then hit unscoped
-            </div>
-            <div style={{ marginTop: 14 }}>
-              <Quickscope onTrickshot={onTrickshot} onNoScope={onNoScope} />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className={styles.detailTitle}>Achievements</div>
-            <div className={styles.detailSub}>
-              {unlocked.length} of {ACHIEVEMENTS.length} · these persist
-            </div>
-            <div className={styles.achList} style={{ marginTop: 14 }}>
-              {ACHIEVEMENTS.map((a) => {
-                const on = unlocked.includes(a.id);
-                return (
-                  <div
-                    key={a.id}
-                    className={`${styles.ach} ${on ? "" : styles.achLocked}`}
-                  >
-                    <div className={`${styles.achOrb} ${on ? styles.achOrbOn : ""}`} />
-                    <div>
-                      <div className={styles.achName}>{on ? a.name : "Locked"}</div>
-                      <div className={styles.achHow}>{a.how}</div>
-                    </div>
-                    <div className={styles.achGs}>{a.gs} G</div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
-    </>
-  );
-}
-
-/* --------------------------------------------------------------------- media */
-
-function Media({
-  montage,
-  onToggle,
-  selected,
-  onPick,
-}: {
-  montage: boolean;
-  onToggle: () => void;
-  selected: number;
-  onPick: (i: number) => void;
-}) {
-  const items = ["MONTAGE_FINAL_v7.wmv", "clip_003.wmv", "intro (do not delete)"];
-  return (
-    <>
-      <div className={styles.menu}>
-        {items.map((x, i) => (
-          <button
-            key={x}
-            type="button"
-            className={`${styles.item} ${i === selected ? styles.itemOn : ""}`}
-            onClick={() => onPick(i)}
-          >
-            <span>{x}</span>
-            <span className={styles.itemMeta}>{i === 0 ? "18s" : "corrupt"}</span>
-          </button>
-        ))}
-        <button
-          type="button"
-          className={`${styles.action} ${montage ? "" : styles.actionGhost}`}
-          style={{ marginTop: 18 }}
-          onClick={onToggle}
-        >
-          {montage ? "Montage mode: ON" : "Montage mode: OFF"}
-        </button>
-      </div>
-      <div className={styles.detail}>
-        <div className={styles.detailTitle}>{items[Math.min(selected, 2)]}</div>
-        <div className={styles.detailSub}>uploaded 2010 · 4 views · 1 like (mine)</div>
-        <div style={{ marginTop: 14 }}>
-          <MontagePlayer montage={montage} />
-        </div>
-      </div>
-    </>
-  );
-}
-
-/* -------------------------------------------------------------------- system */
-
-function System({
-  visited,
-  score,
-  unlockedCount,
-  montage,
-  onToggle,
-  selected,
-  onPick,
-}: {
-  visited: number;
-  score: number;
-  unlockedCount: number;
-  montage: boolean;
-  onToggle: () => void;
-  selected: number;
-  onPick: (i: number) => void;
-}) {
-  const items = ["Console Information", "Display", "Storage"];
-  return (
-    <>
-      <div className={styles.menu}>
-        {items.map((x, i) => (
-          <button
-            key={x}
-            type="button"
-            className={`${styles.item} ${i === selected ? styles.itemOn : ""}`}
-            onClick={() => onPick(i)}
-          >
-            <span>{x}</span>
-            <span className={styles.itemMeta}>{i === 2 ? "20 GB" : ""}</span>
-          </button>
-        ))}
-      </div>
-      <div className={styles.detail}>
-        <div className={styles.detailTitle}>{items[Math.min(selected, 2)]}</div>
-        <div className={styles.detailSub}>dashboard 2.0.1888.0</div>
-        <div className={styles.detailBody}>
-          Channels visited: <b>{visited}</b> of {AESTHETICS.length}
-          <br />
-          Achievements: <b>{unlockedCount}</b> of {ACHIEVEMENTS.length} · <b>{score} G</b>
-          <br />
-          Storage: 20 GB hard drive, 19.2 GB of it screenshots
-          <br />
-          Warranty: expired
-          <br />
-          Temperature: <b style={{ color: "#ff8a5b" }}>elevated</b>
-        </div>
-        <button
-          type="button"
-          className={`${styles.action} ${montage ? "" : styles.actionGhost}`}
-          onClick={onToggle}
-        >
-          {montage ? "Disable colour grading" : "Enable colour grading"}
-        </button>
-      </div>
-    </>
   );
 }

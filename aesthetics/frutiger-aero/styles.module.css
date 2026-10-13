@@ -1,40 +1,19 @@
 /*
- * Frutiger Aero — AquaOS 2004.
- *
- * Own reset, own tokens, own everything (rule R2). No Tailwind reaches this file.
- * All lengths are px against the 1600x900 design canvas — no vw/vh, no breakpoints;
- * CanvasStage handles fitting.
- *
- * The look rests on four things, in order of importance:
- *   1. Specular highlights — a hard white gradient on the TOP half of every surface.
- *      This is what "glossy" actually is. Without it, everything reads as flat 2010s
- *      glassmorphism.
- *   2. Real transparency with saturation — backdrop-filter blur AND saturate, so
- *      colour bleeds through panels rather than greying out.
- *   3. Deep, optimistic blue with a light source top-left.
- *   4. Rounded, generous radii. 2004 was not afraid of a 20px corner.
+ * Channel 01 — Frutiger Aero. One split-level scene.
+ * --wl is the waterline in canvas px; everything hangs off it.
  */
 
 .root {
-  --aq-sky-top: #1d6fd0;
-  --aq-sky-mid: #63b8ef;
-  --aq-sky-haze: #c8ecff;
-  --aq-water-top: #1a9fd4;
-  --aq-water-deep: #04355f;
-  --aq-glass: rgba(255, 255, 255, 0.17);
-  --aq-glass-edge: rgba(255, 255, 255, 0.62);
-  --aq-ink: #f2fbff;
-  --aq-ink-dim: rgba(240, 251, 255, 0.86);
-  --aq-accent: #5fe0ff;
-  --aq-horizon: 512px;
-
+  --wl: 520px;
+  --aqua: 190 235 255;
   position: absolute;
   inset: 0;
   overflow: hidden;
-  font-family: "Segoe UI", Tahoma, Verdana, system-ui, sans-serif;
-  color: var(--aq-ink);
-  cursor: default;
+  font-family: "Segoe UI", "Frutiger", "Myriad Pro", "Helvetica Neue", Arial, sans-serif;
+  color: #fff;
+  background: #1b78c8;
   user-select: none;
+  cursor: default;
 }
 
 :where(.root) *,
@@ -48,566 +27,674 @@
 :where(.root) button {
   font: inherit;
   color: inherit;
-  border: 0;
   background: none;
+  border: 0;
   cursor: pointer;
 }
 
-/* ---------- environment ---------- */
+:where(.root) img {
+  display: block;
+  -webkit-user-drag: none;
+}
 
-/*
- * The sky must stay VIVID. First pass had a huge white sun radial over a white haze
- * gradient and the top two-thirds bleached out to near-white — which killed the deep
- * blue that the whole aesthetic is built on. The glow is now tighter and weaker, and
- * the haze only arrives in the last quarter, just above the horizon.
- */
+/* ------------------------------------------------------------ above water */
+.air {
+  position: absolute;
+  inset: 0;
+}
+
 .sky {
   position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  /* The land does not move. The water rises over it and drains off it. */
+  top: -93px;
+  height: 900px;
+  object-fit: cover;
+  filter: saturate(1.2) contrast(1.04);
+  transition: filter 1.6s ease;
+}
+
+.aurora {
+  position: absolute;
   inset: 0 0 auto 0;
-  height: var(--aq-horizon);
-  background:
-    radial-gradient(70% 52% at 26% 2%, rgba(255, 255, 255, 0.5), transparent 58%),
-    linear-gradient(
-      180deg,
-      var(--aq-sky-top) 0%,
-      #3d92e0 34%,
-      var(--aq-sky-mid) 72%,
-      var(--aq-sky-haze) 100%
-    );
+  width: 100%;
+  height: 520px;
+  object-fit: cover;
+  object-position: 50% 20%;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 2s ease;
+  mask-image: linear-gradient(#000 45%, transparent 96%);
+  animation: auroraDrift 26s ease-in-out infinite alternate;
+}
+
+@keyframes auroraDrift {
+  to {
+    transform: scale(1.12) translateX(-28px);
+    filter: hue-rotate(28deg);
+  }
 }
 
 .sun {
   position: absolute;
-  left: 344px;
-  top: -180px;
-  width: 380px;
-  height: 380px;
+  left: 500px;
+  top: -270px;
+  width: 620px;
+  height: 620px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 58%);
+  background:
+    radial-gradient(circle, #fff 0 5%, rgb(255 255 255 / 0.7) 9%, rgb(255 255 235 / 0.22) 26%, transparent 62%);
+  mix-blend-mode: screen;
   pointer-events: none;
+  transition: transform 1.8s ease, opacity 1.8s ease, filter 1.8s ease;
 }
 
-.cloud {
+/* The lens-flare ghosts every one of these pictures had, on the sun's own axis. */
+.sun::before,
+.sun::after {
+  content: "";
   position: absolute;
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse at 40% 35%,
-    rgba(255, 255, 255, 0.95),
-    rgba(255, 255, 255, 0.55) 58%,
-    rgba(255, 255, 255, 0) 72%
-  );
-  pointer-events: none;
+  border-radius: 50%;
+  border: 2px solid rgb(180 255 220 / 0.25);
+  background: radial-gradient(circle, rgb(140 230 255 / 0.2), transparent 70%);
 }
 
-.skyline {
+.sun::before {
+  width: 110px;
+  height: 110px;
+  left: 60px;
+  top: 560px;
+}
+
+.sun::after {
+  width: 54px;
+  height: 54px;
+  left: 190px;
+  top: 470px;
+  border-color: rgb(255 220 160 / 0.3);
+}
+
+.grade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+/* ------------------------------------------------------------ below water */
+.sea {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 132px;
-  opacity: 0.32;
+  top: var(--wl);
+  height: 900px;
+  overflow: visible;
+}
+
+.seaImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  filter: saturate(1.25) brightness(1.12);
+  transition: filter 1.6s ease;
+}
+
+.rays {
+  position: absolute;
+  inset: 0 -200px;
+  background: repeating-linear-gradient(
+    78deg,
+    transparent 0 60px,
+    rgb(255 255 255 / 0.1) 90px 130px,
+    transparent 170px 260px
+  );
+  mix-blend-mode: soft-light;
+  mask-image: linear-gradient(#000, transparent 70%);
+  animation: rays 14s ease-in-out infinite alternate;
   pointer-events: none;
 }
 
-.water {
-  position: absolute;
-  inset: var(--aq-horizon) 0 0 0;
-  background: linear-gradient(180deg, var(--aq-water-top) 0%, var(--aq-water-deep) 100%);
+@keyframes rays {
+  to {
+    transform: translateX(120px) skewX(-4deg);
+    opacity: 0.6;
+  }
 }
 
-/* The bright band where sky meets water. Frutiger always has this. */
-.waterline {
+.seaGrade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgb(120 235 255 / 0.28), transparent 26%, rgb(0 30 80 / 0.34));
+  pointer-events: none;
+  transition: background 1.6s ease;
+}
+
+.surface {
   position: absolute;
   left: 0;
-  right: 0;
-  top: var(--aq-horizon);
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.95) 30%,
-    rgba(255, 255, 255, 0.95) 70%,
-    transparent
-  );
-  filter: blur(0.5px);
+  top: -24px;
+  width: 3200px;
+  height: 60px;
+  overflow: visible;
+  animation: swell 11s linear infinite;
   pointer-events: none;
 }
 
-.caustics,
-.fish,
+@keyframes swell {
+  to {
+    transform: translateX(-1600px);
+  }
+}
+
+/* The meniscus seen from the side: a bright band of sky refracted in the top inch. */
+.swellA {
+  fill: rgb(225 250 255 / 0.5);
+}
+
+.swellB {
+  fill: rgb(70 205 240 / 0.34);
+}
+
+.glint {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  opacity: 0.95;
+}
+
+/* ------------------------------------------------------------------- life */
+.fish {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 0.4s;
+}
+
+.fish img {
+  width: 100%;
+  height: auto;
+  /* Lit from above like the water around them. */
+  filter: saturate(1.25) brightness(1.1) drop-shadow(0 14px 14px rgb(0 40 90 / 0.3));
+}
+
+.fly {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 72px;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 0.6s;
+}
+
+.fly img {
+  width: 100%;
+  height: auto;
+  filter: saturate(1.3) brightness(1.15) drop-shadow(0 16px 8px rgb(0 40 20 / 0.28));
+  animation: flap 0.26s ease-in-out infinite alternate;
+}
+
+@keyframes flap {
+  to {
+    transform: scaleX(0.22);
+  }
+}
+
 .bubbles {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-/* ---------- glass ---------- */
-
-/*
- * Two stacked layers, and the second one is not decoration.
- *
- * The white layer is the gloss. On its own the panels were unreadable in the lower
- * half: backdrop-filter picks up the bright waterline behind them and blurs it into a
- * milky band, so white text and inactive tabs disappeared into it. The blue underlay
- * below re-establishes a floor of contrast that holds no matter what the panel
- * happens to be sitting in front of — which matters here because the water level is
- * a slider, so what's behind a panel changes while you use it.
- */
-.glass {
+/* ----------------------------------------------------------------- sphere */
+.orb {
   position: absolute;
-  border-radius: 22px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.32) 0%,
-      rgba(255, 255, 255, 0.12) 48%,
-      rgba(255, 255, 255, 0.05) 49%,
-      rgba(255, 255, 255, 0.14) 100%
-    ),
-    linear-gradient(180deg, rgba(9, 64, 112, 0.08) 0%, rgba(5, 46, 86, 0.42) 100%);
-  backdrop-filter: blur(var(--aq-blur, 14px)) saturate(1.5);
-  border: 1px solid var(--aq-glass-edge);
-  box-shadow:
-    0 22px 44px -14px rgba(2, 28, 54, 0.62),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -18px 32px -22px rgba(255, 255, 255, 0.55);
-}
-
-/* The specular sweep. This one pseudo-element is most of the aesthetic. */
-.glass::after {
-  content: "";
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 4px;
-  height: 44%;
-  border-radius: 18px 18px 60% 60% / 18px 18px 22px 22px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.62),
-    rgba(255, 255, 255, 0.12) 72%,
-    rgba(255, 255, 255, 0)
-  );
+  left: 680px;
+  top: 0;
+  width: 240px;
+  height: 240px;
   pointer-events: none;
+  will-change: transform;
 }
 
-/*
- * Gloss off. The toggle is labelled "specular gloss", so it has to actually remove
- * the speculars, not just the blur — otherwise the demo is lying about what it's
- * showing you. With these gone the panels drop to flat translucent rectangles, which
- * is the point being made.
- */
-.noGloss .glass::after,
-.noGloss .dockIcon::after,
-.noGloss .knob::after {
-  display: none;
-}
-
-.noGloss .glass {
-  box-shadow: 0 18px 34px -18px rgba(2, 28, 54, 0.5);
-}
-
-/* ---------- layout ---------- */
-
-.wordmark {
+.orbGlass {
   position: absolute;
-  left: 74px;
-  top: 58px;
-  pointer-events: none;
-}
-
-.wordmarkTitle {
-  font-size: 46px;
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  /* Two shadows: a tight dark one for edge definition against pale sky, and a wide
-     soft one so it still reads if a cloud drifts underneath. */
-  text-shadow:
-    0 1px 2px rgba(0, 40, 80, 0.55),
-    0 3px 22px rgba(0, 40, 80, 0.65);
-}
-
-.wordmarkTitle b {
-  font-weight: 700;
-}
-
-.wordmarkSub {
-  margin-top: 8px;
-  font-size: 13px;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: var(--aq-ink-dim);
-}
-
-.stage {
-  position: absolute;
-  left: 392px;
-  top: 152px;
-  width: 700px;
-  height: 452px;
-  padding: 26px 30px;
-}
-
-.stageHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  position: relative;
-  z-index: 1;
-}
-
-.stageTitle {
-  font-size: 25px;
-  font-weight: 600;
-  text-shadow: 0 1px 6px rgba(0, 40, 80, 0.45);
-}
-
-.stageStep {
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--aq-ink-dim);
-}
-
-.stageBody {
-  position: relative;
-  z-index: 1;
-  margin-top: 20px;
-  display: grid;
-  grid-template-columns: 1fr 232px;
-  gap: 26px;
-  height: 312px;
-}
-
-.stageCopy p {
-  font-size: 15px;
-  line-height: 1.62;
-  color: var(--aq-ink-dim);
-  margin-bottom: 14px;
-}
-
-.stageCopy strong {
-  color: var(--aq-ink);
-  font-weight: 600;
-}
-
-.readout {
-  align-self: end;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(240, 251, 255, 0.72);
-}
-
-.preview {
-  position: relative;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
-  display: grid;
-  place-items: center;
-}
-
-.tabs {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.tab {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 12px;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--aq-ink);
-  text-shadow: 0 1px 4px rgba(0, 34, 66, 0.7);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.24),
-    rgba(6, 52, 94, 0.28)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  transition:
-    transform 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.tab:hover {
-  color: var(--aq-ink);
-  transform: translateY(-1px);
-}
-
-.tabActive {
-  color: #04355f;
-  text-shadow: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.96),
-    rgba(198, 236, 255, 0.72)
-  );
-  box-shadow: 0 6px 16px -6px rgba(0, 30, 60, 0.6);
-}
-
-/* ---------- control panel ---------- */
-
-.panel {
-  position: absolute;
-  left: 1136px;
-  top: 152px;
-  width: 388px;
-  padding: 22px 24px;
-}
-
-.panelTitle {
-  position: relative;
-  z-index: 1;
-  font-size: 11px;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: var(--aq-ink-dim);
-  margin-bottom: 16px;
-}
-
-.row {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 11px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-}
-
-.rowLabel {
-  font-size: 14px;
-}
-
-.rowHint {
-  font-size: 11px;
-  color: rgba(240, 251, 255, 0.66);
-  margin-top: 2px;
-}
-
-/* ---------- gloss toggle ---------- */
-
-.toggle {
-  position: relative;
-  width: 62px;
-  height: 30px;
-  border-radius: 999px;
-  flex-shrink: 0;
-  background: linear-gradient(180deg, rgba(3, 40, 70, 0.6), rgba(3, 40, 70, 0.3));
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  box-shadow: inset 0 2px 6px rgba(0, 20, 40, 0.55);
-  transition: background 220ms ease;
-}
-
-.toggleOn {
-  background: linear-gradient(180deg, #6fe4ff, #0f8fd0);
-  box-shadow:
-    inset 0 2px 6px rgba(255, 255, 255, 0.5),
-    0 0 18px -2px var(--aq-accent);
-}
-
-.knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
+  inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 34% 26%, #ffffff, #cfe6f4 58%, #8bb4cc);
-  box-shadow: 0 2px 5px rgba(0, 20, 40, 0.55);
-  transition: transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  backdrop-filter: blur(3px) saturate(1.6) brightness(1.12);
+  background:
+    radial-gradient(circle at 50% 108%, rgb(60 200 255 / 0.55), transparent 58%),
+    radial-gradient(circle at 50% 50%, transparent 56%, rgb(255 255 255 / 0.36) 70%, rgb(255 255 255 / 0.1) 71%);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.75),
+    inset 0 -26px 46px rgb(0 110 200 / 0.4),
+    inset 0 20px 36px rgb(255 255 255 / 0.3),
+    0 30px 46px -14px rgb(0 50 110 / 0.45);
 }
 
-.toggleOn .knob {
-  transform: translateX(32px);
-}
-
-/* the specular sweep that runs across the knob as it flips */
-.knob::after {
-  content: "";
+.orbShine {
   position: absolute;
-  inset: 2px 2px 50% 2px;
-  border-radius: 50% 50% 40% 40%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+  left: 26px;
+  top: 10px;
+  width: 188px;
+  height: 104px;
+  border-radius: 50%;
+  background: linear-gradient(rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.06) 78%);
+  mask-image: radial-gradient(ellipse at 50% 0, #000 40%, transparent 72%);
 }
 
-/* ---------- gloss slider ---------- */
-
-.slider {
-  position: relative;
-  width: 148px;
-  height: 26px;
-  flex-shrink: 0;
+.orbFace {
+  position: absolute;
+  inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  cursor: ew-resize;
-  touch-action: none;
+  justify-content: center;
+  padding-top: 26px;
+  text-shadow: 0 2px 10px rgb(0 60 130 / 0.6);
 }
 
-.sliderTrack {
+.time {
+  font-size: 62px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.time i {
+  font-style: normal;
+  opacity: 0.7;
+  margin: 0 1px;
+  animation: colon 2s steps(1) infinite;
+}
+
+@keyframes colon {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.date {
+  margin-top: 6px;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  opacity: 0.95;
+}
+
+/* ------------------------------------------------------------------ float */
+.float {
+  position: absolute;
+  right: 96px;
+  top: calc(var(--wl) - 46px);
+  width: 64px;
+  height: 92px;
+  cursor: ns-resize !important;
+  touch-action: none;
+  animation: bob 3.4s ease-in-out infinite;
+}
+
+.float span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  background:
+    radial-gradient(ellipse at 50% 16%, rgb(255 255 255 / 0.95) 0 16%, transparent 44%),
+    linear-gradient(#ffb23a, #f2600c 58%, #b33a00);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.6),
+    inset 0 -14px 18px rgb(120 30 0 / 0.5),
+    0 14px 20px -6px rgb(0 40 90 / 0.5);
+}
+
+.float span::after {
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(3, 40, 70, 0.62), rgba(3, 40, 70, 0.28));
-  border: 1px solid rgba(255, 255, 255, 0.36);
-  box-shadow: inset 0 1px 4px rgba(0, 20, 40, 0.6);
-  overflow: hidden;
+  top: 44%;
+  height: 12px;
+  background: rgb(255 255 255 / 0.88);
 }
 
-.sliderFill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(180deg, #8beeff, #1391d2);
-  box-shadow: 0 0 12px var(--aq-accent);
-}
-
-.sliderKnob {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 26%, #ffffff, #d4ebf8 56%, #7fadc6);
-  box-shadow: 0 2px 6px rgba(0, 20, 40, 0.6);
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-/* ---------- dock ---------- */
-
-.dock {
-  position: absolute;
-  left: 50%;
-  bottom: 42px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  padding: 14px 22px;
-  border-radius: 26px;
-}
-
-.dockIcon {
-  position: relative;
-  z-index: 1;
-  width: 58px;
-  height: 58px;
-  border-radius: 15px;
-  display: grid;
-  place-items: center;
-  font-size: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow:
-    0 8px 16px -6px rgba(0, 30, 60, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: transform 200ms cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-.dockIcon::after {
-  content: "";
-  position: absolute;
-  inset: 3px 3px 52% 3px;
-  border-radius: 12px 12px 60% 60% / 12px 12px 20px 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
-  pointer-events: none;
-}
-
-.dockIcon:hover {
-  transform: translateY(-11px) scale(1.1);
-}
-
-.dockLabel {
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  margin-bottom: 12px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0;
-  transition: opacity 160ms ease;
-  text-shadow: 0 2px 8px rgba(0, 30, 60, 0.8);
-}
-
-.dockIcon:hover .dockLabel {
-  opacity: 1;
-}
-
-/* ---------- flood ---------- */
-
-/*
- * The easter egg: drag the water level above the horizon and the whole page floods.
- * Everything gains a blue cast and starts bobbing.
- */
-.flooded .stage,
-.flooded .panel {
-  animation: bob 4.4s ease-in-out infinite;
-}
-
-/*
- * The dock needs its own keyframes. It is centred with translateX(-50%), and an
- * animation's transform REPLACES that rather than composing with it — so sharing
- * `bob` threw the dock half a screen to the right the moment the page flooded.
- * Any centred element that animates transform needs the offset baked into every
- * keyframe.
- */
-.flooded .dock {
-  animation: bobDock 4.4s ease-in-out infinite;
-}
-
-.flooded .sky {
-  filter: saturate(1.5) brightness(0.72) hue-rotate(-8deg);
+.float:hover span {
+  filter: brightness(1.12);
 }
 
 @keyframes bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-0.28deg);
-  }
   50% {
-    transform: translateY(-9px) rotate(0.28deg);
+    transform: translateY(6px) rotate(3deg);
   }
 }
 
-@keyframes bobDock {
-  0%,
-  100% {
-    transform: translateX(-50%) translateY(0) rotate(-0.28deg);
-  }
-  50% {
-    transform: translateX(-50%) translateY(-9px) rotate(0.28deg);
-  }
+/* ------------------------------------------------------------------- type */
+.mark {
+  position: absolute;
+  left: 64px;
+  top: 52px;
+  pointer-events: none;
+}
+
+.mark h1 {
+  font-size: 68px;
+  font-weight: 200;
+  letter-spacing: -2.5px;
+  line-height: 1;
+  text-shadow: 0 2px 14px rgb(0 70 150 / 0.75), 0 0 3px rgb(0 70 150 / 0.5);
+  /* Its own reflection, the way every keynote wordmark was set. */
+  -webkit-box-reflect: below -8px linear-gradient(transparent 52%, rgb(255 255 255 / 0.24));
+}
+
+.mark p {
+  margin-top: 30px;
+  font-size: 15px;
+  letter-spacing: 3px;
+  text-transform: lowercase;
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgb(0 60 130 / 0.95), 0 0 2px rgb(0 60 130 / 0.8);
+}
+
+.moods {
+  position: absolute;
+  right: 64px;
+  top: 56px;
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 40px;
+  background: linear-gradient(rgb(255 255 255 / 0.42), rgb(255 255 255 / 0.12) 48%, rgb(255 255 255 / 0.2));
+  backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.65),
+    0 14px 30px -10px rgb(0 50 120 / 0.5);
+}
+
+.moods button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 20px 0 8px;
+  border-radius: 30px;
+  font-size: 15px;
+  text-shadow: 0 1px 4px rgb(0 50 110 / 0.7);
+  transition: background 0.3s;
+}
+
+.moods button:hover {
+  background: rgb(255 255 255 / 0.2);
+}
+
+.moods button[data-on] {
+  background: linear-gradient(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.14) 50%, rgb(120 220 255 / 0.4));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.8), 0 0 18px rgb(140 230 255 / 0.6);
+}
+
+/* The glossy gel button: hard specular top half, colour pooling at the bottom. */
+.gel {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 20%, rgb(255 255 255 / 0.95), transparent),
+    radial-gradient(circle at 50% 80%, var(--hi), var(--lo) 72%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.55), 0 2px 6px rgb(0 40 90 / 0.5);
+}
+
+.moods button[data-mood="day"] .gel {
+  --hi: #7fe3ff;
+  --lo: #0a6fd6;
+}
+
+.moods button[data-mood="dusk"] .gel {
+  --hi: #ffd76a;
+  --lo: #e2470f;
+}
+
+.moods button[data-mood="aurora"] .gel {
+  --hi: #8dffb9;
+  --lo: #0a5a66;
 }
 
 .hint {
   position: absolute;
-  left: 74px;
-  bottom: 54px;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(240, 251, 255, 0.62);
+  left: 64px;
+  bottom: 40px;
+  font-size: 14px;
+  letter-spacing: 0.6px;
+  opacity: 0.92;
+  text-shadow: 0 1px 8px rgb(0 30 80 / 0.9);
   pointer-events: none;
 }
 
+/* ------------------------------------------------------------------ moods */
+.root[data-mood="dusk"] .sky {
+  filter: saturate(1.3) contrast(1.08) sepia(0.45) hue-rotate(-18deg) brightness(0.92);
+}
+
+.root[data-mood="dusk"] .grade {
+  opacity: 1;
+  background: linear-gradient(rgb(60 30 120 / 0.42), rgb(255 120 60 / 0.4) 46%, rgb(255 190 90 / 0.3) 58%, transparent 60%);
+  mix-blend-mode: soft-light;
+}
+
+.root[data-mood="dusk"] .sun {
+  transform: translate(-80px, 230px) scale(0.8);
+  filter: sepia(1) saturate(4) hue-rotate(-18deg);
+}
+
+.root[data-mood="dusk"] .seaImg {
+  filter: saturate(1.1) brightness(0.9) hue-rotate(-14deg);
+}
+
+.root[data-mood="dusk"] .seaGrade {
+  background: linear-gradient(rgb(255 170 90 / 0.4), transparent 30%, rgb(20 10 70 / 0.5));
+}
+
+.root[data-mood="aurora"] .sky {
+  filter: saturate(0.7) brightness(0.26) contrast(1.2) hue-rotate(18deg);
+}
+
+.root[data-mood="aurora"] .aurora {
+  opacity: 0.95;
+}
+
+.root[data-mood="aurora"] .sun {
+  opacity: 0;
+}
+
+.root[data-mood="aurora"] .seaImg {
+  filter: saturate(1.3) brightness(0.42) hue-rotate(-24deg);
+}
+
+.root[data-mood="aurora"] .seaGrade {
+  background: linear-gradient(rgb(60 255 190 / 0.3), transparent 34%, rgb(0 6 30 / 0.6));
+}
+
+.root[data-mood="aurora"] .fish img {
+  filter: saturate(1.5) brightness(0.8) drop-shadow(0 0 10px rgb(90 255 200 / 0.55));
+}
+
+.root[data-mood="aurora"] .glint {
+  stroke: #9dffd6;
+}
+
+/* ==========================================================================
+ * 2026-10 — more of the aesthetic than water and grass: the glass city on the
+ * horizon, a rainbow, and soap bubbles with photographs caught in them.
+ * ========================================================================== */
+.skyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* the hill's edge in the photograph sits 118px above the waterline */
+  top: 402px;
+  height: 0;
+  pointer-events: none;
+}
+
+.skyline img {
+  position: absolute;
+  bottom: 0;
+  width: auto;
+  /* far away: blued, softened, and sunk into the haze at the foot */
+  filter: saturate(0.9) brightness(1.12) contrast(0.92) blur(0.4px);
+  opacity: 0.86;
+  mask-image: linear-gradient(180deg, #000 60%, transparent 98%);
+}
+
+.skyline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 150px;
+  background: linear-gradient(180deg, transparent, rgba(232, 246, 255, 0.75));
+}
+
+.root[data-mood="dusk"] .skyline img {
+  filter: saturate(1.1) brightness(0.9) sepia(0.45) hue-rotate(-18deg);
+}
+
+.root[data-mood="aurora"] .skyline img {
+  filter: brightness(0.34) saturate(1.4) hue-rotate(40deg);
+  opacity: 0.95;
+}
+
+.root[data-mood="aurora"] .skyline::after {
+  background: linear-gradient(180deg, transparent, rgba(40, 120, 110, 0.4));
+}
+
+.rainbow {
+  position: absolute;
+  left: 180px;
+  top: 0;
+  width: 1240px;
+  height: 1240px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, transparent 0 63.5%, rgba(160, 100, 255, 0.5) 64.2%, rgba(80, 160, 255, 0.5) 65%, rgba(90, 230, 150, 0.5) 65.8%, rgba(255, 240, 110, 0.5) 66.6%, rgba(255, 160, 80, 0.5) 67.4%, rgba(255, 90, 90, 0.5) 68.2%, transparent 69%);
+  mask-image: linear-gradient(180deg, #000 20%, transparent 40%);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  filter: blur(3px);
+  transition: opacity 1.8s ease;
+}
+
+.root[data-mood="aurora"] .rainbow {
+  opacity: 0;
+}
+
+.photoOrb {
+  position: absolute;
+  z-index: 5;
+  padding: 0;
+  border-radius: 50%;
+  overflow: visible;
+  animation: orbDrift 13s ease-in-out infinite;
+  transition: transform 0.7s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+@keyframes orbDrift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  33% {
+    translate: 14px -22px;
+  }
+  66% {
+    translate: -10px -8px;
+  }
+}
+
+.photoOrb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.86;
+  /* seen through the far wall of a bubble: bulged, and a little washed */
+  filter: saturate(1.25) brightness(1.08);
+}
+
+/* the film: an iridescent rim, a window highlight, a second one underneath */
+.photoOrb i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 34% 20% at 30% 20%, rgba(255, 255, 255, 0.95), transparent 70%),
+    radial-gradient(ellipse 22% 10% at 68% 84%, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(circle, transparent 58%, rgba(255, 255, 255, 0.25) 68%, rgba(140, 220, 255, 0.5) 72%, transparent 74%);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.7),
+    inset 6px -8px 18px rgba(255, 120, 220, 0.35),
+    inset -8px 6px 18px rgba(90, 240, 255, 0.4),
+    0 10px 26px rgba(20, 90, 160, 0.25);
+}
+
+.photoOrb span {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  padding: 5px 14px;
+  white-space: nowrap;
+  font-size: 15px;
+  color: #0b4a7a;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(214, 240, 255, 0.85));
+  box-shadow: 0 4px 10px rgba(20, 90, 160, 0.25);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.photoOrb:hover {
+  transform: scale(1.1);
+}
+
+.photoOrb:hover span,
+.photoOrb[data-open] span {
+  opacity: 1;
+}
+
+.photoOrb[data-open] {
+  z-index: 9;
+  transform: scale(3.1);
+  animation-play-state: paused;
+}
+
+.photoOrb[data-open] img {
+  opacity: 1;
+}
+
+.photoOrb[data-open] span {
+  top: calc(100% + 4px);
+  font-size: 6px;
+  padding: 2px 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .flooded .stage,
-  .flooded .panel,
-  .flooded .dock {
+  .photoOrb {
     animation: none;
   }
+}
+
+/* the first matte kept two scraps of the tree beside it */
+.skyline img:first-child {
+  clip-path: inset(0 42% 0 0);
 }

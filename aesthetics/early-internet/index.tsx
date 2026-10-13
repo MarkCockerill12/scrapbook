@@ -1,5 +1,7 @@
 "use client";
 
+import { useMusic } from "@/lib/music";
+import { midi } from "./music";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cutout } from "@/primitives/Cutout";
 import { chime, tone } from "@/lib/audio";
@@ -143,6 +145,7 @@ function Sticker({
 }
 
 export default function EarlyInternet() {
+  useMusic(midi, 118, true, 2);
   const begin = useShell((s) => s.beginTransition);
 
   const [visits, setVisits] = useState(0);

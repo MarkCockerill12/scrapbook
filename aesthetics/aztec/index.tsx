@@ -1,304 +1,272 @@
 "use client";
 
-import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useCanvas } from "@/components/CanvasStage";
-import { cut, one } from "@/lib/assets";
+import { cutN, src } from "@/lib/assets";
+import { tone } from "@/lib/audio";
+import { playNote, useMusic, type Score } from "@/lib/music";
+import { sbGet, sbSet } from "@/lib/storage";
 import { useShell } from "@/lib/store";
-import { RubPanel } from "./RubPanel";
-import { bell, chime, grind, press, startDrums, startFire, wrong } from "./sound";
-import styles from "./styles.module.css";
+import { CRACK_X, MESSAGES, RELICS, type Relic } from "./lore";
+import { startDrums, startFire } from "./sound";
+import s from "./page.module.css";
 
 /**
- * Channel 11 — Aztec / Izalith.
+ * Channel 11 — Aztec / Lost Izalith. The Descent.
  *
- * Fiction: *Expedition Log — Day 47. We should not have opened it.*
+ * Redesigned 2026-09-28. Mark: "a complete rework — a collage of ideas of Dark Souls'
+ * Lost Izalith and Aztec/Mayan structure. This is more like a puzzle wall." The glyph
+ * puzzle is gone. It's now a panorama you pan by moving the torch: real Mesoamerican
+ * pyramids (Chichén Itzá, Tikal, Uxmal, Palenque, Cobá — matted Wikipedia photos)
+ * standing in a real lava field, relit from below; Izalith and the Demon Ruins in the
+ * far dark; real relics (the Sun Stone, a chacmool, an Olmec head, the Tula warriors)
+ * described like Souls items; a bonfire; orange soapstone messages; and the lava,
+ * which kills you.
  *
- * The demo argument: this page is a **lighting problem**. There are exactly two
- * light sources — the torch you are carrying, which is at the cursor, and the lava,
- * which is underneath — and they come from different directions. Most of the frame
- * is genuinely black. The instinct to let the visitor see everything is the thing to
- * resist; the dread is entirely in what the torch doesn't reach.
- *
- * Assets: `raw/aztec/` — a real Maya stone relief as the wall, matted vines at the
- * corners. The harvested "lava" was basalt columns, so the lava is drawn.
+ * Kept: fall through the floor → Deep Sea (Mark called that out as clever).
  */
 
-const SLUG = "aztec";
+const A = "aztec";
+const W = 1600;
+const PW = 3000; // panorama width at the relic layer
+const PAN = PW - W;
 
-/** Nine carved glyphs. Simple enough to read at 82px in near-darkness. */
-const GLYPHS = [
-  "M20 20h60v60H20z M35 35h30v30H35z",
-  "M50 12l38 38-38 38-38-38z",
-  "M15 50a35 35 0 0 1 70 0 M50 50v34",
-  "M20 25h60 M20 50h60 M20 75h60 M50 25v50",
-  "M50 15v70 M25 30l25-15 25 15 M25 70l25 15 25-15",
-  "M25 25h50v50H25z M25 25l50 50 M75 25l-50 50",
-  "M50 18a32 32 0 1 0 .1 0z M50 34a16 16 0 1 1 -.1 0z",
-  "M18 82l16-64 16 44 16-44 16 64",
-  "M22 22h24v24H22z M54 22h24v24H54z M22 54h24v24H22z M54 54h24v24H54z",
+const RUINS = [
+  { n: 1, x: 20, w: 620, b: 650 },
+  { n: 9, x: 640, w: 420, b: 650 },
+  { n: 5, x: 1040, w: 520, b: 650 },
+  { n: 6, x: 1520, w: 600, b: 650 },
+  { n: 1, x: 2080, w: 520, b: 650, flip: true },
 ];
 
-const SEQUENCE = [4, 1, 7, 3];
-const LAVA_BASE = 92;
-const LAVA_STEP = 26;
+/* The choir: minor, low, slow — detuned saws under the reverb. */
+const CHOIR = [
+  [45, 52, 57, 60],
+  [44, 51, 56, 60],
+  [41, 48, 53, 56],
+  [43, 50, 55, 58],
+];
+const choir: Score = (step, time, dur) => {
+  if (step % 16 !== 0) return;
+  const c = CHOIR[Math.floor(step / 16) % CHOIR.length];
+  c.forEach((m, i) =>
+    playNote({ freq: m, midi: true, dur: dur * 15, gain: 0.03, type: "sawtooth", filter: 700, attack: 1.5, release: 2.5, detune: 18, vibrato: 8, wet: 0.9, pan: (i - 1.5) * 0.4 }, time),
+  );
+};
 
 export default function Aztec() {
   const { toCanvasSpace } = useCanvas();
-  const begin = useShell((s) => s.beginTransition);
-  const muted = useShell((s) => s.muted);
+  const begin = useShell((st) => st.beginTransition);
+  const muted = useShell((st) => st.muted);
 
-  const rootRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
-  const flameRef = useRef<HTMLDivElement>(null);
-  const target = useRef({ x: 800, y: 450 });
-  const pos = useRef({ x: 800, y: 450 });
-
-  const [entered, setEntered] = useState<number[]>([]);
-  const [down, setDown] = useState<number | null>(null);
-  const [dust, setDust] = useState<{ id: number; g: number; dx: number }[]>([]);
-  const [failures, setFailures] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [collapsing, setCollapsing] = useState(false);
-  const [heat, setHeat] = useState(0);
-  const seq = useRef(0);
-
-  const wall = one(SLUG, "aztec_wall", 0)?.src ?? "";
+  const cam = useRef(0);
+  const target = useRef(0);
+  const [camX, setCamX] = useState(0);
+  const torch = useRef({ x: 800, y: 450 });
+  const [pt, setPt] = useState({ x: 800, y: 450 });
+  const [relic, setRelic] = useState<Relic | null>(null);
+  const [lit, setLit] = useState(false);
+  const [bonfireFlash, setBonfireFlash] = useState(false);
+  const [died, setDied] = useState(false);
+  const [deaths, setDeaths] = useState(0);
+  const [msg, setMsg] = useState<number | null>(null);
+  const [cracks, setCracks] = useState(0);
+  const [falling, setFalling] = useState(false);
+  const [found, setFound] = useState<string[]>([]);
+  const burn = useRef(0);
 
   useEffect(() => {
+    setLit(sbGet(A, "bonfire", false));
+    setDeaths(sbGet(A, "deaths", 0));
+    setFound(sbGet(A, "relics", []));
+  }, []);
+
+  useMusic(choir, 50, true);
+  useEffect(() => {
     if (muted) return;
-    const stopFire = startFire();
-    const stopDrums = startDrums();
+    const a = startFire();
+    const b = startDrums();
     return () => {
-      stopFire();
-      stopDrums();
+      a();
+      b();
     };
   }, [muted]);
 
-  // --- the torch --------------------------------------------------------
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      target.current = toCanvasSpace(e.clientX, e.clientY);
-    };
-    window.addEventListener("pointermove", onMove);
-    return () => window.removeEventListener("pointermove", onMove);
-  }, [toCanvasSpace]);
-
+  // Camera eases toward where the torch points; the lava-death timer runs here too.
   useEffect(() => {
     let raf = 0;
-    const step = () => {
-      // Lag the light behind the hand. A torch has mass and the arm swings.
-      pos.current.x += (target.current.x - pos.current.x) * 0.16;
-      pos.current.y += (target.current.y - pos.current.y) * 0.16;
-      const { x, y } = pos.current;
-
-      const root = rootRef.current;
-      if (root) {
-        root.style.setProperty("--tx", `${x.toFixed(1)}px`);
-        root.style.setProperty("--ty", `${y.toFixed(1)}px`);
-      }
-      if (glowRef.current) {
-        glowRef.current.style.transform = `translate(${x}px, ${y}px)`;
-      }
-      if (flameRef.current) {
-        flameRef.current.style.transform = `translate(${target.current.x}px, ${target.current.y}px)`;
-      }
-      raf = requestAnimationFrame(step);
+    let last = performance.now();
+    const loop = (now: number) => {
+      const dt = now - last;
+      last = now;
+      cam.current += (target.current - cam.current) * 0.06;
+      setCamX(cam.current);
+      if (!died && torch.current.y > 812) {
+        burn.current += dt;
+        if (burn.current > 2200) {
+          burn.current = 0;
+          setDied(true);
+          tone({ freq: 110, toFreq: 55, duration: 2.4, type: "sawtooth", gain: 0.12 });
+        }
+      } else burn.current = Math.max(0, burn.current - dt * 2);
+      raf = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(step);
+    raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [died]);
 
-  // --- glyphs -----------------------------------------------------------
-  const pushGlyph = useCallback(
-    (i: number) => {
-      if (open || collapsing) return;
-      press();
-      setDown(i);
-      window.setTimeout(() => setDown(null), 140);
-
-      // Dust out of the recess.
-      const id = ++seq.current;
-      setDust((d) => [...d, { id, g: i, dx: (Math.random() - 0.5) * 40 }]);
-      window.setTimeout(() => setDust((d) => d.filter((x) => x.id !== id)), 900);
-
-      // Each press feeds the fissure. It never goes back down.
-      setHeat((h) => Math.min(6, h + 1));
-
-      const next = [...entered, i];
-      const correctSoFar = next.every((g, k) => g === SEQUENCE[k]);
-
-      if (!correctSoFar) {
-        wrong();
-        setEntered([]);
-        setFailures((f) => {
-          const n = f + 1;
-          if (n >= 3) {
-            setCollapsing(true);
-            bell();
-            window.setTimeout(() => begin("deep-sea"), 2500);
-          }
-          return n;
-        });
-        return;
-      }
-
-      chime(next.length - 1);
-      setEntered(next);
-      if (next.length === SEQUENCE.length) {
-        grind();
-        window.setTimeout(() => setOpen(true), 500);
-      }
+  const onMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const p = toCanvasSpace(e.clientX, e.clientY);
+      torch.current = p;
+      setPt(p);
+      // edges of the screen pan the panorama
+      const edge = (p.x - W / 2) / (W / 2);
+      target.current = Math.min(PAN, Math.max(0, target.current + edge * Math.abs(edge) * 22));
     },
-    [entered, open, collapsing, begin],
+    [toCanvasSpace],
   );
 
-  const lavaHeight = LAVA_BASE + heat * LAVA_STEP;
+  const respawn = () => {
+    setDied(false);
+    target.current = 0;
+    const d = deaths + 1;
+    setDeaths(d);
+    sbSet(A, "deaths", d);
+  };
+
+  const rest = () => {
+    setLit(true);
+    sbSet(A, "bonfire", true);
+    setBonfireFlash(true);
+    tone({ freq: 220, toFreq: 330, duration: 1.4, type: "sine", gain: 0.08 });
+    tone({ freq: 440, duration: 1.8, type: "triangle", gain: 0.04, delay: 0.3 });
+    window.setTimeout(() => setBonfireFlash(false), 3200);
+  };
+
+  const openRelic = (r: Relic) => {
+    setRelic(r);
+    tone({ freq: 523, duration: 0.5, type: "sine", gain: 0.06 });
+    if (!found.includes(r.id)) {
+      const next = [...found, r.id];
+      setFound(next);
+      sbSet(A, "relics", next);
+    }
+  };
+
+  const hitCrack = () => {
+    const n = cracks + 1;
+    setCracks(n);
+    tone({ freq: 90, toFreq: 50, duration: 0.3, type: "sawtooth", gain: 0.1 });
+    if (n >= 3) {
+      setFalling(true);
+      tone({ freq: 300, toFreq: 40, duration: 2.2, type: "sawtooth", gain: 0.12 });
+      window.setTimeout(() => begin("deep-sea"), 2600);
+    }
+  };
+
+  const layer = (f: number) => ({ transform: `translateX(${-camX * f}px)` });
+  const heat = useMemo(() => (pt.y > 700 ? (pt.y - 700) / 200 : 0), [pt.y]);
 
   return (
-    <div ref={rootRef} className={styles.root} style={{ "--torch": "300px" } as React.CSSProperties}>
-      <div className={styles.wall} style={{ backgroundImage: `url(${wall})` }} />
-      <div className={styles.wallJoints} />
-
-      <div className={styles.lavaGlow} style={{ height: lavaHeight + 260 }} />
-      <div className={styles.lava} style={{ height: lavaHeight }}>
-        <div className={styles.lavaCrust} />
+    <div className={`${s.root} ${falling ? s.falling : ""}`} onPointerMove={onMove}>
+      {/* the far dark: Izalith and the Demon Ruins */}
+      <div className={s.far} style={layer(0.25)}>
+        <img src={src(A, "az_ds", 1)} alt="" style={{ left: 0 }} />
+        <img src={src(A, "az_ds2", 4)} alt="" style={{ left: 1000 }} />
+        <img src={src(A, "az_ds2", 2)} alt="" style={{ left: 1700 }} />
       </div>
-      <div className={styles.haze} style={{ bottom: lavaHeight }} />
+      <div className={s.smoke} />
 
-      <div className={styles.title}>
-        <div className={styles.titleMain}>EXPEDITION LOG · DAY 47</div>
-        <div className={styles.titleSub}>we should not have opened it</div>
-      </div>
+      {/* the ground: real paving stone, lit orange from the lava */}
+      <div className={s.ground} style={{ backgroundImage: `url(${src(A, "az_floor", 1)})`, backgroundPositionX: `${-camX * 0.9}px` }} />
 
-      {/* glyph wall, or the door once it is open */}
-      {open ? (
-        <div className={styles.door}>
-          <div className={styles.doorText}>the stone has moved</div>
-          <div className={styles.doorText} style={{ letterSpacing: "0.18em", opacity: 0.7 }}>
-            beyond it the passage is carpeted
+      {/* the pyramids, relit from below */}
+      <div className={s.ruins} style={layer(0.6)}>
+        {RUINS.map((r) => (
+          <div key={r.x} className={s.ruin} style={{ left: r.x, width: r.w, bottom: 900 - r.b, transform: "flip" in r ? "scaleX(-1)" : undefined }}>
+            <img src={cutN(A, "az_ruin", r.n)?.src ?? ""} alt="" />
           </div>
-          <button
-            type="button"
-            className={styles.doorLink}
-            onClick={() => begin("liminal")}
-          >
-            go through
+        ))}
+      </div>
+
+      {/* relics, the soapstone messages, the bonfire, the crack */}
+      <div className={s.near} style={layer(1)}>
+        {RELICS.map((r) => (
+          <button key={r.id} type="button" className={s.relic} style={{ left: r.x, width: 250 }} onClick={() => openRelic(r)} aria-label={r.name}>
+            <img src={cutN(A, r.slot, r.n)?.src ?? ""} alt="" />
           </button>
-        </div>
-      ) : (
-        <div className={styles.glyphs}>
-          {GLYPHS.map((d, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Glyph ${i + 1}`}
-              className={`${styles.glyph} ${down === i ? styles.glyphDown : ""} ${
-                entered.includes(i) ? styles.glyphLit : ""
-              }`}
-              onClick={() => pushGlyph(i)}
-            >
-              <svg className={styles.glyphSvg} viewBox="0 0 100 100">
-                <path d={d} />
-              </svg>
-              {dust
-                .filter((x) => x.g === i)
-                .map((x) => (
-                  <span
-                    key={x.id}
-                    className={styles.dust}
-                    style={{ "--dx": `${x.dx}px` } as React.CSSProperties}
-                  />
-                ))}
-            </button>
-          ))}
+        ))}
+
+        <button type="button" className={`${s.bonfire} ${lit ? s.bonfireLit : ""}`} onClick={rest} aria-label="Rest at bonfire">
+          <img className={s.embers} src={src(A, "az_fire", 1)} alt="" />
+          <img className={s.sword} src={cutN(A, "az_fire2", 1)?.src ?? ""} alt="" />
+          <span className={s.flame} />
+          <span className={s.prompt}>{lit ? "Rest at bonfire" : "Light bonfire"}</span>
+        </button>
+
+        {MESSAGES.map((m, i) => (
+          <button key={i} type="button" className={s.soap} style={{ left: m.x }} onClick={() => setMsg(i)}>
+            <span>{m.text}</span>
+          </button>
+        ))}
+
+        <button type="button" className={`${s.crack} ${cracks ? s.cracked : ""}`} style={{ left: CRACK_X }} onClick={hitCrack} aria-label="A crack in the floor" />
+      </div>
+
+      {/* the lava river */}
+      <div className={s.lava} style={{ backgroundImage: `url(${src(A, "az_lava", 2)})`, backgroundPositionX: `${-camX * 1.2}px` }} />
+      <div className={s.lavaGlow} style={{ opacity: 0.55 + heat * 0.4 }} />
+
+      {/* the torch — everything outside it falls to near-black */}
+      <div className={s.dark} style={{ background: `radial-gradient(circle at ${pt.x}px ${pt.y}px, transparent 0, rgba(8,3,0,.15) 150px, rgba(8,3,0,.72) 380px, rgba(4,1,0,.9) 620px)` }} />
+      <div className={s.torchGlow} style={{ left: pt.x, top: pt.y }} />
+
+      {/* HUD */}
+      <div className={s.place}>
+        <b>IZALITH</b>
+        <span>the buried city</span>
+      </div>
+      <div className={s.hud}>
+        <span className={s.bar}>
+          <i style={{ width: `${Math.max(0, 100 - heat * 60)}%` }} />
+        </span>
+        <span className={s.souls}>
+          RELICS {found.length}/{RELICS.length} · DEATHS {deaths}
+        </span>
+      </div>
+
+      {msg !== null && (
+        <div className={s.msgCard} onClick={() => setMsg(null)}>
+          <p>&ldquo;{MESSAGES[msg].text}&rdquo;</p>
+          <small>{MESSAGES[msg].note}</small>
         </div>
       )}
 
-      {/* the panel with the answer under five centuries of dirt */}
-      <RubPanel width={414} height={190} onClean={() => setRevealed(true)}>
-        <span style={{ display: "flex", gap: 18, alignItems: "center" }}>
-          {SEQUENCE.map((g, i) => (
-            <svg key={i} width="58" height="58" viewBox="0 0 100 100">
-              <path
-                d={GLYPHS[g]}
-                stroke="#ffcf8f"
-                strokeWidth="6"
-                fill="none"
-                strokeLinecap="square"
-              />
-            </svg>
-          ))}
-        </span>
-      </RubPanel>
-
-      {/* journal */}
-      <div className={styles.journal}>
-        <span className={styles.clip} />
-        <div className={styles.journalHead}>Field journal · R. Vasquez · Day 47</div>
-        <div className={styles.journalBody}>
-          The chamber is not a tomb. There is no body, no offering, nothing anyone was
-          meant to find. Only the wall, and the wall is a <em>lock</em>.
-          <br />
-          <br />
-          Four marks, in an order, and the order is cut into the panel by the fissure
-          — but the panel has not been cleaned in five hundred years and neither, I am
-          told, has anyone here.
-          <br />
-          <br />
-          The heat rises every time we press one. I have asked the others to stop. They
-          have not stopped.
-          <span className={styles.hand}>
-            {revealed
-              ? "— the marks are legible now. God help us."
-              : "— rub the panel. it is under there."}
-          </span>
-        </div>
-      </div>
-
-      {/* vines, matted from real photographs */}
-      {[0, 1].map((i) => {
-        const v = cut(SLUG, "aztec_vine", i);
-        if (!v) return null;
-        const w = i === 0 ? 480 : 420;
-        return (
-          <Image
-            key={i}
-            src={v.src}
-            alt=""
-            width={w}
-            height={Math.round((w * v.height) / v.width)}
-            className={styles.vine}
-            style={
-              i === 0
-                ? { left: -70, top: -60 }
-                : { right: -80, bottom: 60, transform: "scaleX(-1)" }
-            }
-          />
-        );
-      })}
-
-      <div className={styles.hint}>
-        the torch is your cursor · press the glyphs in order
-        <br />
-        {failures > 0 && !collapsing
-          ? `the floor has cracked ${failures} time${failures > 1 ? "s" : ""}`
-          : "rub the panel to find the order"}
-      </div>
-
-      {/* torch layers, drawn last so nothing sits over the light */}
-      <div className={styles.dark} />
-      <div ref={glowRef} className={styles.torchGlow} />
-      <div ref={flameRef} className={styles.flame} />
-
-      {collapsing && (
-        <div className={styles.collapse}>
-          <div className={styles.collapseText}>
-            the floor gives way
-            <br />
-            there is water below
+      {relic && (
+        <div className={s.item} onClick={() => setRelic(null)}>
+          <div className={s.itemCard}>
+            <img src={cutN(A, relic.slot, relic.n)?.src ?? ""} alt="" />
+            <div>
+              <h3>{relic.name}</h3>
+              <em>{relic.kind}</em>
+              <p>{relic.lore}</p>
+            </div>
           </div>
+        </div>
+      )}
+
+      {bonfireFlash && <div className={s.banner}>BONFIRE LIT</div>}
+      {died && (
+        <div className={s.died} onClick={respawn}>
+          <b>YOU DIED</b>
+          <small>click to return to the bonfire</small>
+        </div>
+      )}
+      {falling && (
+        <div className={s.fall}>
+          <b>The floor was an illusion.</b>
+          <small>something far below is full of water</small>
         </div>
       )}
     </div>

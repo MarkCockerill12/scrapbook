@@ -15,6 +15,9 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
 const R2_PREFIX = (process.env.R2_PREFIX ?? "scrapbook").replace(/^\/+|\/+$/g, "");
 
 const nextConfig: NextConfig = {
+  // Everything in the bucket is already a sized WebP with its content hash on the URL.
+  // Running it through the optimiser again would cost a second fetch and gain nothing.
+  images: { unoptimized: true },
   async rewrites() {
     if (!R2_PUBLIC_URL) return [];
     return [
