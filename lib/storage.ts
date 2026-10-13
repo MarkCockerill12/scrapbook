@@ -5,10 +5,11 @@
  * high scores, coins collected. All of it routes through here so a single decision
  * governs the lot.
  *
- * If the visitor declines, everything still works for the length of the session; it
- * just lives in memory and evaporates on reload. The decision itself is kept in
- * sessionStorage in that case, so we don't nag them again this visit but leave
- * nothing behind afterwards.
+ * If the visitor declines, the consent modal keeps the site shut until they say yes.
+ * The refusal itself is kept in sessionStorage, so a reload lands on the same shut
+ * door but nothing is left behind afterwards. The in-memory fallback is for browsers
+ * with storage switched off: a yes there still opens the site, it just can't keep
+ * anything.
  */
 
 export type ConsentState = "granted" | "denied" | "undecided";
