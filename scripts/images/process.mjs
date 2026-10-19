@@ -28,6 +28,11 @@ const OUT = resolve(PROJECT_ROOT, "public/dev-assets");
 
 /** The canvas is a fixed 1600x900, so we know the largest anything can ever display. */
 const MAX_W = 1600;
+/**
+ * Slots the camera pushes INTO, so they are shown well past 1:1 — capped at 1600 they
+ * smear long before the move ends. Keyed by `<aesthetic>/<slot>`.
+ */
+const ZOOMED = new Map([["silicon-dreams/sd_ws", 3600]]);
 const THUMB_W = 480;
 const QUALITY = 82;
 
@@ -99,11 +104,12 @@ async function processOne(aesthetic, file, { hasAlpha }) {
   const frameHeight = animated ? (meta.pageHeight ?? meta.height) : meta.height;
 
   const pipeline = () => sharp(buf, { animated: isGif }).rotate();
+  const maxW = ZOOMED.get(`${aesthetic}/${slot}`) ?? MAX_W;
 
   const displayOut = join(outDir, `${stem}.webp`);
   await pipeline()
     .resize({
-      width: Math.min(MAX_W, meta.width ?? MAX_W),
+      width: Math.min(maxW, meta.width ?? maxW),
       withoutEnlargement: true,
     })
     // Never flatten. Alpha is preserved wherever the source has it — the cutout/
@@ -119,7 +125,7 @@ async function processOne(aesthetic, file, { hasAlpha }) {
     .webp({ quality: 74, effort: 5 })
     .toFile(thumbOut);
 
-  const outWidth = Math.min(MAX_W, meta.width ?? MAX_W);
+  const outWidth = Math.min(maxW, meta.width ?? maxW);
   const scale = outWidth / (meta.width || outWidth);
   const outHeight = Math.round((frameHeight || 0) * scale);
 

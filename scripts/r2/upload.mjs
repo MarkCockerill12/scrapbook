@@ -14,6 +14,7 @@
  *
  *   node scripts/r2/upload.mjs            # dry run, prints what it would do
  *   node scripts/r2/upload.mjs --confirm  # actually uploads
+ *   node scripts/r2/upload.mjs --only=<aesthetic> [--confirm]   # just one channel's folder
  */
 import { readdir, readFile, stat } from "node:fs/promises";
 import { extname, join, relative, resolve } from "node:path";
@@ -26,8 +27,11 @@ import { loadEnv, PROJECT_ROOT } from "../lib/env.mjs";
 
 const env = loadEnv();
 const CONFIRM = process.argv.includes("--confirm");
+// A new channel's images, without re-putting the other 4000 files that are already there.
+const ONLY = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
 
-const LOCAL = resolve(PROJECT_ROOT, "public/dev-assets");
+const LOCAL = resolve(PROJECT_ROOT, ONLY ? `public/dev-assets/${ONLY.replace(/[^a-z0-9-]/gi, "")}` : "public/dev-assets");
+const ROOT = resolve(PROJECT_ROOT, "public/dev-assets");
 const FREE_TIER_BYTES = 10 * 1024 ** 3;
 const CEILING = 0.8;
 
@@ -86,7 +90,7 @@ if (rejected.length) {
 // --- build keys, guard 1: prefix -----------------------------------------
 const planned = [];
 for (const file of local) {
-  const rel = relative(LOCAL, file).split("\\").join("/");
+  const rel = relative(ROOT, file).split("\\").join("/");
   const key = `${env.R2_PREFIX}/${rel}`;
 
   if (!key.startsWith(`${env.R2_PREFIX}/`) || key.includes("..")) {

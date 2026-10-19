@@ -77,6 +77,17 @@ const ROSTER: Omit<Aesthetic, "channel">[] = [
     tags: ["warm", "quiet", "painted", "slow"],
   },
   {
+    slug: "silicon-dreams",
+    name: "Silicon Dreams",
+    tagline: "HYPERSPHERE 3D Chat — connected at 28,800 bps",
+    accent: "#6f63e6",
+    status: "live",
+    canvas: FIT,
+    letterbox: "#121516",
+    map: { x: 41, y: 64 },
+    tags: ["3d", "chat", "worlds", "1996"],
+  },
+  {
     slug: "xbox-360",
     name: "Xbox 360",
     tagline: "xX_no_scope_420_Xx's console, late 2011",

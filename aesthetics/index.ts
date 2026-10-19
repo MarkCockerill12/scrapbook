@@ -40,6 +40,7 @@ const PAGES: Record<string, ComponentType> = {
   blockbuster: dynamic(() => import("./blockbuster")),
   space: dynamic(() => import("./space")),
   academia: dynamic(() => import("./academia")),
+  "silicon-dreams": dynamic(() => import("./silicon-dreams")),
 };
 
 export function getAestheticComponent(slug: string): ComponentType | null {

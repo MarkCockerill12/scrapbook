@@ -1,0 +1,748 @@
+/*
+ * Silicon Dreams — own reset, own tokens, own type (rule R2).
+ * px against the 1600x900 canvas.
+ *
+ * Three looks share one stylesheet: the museum room (a photograph with a CRT in it),
+ * the HYPERSPHERE chat client (navy panels, gold rules, Arial — the client's own skin,
+ * deliberately not a Windows bevel, which other channels own), and the Render Gallery's
+ * title cards (Michroma). The CRT layers are mapped onto the photographed glass with the
+ * same matrix3d, so they stay in its perspective.
+ */
+@font-face {
+  font-family: "Michroma";
+  src: url("/fonts/silicon-dreams/michroma-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/silicon-dreams/ibm-plex-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/silicon-dreams/ibm-plex-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+
+.root {
+  --ink: #eef0f6;
+  --dim: rgba(214, 220, 238, 0.66);
+  --hint: #c9bfff;
+  --panel: rgba(10, 18, 48, 0.82);
+  --rule: #c9a640;
+  --gold: #ffe680;
+  --client: Arial, Helvetica, sans-serif;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #121516;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  user-select: none;
+}
+
+:where(.root) *,
+:where(.root) *::before,
+:where(.root) *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.root) button,
+:where(.root) input {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+}
+
+:where(.root) button {
+  cursor: pointer;
+}
+
+/* ---------- the room ---------- */
+.photo {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.photo img {
+  position: absolute;
+  left: 0;
+  display: block;
+  /* A museum on an overcast afternoon: a touch cooler and quieter than the camera saw it,
+     so the one thing giving off light is the tube. */
+  filter: saturate(0.9) brightness(0.93) contrast(1.05);
+}
+
+.photo::after {
+  content: "";
+  position: absolute;
+  inset: -60px 0 0;
+  background: radial-gradient(ellipse 80% 75% at 38% 46%, transparent 55%, rgba(8, 10, 12, 0.42) 100%);
+  pointer-events: none;
+}
+
+.root[data-mode="world"] .photo,
+.root[data-mode="gallery"] .photo {
+  display: none;
+}
+
+/* The chat client's view: a small framebuffer, scaled up with hard pixels. */
+.render {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  display: block;
+  image-rendering: pixelated;
+  transition: opacity 0.4s;
+}
+
+.root[data-mode="off"] .render,
+.root[data-mode="gallery"] .render {
+  opacity: 0;
+}
+
+.root[data-mode="boot"] .render,
+.root[data-mode="room"] .render {
+  box-shadow: 0 0 70px 14px rgba(150, 190, 255, 0.16);
+  filter: saturate(1.08) contrast(1.04);
+}
+
+/* Degauss: the picture swims in colour and brightness for a moment as the coil fires. */
+.render[data-booting] {
+  animation: degauss 0.9s ease-out;
+}
+
+@keyframes degauss {
+  0% {
+    filter: brightness(2.4) hue-rotate(0deg) saturate(2);
+  }
+  20% {
+    filter: brightness(1.2) hue-rotate(70deg) saturate(1.8);
+  }
+  45% {
+    filter: brightness(1.05) hue-rotate(-40deg) saturate(1.4);
+  }
+  70% {
+    filter: brightness(1) hue-rotate(15deg);
+  }
+  100% {
+    filter: brightness(1) hue-rotate(0deg);
+  }
+}
+
+.gallery {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  display: none;
+}
+
+.root[data-mode="gallery"] .gallery {
+  display: block;
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.root[data-mode="off"] .glass,
+.root[data-mode="world"] .glass,
+.root[data-mode="gallery"] .glass {
+  opacity: 0;
+}
+
+.glassPane {
+  position: absolute;
+  background-repeat: no-repeat;
+  filter: contrast(1.25) brightness(0.9);
+}
+
+.crt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.root[data-mode="off"] .crt,
+.root[data-mode="world"] .crt,
+.root[data-mode="gallery"] .crt {
+  display: none;
+}
+
+.scan {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.26) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 72% 70% at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* The client connecting, on the tube. */
+.splash {
+  position: absolute;
+  inset: 0;
+  padding: 90px 70px;
+  background: linear-gradient(#0a1440, #1c0c3c);
+  font-family: var(--client);
+  color: #d8e4ff;
+  animation: splashOut 3.6s steps(1, end) forwards;
+}
+
+@keyframes splashOut {
+  0%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.splash h1 {
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  font-size: 48px;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #b03070;
+}
+
+.splash h2 {
+  font-size: 20px;
+  font-weight: 400;
+  font-style: italic;
+  margin: 6px 0 36px;
+  color: #9fb4ff;
+}
+
+.splash ol {
+  list-style: none;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.splash li {
+  opacity: 0;
+  animation: line 0.01s forwards;
+}
+
+.splash li:nth-child(1) {
+  animation-delay: 0.3s;
+}
+.splash li:nth-child(2) {
+  animation-delay: 0.9s;
+}
+.splash li:nth-child(3) {
+  animation-delay: 2.1s;
+}
+.splash li:nth-child(4) {
+  animation-delay: 2.6s;
+}
+
+@keyframes line {
+  to {
+    opacity: 1;
+  }
+}
+
+.bar {
+  height: 18px;
+  margin-top: 26px;
+  border: 2px solid var(--rule);
+  background: #050a20;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: repeating-linear-gradient(90deg, var(--gold) 0 14px, transparent 14px 18px);
+  animation: fill 3.3s linear forwards;
+}
+
+@keyframes fill {
+  to {
+    width: 100%;
+  }
+}
+
+.hot {
+  position: absolute;
+  inset: 0;
+}
+
+.screen,
+.power {
+  position: absolute;
+  display: block;
+}
+
+.screen {
+  background: rgba(150, 200, 255, 0);
+  transition: background 0.25s;
+}
+
+.screen:hover {
+  background: rgba(150, 200, 255, 0.06);
+}
+
+/* The real button, found on the photo. Breathes while the monitor is off. */
+.power {
+  border-radius: 4px;
+  transition: box-shadow 0.2s;
+}
+
+.power:not([data-on]) {
+  animation: breathe 2.2s ease-in-out infinite;
+}
+
+.power:hover {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 16px rgba(160, 220, 255, 0.7);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55), 0 0 18px rgba(160, 220, 255, 0.55);
+  }
+}
+
+.led {
+  position: absolute;
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.led[data-on] {
+  background: #7dff7a;
+  box-shadow: 0 0 8px 2px rgba(125, 255, 122, 0.8);
+}
+
+/* ---------- the chat client ---------- */
+.view {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+
+.view[data-hover] {
+  cursor: pointer;
+}
+
+.view:active {
+  cursor: grabbing;
+}
+
+.keysHint {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  translate: -50% 0;
+  padding: 6px 14px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  font-family: var(--client);
+  font-size: 13px;
+  color: #d8e4ff;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.keysHint b {
+  color: var(--gold);
+}
+
+.client {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--client);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.client > * {
+  pointer-events: auto;
+}
+
+.client > button,
+.teleports button {
+  padding: 5px 11px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  color: var(--gold);
+  font-weight: bold;
+}
+
+.client > button:hover,
+.teleports button:hover {
+  background: #1d2c70;
+}
+
+.where {
+  padding: 5px 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  font-weight: bold;
+}
+
+.where em {
+  font-style: normal;
+  font-weight: normal;
+  color: var(--dim);
+}
+
+.views {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.views > span,
+.views button {
+  padding: 5px 9px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  color: #d8e4ff;
+  text-transform: capitalize;
+}
+
+.views button:hover {
+  background: #1d2c70;
+}
+
+.views button[data-on] {
+  color: #111;
+  background: #9fe0ff;
+}
+
+.teleports {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.teleports > span {
+  margin-right: 6px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  font-weight: bold;
+}
+
+.teleports button {
+  font-weight: normal;
+  color: #d8e4ff;
+}
+
+.teleports button[data-on] {
+  color: #111;
+  background: var(--gold);
+}
+
+.chat {
+  position: absolute;
+  left: 20px;
+  bottom: 74px;
+  width: 480px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  font-family: var(--client);
+  font-size: 14px;
+  user-select: text;
+}
+
+.chatHead {
+  padding: 4px 10px;
+  background: linear-gradient(90deg, #26357e, #0e1846);
+  color: var(--gold);
+  font-weight: bold;
+  border-bottom: 1px solid var(--rule);
+}
+
+.chatHead span {
+  float: right;
+  font-weight: normal;
+  color: var(--dim);
+}
+
+.chatLog {
+  height: 150px;
+  overflow-y: auto;
+  padding: 6px 10px;
+  line-height: 1.35;
+}
+
+.chatLog p[data-kind="sys"] {
+  color: #8fa0d8;
+  font-style: italic;
+}
+
+.chatIn {
+  display: flex;
+  border-top: 1px solid var(--rule);
+}
+
+.chatIn input {
+  flex: 1;
+  padding: 6px 10px;
+  background: #050a20;
+  outline: none;
+}
+
+.chatIn button {
+  padding: 0 16px;
+  background: var(--gold);
+  color: #111;
+  font-weight: bold;
+}
+
+.going {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: 460px;
+  padding: 22px 26px;
+  background: var(--panel);
+  border: 2px solid var(--rule);
+  font-family: var(--client);
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--gold);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.going .bar {
+  margin-top: 14px;
+}
+
+.going .bar i {
+  animation-name: fill;
+}
+
+.nick {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  translate: -50% -50%;
+  width: 420px;
+  padding: 24px 26px;
+  background: var(--panel);
+  border: 2px solid var(--rule);
+  font-family: var(--client);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.nick h3 {
+  color: var(--gold);
+  font-size: 20px;
+}
+
+.nick p {
+  margin: 8px 0 14px;
+  font-size: 14px;
+  color: var(--dim);
+}
+
+.nick input {
+  width: 100%;
+  padding: 7px 10px;
+  background: #050a20;
+  border: 1px solid var(--rule);
+  font-size: 16px;
+  outline: none;
+  user-select: text;
+}
+
+.nick button {
+  margin-top: 14px;
+  padding: 7px 16px;
+  background: var(--gold);
+  color: #111;
+  font-weight: bold;
+}
+
+/* ---------- the Render Gallery ---------- */
+.world {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.world[data-vista="0"] {
+  cursor: grab;
+}
+
+.world[data-vista="0"]:active {
+  cursor: grabbing;
+}
+
+.world[data-vista="2"],
+.world[data-vista="3"] {
+  cursor: pointer;
+}
+
+.tabs {
+  position: absolute;
+  top: 62px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  gap: 30px;
+}
+
+.tabs button {
+  font-family: "Michroma", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: rgba(214, 220, 238, 0.4);
+  padding: 4px 2px 6px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tabs button:hover {
+  color: var(--ink);
+}
+
+.tabs button[data-on] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.prev,
+.next {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  width: 64px;
+  height: 120px;
+  font-family: "Michroma", sans-serif;
+  font-size: 54px;
+  line-height: 1;
+  color: rgba(230, 234, 246, 0.32);
+  transition: color 0.2s;
+}
+
+.prev {
+  left: 14px;
+}
+
+.next {
+  right: 14px;
+}
+
+.prev:hover,
+.next:hover {
+  color: var(--ink);
+}
+
+/* Top-left in the gallery: the chat panel owns the bottom-left. */
+.caption {
+  position: absolute;
+  left: 46px;
+  top: 76px;
+  max-width: 600px;
+  pointer-events: none;
+  animation: title 1.4s ease-out both;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes title {
+  0% {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  35% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.numeral {
+  font-family: "Michroma", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+
+.caption h2 {
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.caption h2 span {
+  font-size: 22px;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  margin-left: 10px;
+  vertical-align: 0.25em;
+}
+
+.caption p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--dim);
+}
+
+.caption .paper {
+  color: var(--ink);
+  opacity: 0.85;
+}
+
+.caption .hint {
+  margin-top: 10px;
+  color: var(--hint);
+}
+
+.pass {
+  display: block;
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(214, 220, 238, 0.38);
+}
